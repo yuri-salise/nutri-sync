@@ -4,18 +4,27 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from app.core.logging import logger
 from app.core.security import get_password_hash
+from app.db.base import Base
 from app.db.models import Exercise, NutritionLog, RunActivity, User, WorkoutSession, WorkoutSet
-from app.db.session import AsyncSessionLocal
+from app.db.session import AsyncSessionLocal, engine
 
 
 async def seed_demo_data():
+    # Ensure pgvector extension and table schema exist defensively
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        except Exception:
+            pass
+        await conn.run_sync(Base.metadata.create_all)
+
     async with AsyncSessionLocal() as session:
         logger.info("Checking existing demo users...")
         res = await session.execute(select(User).where(User.email == "athlete@nutrisync.com"))

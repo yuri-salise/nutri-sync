@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.health import router as health_router
@@ -29,9 +30,9 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             # Enable pgvector extension if available
             try:
-                await conn.execute(Base.metadata.tables.get('nutrition_knowledge_items', None) and "CREATE EXTENSION IF NOT EXISTS vector;")
-            except Exception:
-                pass
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            except Exception as ext_err:
+                logger.warning(f"pgvector extension check note: {ext_err}")
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database schema synchronized.")
     except Exception as e:

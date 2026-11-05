@@ -6,15 +6,16 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 
 # Add backend directory to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from app.core.logging import logger
+from app.db.base import Base
 from app.db.models import NutritionKnowledgeItem
-from app.db.session import AsyncSessionLocal
+from app.db.session import AsyncSessionLocal, engine
 from app.services.embedding_service import generate_embedding
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -60,6 +61,14 @@ async def seed_dataset(
     truncate: bool = False
 ):
     """Computes vector embeddings and inserts records into PostgreSQL pgvector table."""
+    # Ensure pgvector extension and table schema exist defensively
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        except Exception:
+            pass
+        await conn.run_sync(Base.metadata.create_all)
+
     async with AsyncSessionLocal() as session:
         if truncate:
             logger.info("Truncating existing nutrition_knowledge_items...")

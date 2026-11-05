@@ -1,20 +1,18 @@
-import asyncio
-import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
+
 from alembic import context
-from pgvector.sqlalchemy import Vector
 
 # Add backend directory to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
+import app.db.models  # noqa: F401
 from app.core.config import settings
 from app.db.base import Base
-import app.db.models  # Load all models
 
 config = context.config
 
@@ -49,7 +47,8 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        connection.execute(Base.metadata.tables.get('nutrition_knowledge_items', None) and "CREATE EXTENSION IF NOT EXISTS vector;")
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata
