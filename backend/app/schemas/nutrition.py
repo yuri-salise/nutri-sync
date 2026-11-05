@@ -1,0 +1,87 @@
+from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class RagScanRequest(BaseModel):
+    query_input: str = Field(..., min_length=2, max_length=1000, description="Natural language meal description or food item.")
+    image_base64: Optional[str] = Field(None, description="Optional meal photo base64 string.")
+
+
+class FoodItemSummary(BaseModel):
+    id: int
+    food_name: str
+    source_dataset: str
+    kcal_per_100g: float
+    protein_per_100g: float
+    carbs_per_100g: float
+    fat_per_100g: float
+    serving_description: str
+
+
+class PredictedMacros(BaseModel):
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+
+
+class RagScanResponse(BaseModel):
+    scan_id: int
+    query_input: str
+    is_machine_generated: bool = True
+    requires_human_confirmation: bool = True
+    used_fallback: bool
+    latency_ms: float
+    top_similarity_score: float
+    predicted_macros: PredictedMacros
+    retrieved_items: List[FoodItemSummary]
+    model_version: str
+
+
+class NutritionLogCreate(BaseModel):
+    meal_name: str = Field(..., min_length=2, max_length=255)
+    total_kcal: float = Field(..., ge=0.0)
+    protein_g: float = Field(..., ge=0.0)
+    carbs_g: float = Field(..., ge=0.0)
+    fat_g: float = Field(..., ge=0.0)
+    rag_scan_id: Optional[int] = None
+    logged_at: Optional[datetime] = None
+
+
+class NutritionLogUpdate(BaseModel):
+    meal_name: Optional[str] = Field(None, min_length=2, max_length=255)
+    total_kcal: Optional[float] = Field(None, ge=0.0)
+    protein_g: Optional[float] = Field(None, ge=0.0)
+    carbs_g: Optional[float] = Field(None, ge=0.0)
+    fat_g: Optional[float] = Field(None, ge=0.0)
+
+
+class NutritionLogResponse(BaseModel):
+    id: int
+    user_id: int
+    rag_scan_id: Optional[int] = None
+    meal_name: str
+    total_kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    logged_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RagScanLogResponse(BaseModel):
+    id: int
+    user_id: int
+    query_input: str
+    retrieved_item_ids: str
+    top_similarity_score: float
+    predicted_macros_json: str
+    model_version: str
+    latency_ms: float
+    used_fallback: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

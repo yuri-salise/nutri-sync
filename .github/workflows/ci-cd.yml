@@ -1,0 +1,122 @@
+name: NutriSync-RAG CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend:
+    name: Backend Lint & API Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: nutrisync_test_db
+          POSTGRES_USER: nutrisync_user
+          POSTGRES_PASSWORD: nutrisync_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest pytest-asyncio pytest-cov httpx
+
+      - name: Run Linter (Ruff)
+        working-directory: ./backend
+        run: |
+          ruff check .
+
+      - name: Run Backend API Tests with Coverage
+        working-directory: ./backend
+        env:
+          APP_ENV: testing
+          DATABASE_URL: postgresql+asyncpg://nutrisync_user:nutrisync_test_password@localhost:5432/nutrisync_test_db
+          DATABASE_URL_SYNC: postgresql://nutrisync_user:nutrisync_test_password@localhost:5432/nutrisync_test_db
+          SECRET_KEY: test_secret_key_minimum_32_characters_for_ci_build
+        run: |
+          pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-report
+          path: backend/coverage.xml
+
+  frontend:
+    name: Frontend Lint & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Linter (ESLint)
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run Component Tests
+        working-directory: ./frontend
+        run: npm run test:run
+
+      - name: Build Production Bundle
+        working-directory: ./frontend
+        run: npm run build
+
+  deploy:
+    name: Self-Hosted Production Deployment
+    runs-on: [ self-hosted, linux, deploy ]
+    needs: [ backend, frontend ]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy Containers & Apply Migrations
+        env:
+          APP_VERSION: ${{ github.sha }}
+        run: |
+          cp /home/deploy/secrets/finalproject.env .env
+          docker compose -p finalproject up -d --build --remove-orphans
+          docker compose -p finalproject exec -T api alembic upgrade head
+          docker compose -p finalproject exec -T api python -m app.scripts.seed_nutrition
+
+      - name: Automated Health Check Verification
+        run: |
+          for i in $(seq 1 20); do
+            curl -fs http://localhost:8080/api/health | grep -q "$GITHUB_SHA" && exit 0
+            sleep 3
+          done
+          docker compose -p finalproject logs --tail 80 api
+          exit 1

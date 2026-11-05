@@ -1,0 +1,2061 @@
+openapi: 3.1.0
+info:
+  title: NutriSync-RAG REST API
+  description: Activity-Synced Nutritional Retrieval-Augmented Generation & Geolocation
+    Workout Tracking API
+  version: v1.0.0-dev
+paths:
+  /api/health:
+    get:
+      tags:
+      - Health
+      summary: Health Check
+      description: Returns service status, git commit ID, and database connectivity.
+      operationId: health_check_api_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/auth/register:
+    post:
+      tags:
+      - Authentication
+      summary: Register a new user account
+      operationId: register_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Authentication
+      summary: User Login
+      description: Authenticates credentials and returns JWT Bearer access and refresh
+        tokens.
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Authentication
+      summary: Get current user profile
+      operationId: get_current_user_profile_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+      security:
+      - OAuth2PasswordBearer: []
+    patch:
+      tags:
+      - Authentication
+      summary: Update current user goals or weight
+      operationId: update_current_user_profile_api_v1_auth_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/exercises:
+    get:
+      tags:
+      - Exercises
+      summary: List exercises with pagination, filtering, and sorting (Requirement
+        B6)
+      operationId: list_exercises_api_v1_exercises_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Page number
+          default: 1
+          title: Page
+        description: Page number
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Items per page
+          default: 20
+          title: Limit
+        description: Items per page
+      - name: muscle_group
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by muscle group
+          title: Muscle Group
+        description: Filter by muscle group
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by exercise category
+          title: Category
+        description: Filter by exercise category
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by status (pending|approved)
+          title: Status
+        description: Filter by status (pending|approved)
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search query string
+          title: Q
+        description: Search query string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Sort field (prefix with - for desc)
+          default: -created_at
+          title: Sort
+        description: Sort field (prefix with - for desc)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_ExerciseResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Exercises
+      summary: Create or submit a custom exercise
+      operationId: create_exercise_api_v1_exercises_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/exercises/{id}:
+    get:
+      tags:
+      - Exercises
+      summary: Get single exercise by ID
+      operationId: get_exercise_api_v1_exercises__id__get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Exercises
+      summary: Update an exercise (Admins can approve/reject; Creators can update
+        fields)
+      operationId: update_exercise_api_v1_exercises__id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Exercises
+      summary: Delete an exercise
+      operationId: delete_exercise_api_v1_exercises__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/workout-sessions:
+    get:
+      tags:
+      - Workouts
+      summary: List workout sessions with pagination and filtering
+      operationId: list_workout_sessions_api_v1_workout_sessions_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: split_title
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Split Title
+      - name: only_mine
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Only Mine
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_WorkoutSessionResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Workouts
+      summary: Log a workout session with sets and automatic PR detection
+      operationId: create_workout_session_api_v1_workout_sessions_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutSessionCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSessionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/workout-sessions/{id}:
+    get:
+      tags:
+      - Workouts
+      summary: Get single workout session by ID
+      operationId: get_workout_session_api_v1_workout_sessions__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSessionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Workouts
+      summary: Update workout session metadata
+      operationId: update_workout_session_api_v1_workout_sessions__id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutSessionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSessionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Workouts
+      summary: Delete a workout session
+      operationId: delete_workout_session_api_v1_workout_sessions__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/workout-sets/{id}/verify:
+    patch:
+      tags:
+      - Workouts
+      summary: Coach/Admin PR Verification (Requirement B4, Core Feature 7)
+      operationId: verify_workout_set_pr_api_v1_workout_sets__id__verify_patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSetResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/run-activities:
+    get:
+      tags:
+      - Runs
+      summary: List GPS run activities
+      operationId: list_run_activities_api_v1_run_activities_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: surface_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: road or trail
+          title: Surface Type
+        description: road or trail
+      - name: only_mine
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Only Mine
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_RunActivityResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Runs
+      summary: Record a GPS road or trail run activity
+      operationId: create_run_activity_api_v1_run_activities_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunActivityCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunActivityResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/run-activities/{id}:
+    get:
+      tags:
+      - Runs
+      summary: Get single run activity
+      operationId: get_run_activity_api_v1_run_activities__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunActivityResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Runs
+      summary: Update run activity
+      operationId: update_run_activity_api_v1_run_activities__id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunActivityUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunActivityResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Runs
+      summary: Delete run activity
+      operationId: delete_run_activity_api_v1_run_activities__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rag-nutrition-scans:
+    post:
+      tags:
+      - RAG Nutrition Engine
+      summary: Analyze meal description or photo via RAG pipeline (Requirements T1-T4,
+        T6)
+      operationId: scan_meal_nutrition_api_v1_rag_nutrition_scans_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RagScanRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RagScanResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - RAG Nutrition Engine
+      summary: Audit RAG scan logs for traceability & model latency (Admin/Coach only,
+        Req T4)
+      operationId: list_rag_scan_logs_api_v1_rag_nutrition_scans_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_RagScanLogResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nutrition-knowledge-items:
+    get:
+      tags:
+      - RAG Nutrition Engine
+      summary: Explore indexed DOST-FNRI & USDA food items in knowledge base
+      operationId: list_nutrition_knowledge_items_api_v1_nutrition_knowledge_items_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: source_dataset
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by FNRI or USDA
+          title: Source Dataset
+        description: Filter by FNRI or USDA
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search food item name
+          title: Q
+        description: Search food item name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_FoodItemSummary_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nutrition-logs:
+    get:
+      tags:
+      - Nutrition Logs
+      summary: List logged meals for current user
+      operationId: list_nutrition_logs_api_v1_nutrition_logs_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_NutritionLogResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Nutrition Logs
+      summary: Save a confirmed meal log (Human confirmation of RAG scan or manual
+        entry)
+      operationId: create_nutrition_log_api_v1_nutrition_logs_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NutritionLogCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionLogResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nutrition-logs/{id}:
+    get:
+      tags:
+      - Nutrition Logs
+      summary: Get single nutrition log
+      operationId: get_nutrition_log_api_v1_nutrition_logs__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionLogResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Nutrition Logs
+      summary: Update nutrition log
+      operationId: update_nutrition_log_api_v1_nutrition_logs__id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NutritionLogUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NutritionLogResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Nutrition Logs
+      summary: Delete nutrition log
+      operationId: delete_nutrition_log_api_v1_nutrition_logs__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/activity-synced-summary:
+    get:
+      tags:
+      - Activity Synchronization
+      summary: Compute dynamic calorie and macronutrient targets synchronized with
+        daily physical activity
+      operationId: get_activity_synced_summary_api_v1_activity_synced_summary_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/community-feed:
+    get:
+      tags:
+      - Community
+      summary: Get paginated community feed of public workouts, verified PRs, and
+        runs
+      operationId: get_community_feed_api_v1_community_feed_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: activity_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: all | workouts | runs
+          title: Activity Type
+        description: all | workouts | runs
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    ExerciseCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 2
+          title: Name
+        category:
+          type: string
+          maxLength: 100
+          title: Category
+          default: compound
+        muscle_group:
+          type: string
+          maxLength: 100
+          title: Muscle Group
+        met_value:
+          type: number
+          exclusiveMaximum: 25.0
+          exclusiveMinimum: 0.5
+          title: Met Value
+          default: 6.0
+      type: object
+      required:
+      - name
+      - muscle_group
+      title: ExerciseCreate
+    ExerciseResponse:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 2
+          title: Name
+        category:
+          type: string
+          maxLength: 100
+          title: Category
+          default: compound
+        muscle_group:
+          type: string
+          maxLength: 100
+          title: Muscle Group
+        met_value:
+          type: number
+          exclusiveMaximum: 25.0
+          exclusiveMinimum: 0.5
+          title: Met Value
+          default: 6.0
+        id:
+          type: integer
+          title: Id
+        status:
+          type: string
+          title: Status
+        created_by_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Created By Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - name
+      - muscle_group
+      - id
+      - status
+      - created_at
+      title: ExerciseResponse
+    ExerciseUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 2
+          - type: 'null'
+          title: Name
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+        muscle_group:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Muscle Group
+        met_value:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 25.0
+            exclusiveMinimum: 0.5
+          - type: 'null'
+          title: Met Value
+        status:
+          anyOf:
+          - type: string
+            pattern: ^(pending|approved|rejected)$
+          - type: 'null'
+          title: Status
+      type: object
+      title: ExerciseUpdate
+    FoodItemSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        food_name:
+          type: string
+          title: Food Name
+        source_dataset:
+          type: string
+          title: Source Dataset
+        kcal_per_100g:
+          type: number
+          title: Kcal Per 100G
+        protein_per_100g:
+          type: number
+          title: Protein Per 100G
+        carbs_per_100g:
+          type: number
+          title: Carbs Per 100G
+        fat_per_100g:
+          type: number
+          title: Fat Per 100G
+        serving_description:
+          type: string
+          title: Serving Description
+      type: object
+      required:
+      - id
+      - food_name
+      - source_dataset
+      - kcal_per_100g
+      - protein_per_100g
+      - carbs_per_100g
+      - fat_per_100g
+      - serving_description
+      title: FoodItemSummary
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    LoginRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - email
+      - password
+      title: LoginRequest
+    NutritionLogCreate:
+      properties:
+        meal_name:
+          type: string
+          maxLength: 255
+          minLength: 2
+          title: Meal Name
+        total_kcal:
+          type: number
+          minimum: 0.0
+          title: Total Kcal
+        protein_g:
+          type: number
+          minimum: 0.0
+          title: Protein G
+        carbs_g:
+          type: number
+          minimum: 0.0
+          title: Carbs G
+        fat_g:
+          type: number
+          minimum: 0.0
+          title: Fat G
+        rag_scan_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rag Scan Id
+        logged_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Logged At
+      type: object
+      required:
+      - meal_name
+      - total_kcal
+      - protein_g
+      - carbs_g
+      - fat_g
+      title: NutritionLogCreate
+    NutritionLogResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        rag_scan_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rag Scan Id
+        meal_name:
+          type: string
+          title: Meal Name
+        total_kcal:
+          type: number
+          title: Total Kcal
+        protein_g:
+          type: number
+          title: Protein G
+        carbs_g:
+          type: number
+          title: Carbs G
+        fat_g:
+          type: number
+          title: Fat G
+        logged_at:
+          type: string
+          format: date-time
+          title: Logged At
+      type: object
+      required:
+      - id
+      - user_id
+      - meal_name
+      - total_kcal
+      - protein_g
+      - carbs_g
+      - fat_g
+      - logged_at
+      title: NutritionLogResponse
+    NutritionLogUpdate:
+      properties:
+        meal_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 2
+          - type: 'null'
+          title: Meal Name
+        total_kcal:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Total Kcal
+        protein_g:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Protein G
+        carbs_g:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Carbs G
+        fat_g:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Fat G
+      type: object
+      title: NutritionLogUpdate
+    PaginatedResponse_ExerciseResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ExerciseResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[ExerciseResponse]
+    PaginatedResponse_FoodItemSummary_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/FoodItemSummary'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[FoodItemSummary]
+    PaginatedResponse_NutritionLogResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/NutritionLogResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[NutritionLogResponse]
+    PaginatedResponse_RagScanLogResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/RagScanLogResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[RagScanLogResponse]
+    PaginatedResponse_RunActivityResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/RunActivityResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[RunActivityResponse]
+    PaginatedResponse_WorkoutSessionResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/WorkoutSessionResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[WorkoutSessionResponse]
+    PaginationMeta:
+      properties:
+        page:
+          type: integer
+          title: Page
+        limit:
+          type: integer
+          title: Limit
+        total:
+          type: integer
+          title: Total
+        total_pages:
+          type: integer
+          title: Total Pages
+      type: object
+      required:
+      - page
+      - limit
+      - total
+      - total_pages
+      title: PaginationMeta
+    PredictedMacros:
+      properties:
+        calories:
+          type: number
+          title: Calories
+        protein_g:
+          type: number
+          title: Protein G
+        carbs_g:
+          type: number
+          title: Carbs G
+        fat_g:
+          type: number
+          title: Fat G
+      type: object
+      required:
+      - calories
+      - protein_g
+      - carbs_g
+      - fat_g
+      title: PredictedMacros
+    RagScanLogResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        query_input:
+          type: string
+          title: Query Input
+        retrieved_item_ids:
+          type: string
+          title: Retrieved Item Ids
+        top_similarity_score:
+          type: number
+          title: Top Similarity Score
+        predicted_macros_json:
+          type: string
+          title: Predicted Macros Json
+        model_version:
+          type: string
+          title: Model Version
+        latency_ms:
+          type: number
+          title: Latency Ms
+        used_fallback:
+          type: boolean
+          title: Used Fallback
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - user_id
+      - query_input
+      - retrieved_item_ids
+      - top_similarity_score
+      - predicted_macros_json
+      - model_version
+      - latency_ms
+      - used_fallback
+      - created_at
+      title: RagScanLogResponse
+    RagScanRequest:
+      properties:
+        query_input:
+          type: string
+          maxLength: 1000
+          minLength: 2
+          title: Query Input
+          description: Natural language meal description or food item.
+        image_base64:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Base64
+          description: Optional meal photo base64 string.
+      type: object
+      required:
+      - query_input
+      title: RagScanRequest
+    RagScanResponse:
+      properties:
+        scan_id:
+          type: integer
+          title: Scan Id
+        query_input:
+          type: string
+          title: Query Input
+        is_machine_generated:
+          type: boolean
+          title: Is Machine Generated
+          default: true
+        requires_human_confirmation:
+          type: boolean
+          title: Requires Human Confirmation
+          default: true
+        used_fallback:
+          type: boolean
+          title: Used Fallback
+        latency_ms:
+          type: number
+          title: Latency Ms
+        top_similarity_score:
+          type: number
+          title: Top Similarity Score
+        predicted_macros:
+          $ref: '#/components/schemas/PredictedMacros'
+        retrieved_items:
+          items:
+            $ref: '#/components/schemas/FoodItemSummary'
+          type: array
+          title: Retrieved Items
+        model_version:
+          type: string
+          title: Model Version
+      type: object
+      required:
+      - scan_id
+      - query_input
+      - used_fallback
+      - latency_ms
+      - top_similarity_score
+      - predicted_macros
+      - retrieved_items
+      - model_version
+      title: RagScanResponse
+    RegisterRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          minLength: 8
+          title: Password
+          description: Password must be at least 8 characters long.
+        full_name:
+          type: string
+          maxLength: 255
+          minLength: 2
+          title: Full Name
+        role:
+          type: string
+          pattern: ^(athlete|admin)$
+          title: Role
+          default: athlete
+        weight_kg:
+          type: number
+          exclusiveMaximum: 400.0
+          exclusiveMinimum: 20.0
+          title: Weight Kg
+          default: 70.0
+        base_kcal_goal:
+          type: number
+          exclusiveMaximum: 10000.0
+          exclusiveMinimum: 500.0
+          title: Base Kcal Goal
+          default: 2200.0
+        protein_goal_g:
+          type: number
+          exclusiveMaximum: 600.0
+          exclusiveMinimum: 10.0
+          title: Protein Goal G
+          default: 150.0
+        carbs_goal_g:
+          type: number
+          exclusiveMaximum: 1000.0
+          exclusiveMinimum: 10.0
+          title: Carbs Goal G
+          default: 250.0
+        fat_goal_g:
+          type: number
+          exclusiveMaximum: 400.0
+          exclusiveMinimum: 5.0
+          title: Fat Goal G
+          default: 65.0
+      type: object
+      required:
+      - email
+      - password
+      - full_name
+      title: RegisterRequest
+    RunActivityCreate:
+      properties:
+        surface_type:
+          type: string
+          pattern: ^(road|trail)$
+          title: Surface Type
+          default: road
+        distance_km:
+          type: number
+          maximum: 500.0
+          exclusiveMinimum: 0.0
+          title: Distance Km
+        duration_sec:
+          type: integer
+          maximum: 86400.0
+          exclusiveMinimum: 0.0
+          title: Duration Sec
+        elevation_gain_m:
+          type: number
+          maximum: 10000.0
+          minimum: 0.0
+          title: Elevation Gain M
+          default: 0.0
+        burned_kcal:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Burned Kcal
+        route_geojson:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Route Geojson
+        is_public:
+          type: boolean
+          title: Is Public
+          default: true
+        recorded_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Recorded At
+      type: object
+      required:
+      - distance_km
+      - duration_sec
+      title: RunActivityCreate
+    RunActivityResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        surface_type:
+          type: string
+          title: Surface Type
+        distance_km:
+          type: number
+          title: Distance Km
+        duration_sec:
+          type: integer
+          title: Duration Sec
+        elevation_gain_m:
+          type: number
+          title: Elevation Gain M
+        burned_kcal:
+          type: number
+          title: Burned Kcal
+        route_geojson:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Route Geojson
+        is_public:
+          type: boolean
+          title: Is Public
+        recorded_at:
+          type: string
+          format: date-time
+          title: Recorded At
+      type: object
+      required:
+      - id
+      - user_id
+      - surface_type
+      - distance_km
+      - duration_sec
+      - elevation_gain_m
+      - burned_kcal
+      - is_public
+      - recorded_at
+      title: RunActivityResponse
+    RunActivityUpdate:
+      properties:
+        surface_type:
+          anyOf:
+          - type: string
+            pattern: ^(road|trail)$
+          - type: 'null'
+          title: Surface Type
+        distance_km:
+          anyOf:
+          - type: number
+            maximum: 500.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Distance Km
+        duration_sec:
+          anyOf:
+          - type: integer
+            maximum: 86400.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Duration Sec
+        elevation_gain_m:
+          anyOf:
+          - type: number
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Elevation Gain M
+        burned_kcal:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Burned Kcal
+        is_public:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Public
+      type: object
+      title: RunActivityUpdate
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+          default: Bearer
+        expires_in:
+          type: integer
+          title: Expires In
+      type: object
+      required:
+      - access_token
+      - refresh_token
+      - expires_in
+      title: TokenResponse
+    UserResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          format: email
+          title: Email
+        full_name:
+          type: string
+          title: Full Name
+        role:
+          type: string
+          title: Role
+        weight_kg:
+          type: number
+          title: Weight Kg
+        base_kcal_goal:
+          type: number
+          title: Base Kcal Goal
+        protein_goal_g:
+          type: number
+          title: Protein Goal G
+        carbs_goal_g:
+          type: number
+          title: Carbs Goal G
+        fat_goal_g:
+          type: number
+          title: Fat Goal G
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - email
+      - full_name
+      - role
+      - weight_kg
+      - base_kcal_goal
+      - protein_goal_g
+      - carbs_goal_g
+      - fat_goal_g
+      - created_at
+      title: UserResponse
+    UserUpdateRequest:
+      properties:
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        weight_kg:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 400.0
+            exclusiveMinimum: 20.0
+          - type: 'null'
+          title: Weight Kg
+        base_kcal_goal:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 10000.0
+            exclusiveMinimum: 500.0
+          - type: 'null'
+          title: Base Kcal Goal
+        protein_goal_g:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 600.0
+            exclusiveMinimum: 10.0
+          - type: 'null'
+          title: Protein Goal G
+        carbs_goal_g:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 1000.0
+            exclusiveMinimum: 10.0
+          - type: 'null'
+          title: Carbs Goal G
+        fat_goal_g:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 400.0
+            exclusiveMinimum: 5.0
+          - type: 'null'
+          title: Fat Goal G
+      type: object
+      title: UserUpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkoutSessionCreate:
+      properties:
+        split_title:
+          type: string
+          maxLength: 255
+          minLength: 2
+          title: Split Title
+        duration_min:
+          type: integer
+          maximum: 1440.0
+          minimum: 1.0
+          title: Duration Min
+          default: 60
+        burned_kcal:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Burned Kcal
+        is_public:
+          type: boolean
+          title: Is Public
+          default: true
+        session_date:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Session Date
+        sets:
+          items:
+            $ref: '#/components/schemas/WorkoutSetCreate'
+          type: array
+          title: Sets
+      type: object
+      required:
+      - split_title
+      title: WorkoutSessionCreate
+    WorkoutSessionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        split_title:
+          type: string
+          title: Split Title
+        duration_min:
+          type: integer
+          title: Duration Min
+        burned_kcal:
+          type: number
+          title: Burned Kcal
+        is_public:
+          type: boolean
+          title: Is Public
+        session_date:
+          type: string
+          format: date-time
+          title: Session Date
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        sets:
+          items:
+            $ref: '#/components/schemas/WorkoutSetResponse'
+          type: array
+          title: Sets
+      type: object
+      required:
+      - id
+      - user_id
+      - split_title
+      - duration_min
+      - burned_kcal
+      - is_public
+      - session_date
+      - created_at
+      title: WorkoutSessionResponse
+    WorkoutSessionUpdate:
+      properties:
+        split_title:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 2
+          - type: 'null'
+          title: Split Title
+        duration_min:
+          anyOf:
+          - type: integer
+            maximum: 1440.0
+            minimum: 1.0
+          - type: 'null'
+          title: Duration Min
+        burned_kcal:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Burned Kcal
+        is_public:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Public
+      type: object
+      title: WorkoutSessionUpdate
+    WorkoutSetCreate:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        set_no:
+          type: integer
+          minimum: 1.0
+          title: Set No
+        reps:
+          type: integer
+          maximum: 500.0
+          minimum: 1.0
+          title: Reps
+        weight_kg:
+          type: number
+          maximum: 1000.0
+          minimum: 0.0
+          title: Weight Kg
+        is_pr:
+          type: boolean
+          title: Is Pr
+          default: false
+      type: object
+      required:
+      - exercise_id
+      - set_no
+      - reps
+      - weight_kg
+      title: WorkoutSetCreate
+    WorkoutSetResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        session_id:
+          type: integer
+          title: Session Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        set_no:
+          type: integer
+          title: Set No
+        reps:
+          type: integer
+          title: Reps
+        weight_kg:
+          type: number
+          title: Weight Kg
+        is_pr:
+          type: boolean
+          title: Is Pr
+        verified_by_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Verified By Id
+        exercise:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseResponse'
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - session_id
+      - exercise_id
+      - set_no
+      - reps
+      - weight_kg
+      - is_pr
+      - created_at
+      title: WorkoutSetResponse
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/login

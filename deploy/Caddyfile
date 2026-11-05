@@ -1,0 +1,20 @@
+:80 {
+    # Security Headers (Requirement 6.4, Q4)
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        -Server
+    }
+
+    # API and Swagger Documentation Routes (Requirement B1, B7, B8, DP2)
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Static Frontend Application (Requirement F1, DP2)
+    handle {
+        reverse_proxy web:80
+    }
+}

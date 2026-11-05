@@ -1,0 +1,175 @@
+export type UserRole = 'athlete' | 'admin';
+
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  weight_kg: number;
+  base_kcal_goal: number;
+  protein_goal_g: number;
+  carbs_goal_g: number;
+  fat_goal_g: number;
+  created_at: string;
+}
+
+export interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export interface Exercise {
+  id: number;
+  name: string;
+  category: string;
+  muscle_group: string;
+  met_value: number;
+  status: 'pending' | 'approved' | 'rejected';
+  created_by_id?: number | null;
+  created_at: string;
+}
+
+export interface WorkoutSet {
+  id?: number;
+  session_id?: number;
+  exercise_id: number;
+  set_no: number;
+  reps: number;
+  weight_kg: number;
+  is_pr: boolean;
+  verified_by_id?: number | null;
+  exercise?: Exercise;
+}
+
+export interface WorkoutSession {
+  id: number;
+  user_id: number;
+  split_title: string;
+  duration_min: number;
+  burned_kcal: number;
+  is_public: boolean;
+  session_date: string;
+  created_at: string;
+  sets: WorkoutSet[];
+}
+
+export interface RunActivity {
+  id: number;
+  user_id: number;
+  surface_type: 'road' | 'trail';
+  distance_km: number;
+  duration_sec: number;
+  elevation_gain_m: number;
+  burned_kcal: number;
+  route_geojson?: string | null;
+  is_public: boolean;
+  recorded_at: string;
+}
+
+export interface FoodItemSummary {
+  id: number;
+  food_name: string;
+  source_dataset: 'FNRI' | 'USDA' | string;
+  kcal_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+  serving_description: string;
+}
+
+export interface PredictedMacros {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
+export interface RagScanResult {
+  scan_id: number;
+  query_input: string;
+  is_machine_generated: boolean;
+  requires_human_confirmation: boolean;
+  used_fallback: boolean;
+  latency_ms: number;
+  top_similarity_score: number;
+  predicted_macros: PredictedMacros;
+  retrieved_items: FoodItemSummary[];
+  model_version: string;
+}
+
+export interface NutritionLog {
+  id: number;
+  user_id: number;
+  rag_scan_id?: number | null;
+  meal_name: string;
+  total_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  logged_at: string;
+}
+
+export interface RagScanLog {
+  id: number;
+  user_id: number;
+  query_input: string;
+  retrieved_item_ids: string;
+  top_similarity_score: number;
+  predicted_macros_json: string;
+  model_version: string;
+  latency_ms: number;
+  used_fallback: boolean;
+  created_at: string;
+}
+
+export interface ActivitySyncedSummary {
+  date: string;
+  user_weight_kg: number;
+  base_goals: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  };
+  activity_burn: {
+    workout_burned_kcal: number;
+    workout_minutes: number;
+    run_burned_kcal: number;
+    run_distance_km: number;
+    run_duration_min: number;
+    total_burned_kcal: number;
+  };
+  dynamic_targets: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  };
+  consumed: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+    logged_meals_count: number;
+  };
+  remaining: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  };
+}
+
+export interface PaginatedMeta {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginatedMeta;
+}
