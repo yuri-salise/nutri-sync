@@ -131,15 +131,15 @@ export const WorkoutLoggerPage: React.FC = () => {
 
       const prSets = newSession.sets.filter((s) => s.is_pr);
       if (prSets.length > 0) {
-        setSuccessMsg(`PROGRESSIVE OVERLOAD ACHIEVED: ${prSets.length} Personal Record(s) unlocked!`);
+        setSuccessMsg(`Awesome work! You achieved ${prSets.length} new Personal Record(s)!`);
       } else {
-        setSuccessMsg('Workout session logged successfully!');
+        setSuccessMsg('Workout saved successfully!');
       }
 
       loadData();
       setActiveTab('history');
     } catch (err: any) {
-      setError(err.message || 'Failed to log workout session.');
+      setError(err.message || 'Failed to save workout.');
     } finally {
       setSubmitting(false);
     }
@@ -152,10 +152,10 @@ export const WorkoutLoggerPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Dumbbell className="h-6 w-6 text-[#C8FF00]" />
-            <span>Strength & Personal Records (PR)</span>
+            <span>Workouts & Personal Records</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Log sets, reps, and progressive overload with automated 1RM Personal Record detection
+            Log your exercises, sets, and reps. We automatically calculate your 1-Rep Max and celebrate new Personal Records.
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Log Session
+            Log Workout
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -179,7 +179,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            History ({sessions.length})
+            Past Workouts ({sessions.length})
           </button>
         </div>
       </div>
@@ -207,26 +207,26 @@ export const WorkoutLoggerPage: React.FC = () => {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card">
+              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-[#C8FF00]" />
-                  <span>Session Architecture</span>
+                  <span>Workout Details</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Split Title</label>
+                    <label className="text-xs font-semibold text-[#848E9C]">Workout Name</label>
                     <input
                       type="text"
                       value={splitTitle}
                       onChange={(e) => setSplitTitle(e.target.value)}
-                      placeholder="e.g. Heavy Push Day A"
+                      placeholder="e.g. Chest & Triceps"
                       className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Duration (Minutes)</label>
+                    <label className="text-xs font-semibold text-[#848E9C]">Duration (minutes)</label>
                     <input
                       type="number"
                       value={durationMin}
@@ -247,17 +247,17 @@ export const WorkoutLoggerPage: React.FC = () => {
                     className="h-4 w-4 rounded border-[#1e232d] bg-[#07080a] text-[#C8FF00] focus:ring-0"
                   />
                   <label htmlFor="isPublic" className="text-xs text-[#848E9C]">
-                    Share to Club & Community Training Feed
+                    Share to Club Community Feed
                   </label>
                 </div>
               </div>
 
               {/* Set Matrix Table */}
-              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card">
+              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <Award className="h-4 w-4 text-[#C8FF00]" />
-                    <span>Lifting Sets Matrix</span>
+                    <span>Exercises & Sets</span>
                   </h3>
                   <button
                     type="button"
@@ -353,7 +353,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                     disabled={submitting}
                     className="w-full py-3.5 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm tracking-wide hover:bg-[#d4ff33] shadow-glow-lime transition-all disabled:opacity-50"
                   >
-                    {submitting ? 'Recording Workout & Calculating PRs...' : 'Commit Workout Session'}
+                    {submitting ? 'Saving Workout & Checking PRs...' : 'Save Workout'}
                   </button>
                 </div>
               </div>
@@ -363,10 +363,10 @@ export const WorkoutLoggerPage: React.FC = () => {
           {/* Right Rail: Rest Stopwatch & Auto 1RM Formula */}
           <div className="space-y-6">
             {/* Rest Timer */}
-            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card text-center">
+            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card text-center">
               <div className="flex items-center justify-between text-xs text-[#848E9C]">
-                <span className="font-mono uppercase tracking-wider flex items-center gap-1.5">
-                  <Timer className="h-4 w-4 text-[#C8FF00]" /> Rest Clock
+                <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <Timer className="h-4 w-4 text-[#C8FF00]" /> Rest Timer
                 </span>
                 <span className={`h-2 w-2 rounded-full ${timerRunning ? 'bg-[#00D26A] animate-pulse' : 'bg-[#848E9C]'}`} />
               </div>
@@ -407,18 +407,18 @@ export const WorkoutLoggerPage: React.FC = () => {
             </div>
 
             {/* 1RM Mechanics Card */}
-            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-okx-card">
+            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-cyber-card">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-[#C8FF00]" /> Epley 1RM Engine
+                <Zap className="h-3.5 w-3.5 text-[#C8FF00]" /> How PRs Are Calculated
               </h4>
               <p className="text-[11px] text-[#848E9C] leading-relaxed">
-                Personal Records (PRs) are mathematically computed on each set using the standardized Epley formula:
+                Your estimated 1-Rep Max (1RM) is automatically calculated on each set using the standard strength formula:
               </p>
               <div className="p-2.5 rounded-xl bg-[#07080a] border border-[#1e232d] text-center font-mono text-xs text-[#00E5FF]">
                 1RM = Weight &times; (1 + Reps / 30)
               </div>
               <p className="text-[10px] text-[#848E9C]">
-                When your estimated 1RM surpasses your historic maximum, an official PR flag is unlocked and staged for Coach verification.
+                Whenever your lift beats your previous personal best, an official Personal Record (PR) is automatically saved!
               </p>
             </div>
           </div>
@@ -428,13 +428,13 @@ export const WorkoutLoggerPage: React.FC = () => {
         <div className="space-y-4">
           {sessions.length === 0 ? (
             <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-              No workouts logged yet. Switch to "Log Session" to track your first training split.
+              No workouts logged yet. Switch to "Log Workout" to track your first training session.
             </div>
           ) : (
             sessions.map((sess) => (
               <div
                 key={sess.id}
-                className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card hover:border-[#2a313f] transition-colors"
+                className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card hover:border-[#2a313f] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -442,7 +442,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                       <span>{sess.split_title}</span>
                       {sess.sets.some((s) => s.is_pr) && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime">
-                          PR UNLOCKED
+                          NEW PR
                         </span>
                       )}
                     </h3>
@@ -478,7 +478,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                       }`}
                     >
                       <span className="font-semibold text-white truncate max-w-[130px]">
-                        {st.exercise?.name || 'Movement'}
+                        {st.exercise?.name || 'Exercise'}
                       </span>
                       <span className="font-mono">
                         {st.weight_kg}kg &times; {st.reps}

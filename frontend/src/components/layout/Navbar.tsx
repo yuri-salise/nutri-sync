@@ -55,40 +55,40 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenu
                   NUTRI<span className="text-[#C8FF00]">SYNC</span>
                 </span>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#C8FF00]/10 text-[#C8FF00] border border-[#C8FF00]/30 tracking-wider">
-                  RAG
+                  PRO
                 </span>
               </div>
-              <span className="text-[10px] text-[#848E9C] tracking-wide font-mono -mt-0.5">
-                EXCHANGE-GRADE AI
+              <span className="text-[10px] text-[#848E9C] tracking-wide font-medium -mt-0.5">
+                SMART FITNESS & NUTRITION
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Center: OKX-Style Telemetry Badges */}
+        {/* Center: System Status Badges */}
         <div className="hidden lg:flex items-center gap-2">
-          {/* Database & RLS status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
+          {/* Database status */}
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
             <Database className="h-3.5 w-3.5 text-[#00E5FF]" />
-            <span className="text-[#848E9C]">DB:</span>
+            <span>Database:</span>
             <span
               className={`inline-block h-2 w-2 rounded-full ${
                 dbHealthy ? 'bg-[#00D26A] shadow-glow-green animate-pulse' : 'bg-[#F6465D]'
               }`}
             />
             <span className="text-[#EAECEF] font-semibold">
-              {dbHealthy ? 'pg17 + vector' : 'Connecting'}
+              {dbHealthy ? 'Online' : 'Connecting'}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
             <Lock className="h-3.5 w-3.5 text-[#C8FF00]" />
-            <span className="text-[#EAECEF] font-semibold">RLS Guard Active</span>
+            <span className="text-[#EAECEF] font-semibold">Private & Secure</span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
             <Cpu className="h-3.5 w-3.5 text-[#C8FF00]" />
-            <span className="text-[#C8FF00]">384d all-MiniLM</span>
+            <span className="text-[#C8FF00]">AI Food Engine Ready</span>
           </div>
         </div>
 
@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenu
           {/* User Profile & Logout */}
           {user ? (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-[#12151b] border border-[#1e232d] px-3 py-1.5 rounded-xl shadow-okx-card">
+              <div className="flex items-center gap-2 bg-[#12151b] border border-[#1e232d] px-3 py-1.5 rounded-xl shadow-cyber-card">
                 <div
                   className={`p-1.5 rounded-lg ${
                     role === 'admin'

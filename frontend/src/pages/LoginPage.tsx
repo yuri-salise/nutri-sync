@@ -83,7 +83,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* 1-Click Evaluation Demo Credentials Banner */}
-        <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3">
+        <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-white flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-[#C8FF00]" /> 1-Click Demo Evaluation

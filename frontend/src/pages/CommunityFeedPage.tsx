@@ -31,10 +31,10 @@ export const CommunityFeedPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Users className="h-6 w-6 text-[#C8FF00]" />
-            <span>Club Training Feed & PR Ledger</span>
+            <span>Club Activity Feed</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Verified Personal Records (PRs), lifting splits, and GPS trail routes shared by club athletes
+            See workouts, runs, and new personal records shared by teammates.
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export const CommunityFeedPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            All Stream
+            All Activities
           </button>
           <button
             onClick={() => setFilterType('workouts')}
@@ -58,7 +58,7 @@ export const CommunityFeedPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Lifting Splits
+            Workouts
           </button>
           <button
             onClick={() => setFilterType('runs')}
@@ -68,7 +68,7 @@ export const CommunityFeedPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            GPS Runs
+            Runs
           </button>
         </div>
       </div>
@@ -88,7 +88,7 @@ export const CommunityFeedPage: React.FC = () => {
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-all space-y-4"
+              className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-all space-y-4"
             >
               {/* Header */}
               <div className="flex items-start justify-between">
@@ -108,7 +108,7 @@ export const CommunityFeedPage: React.FC = () => {
                       <span className="text-sm font-bold text-white">{item.user?.full_name || 'Athlete'}</span>
                       {item.has_pr && (
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime flex items-center gap-1">
-                          <Award className="h-3 w-3" /> VERIFIED PR
+                          <Award className="h-3 w-3" /> NEW PR
                         </span>
                       )}
                     </div>

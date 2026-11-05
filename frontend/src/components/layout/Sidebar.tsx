@@ -25,16 +25,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const athleteNavItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Strength & PRs', path: '/workouts', icon: Dumbbell },
+    { name: 'Workouts & PRs', path: '/workouts', icon: Dumbbell },
     { name: 'GPS Run Tracker', path: '/runs', icon: MapPin },
-    { name: 'RAG Nutrition AI', path: '/scanner', icon: Compass },
-    { name: 'Daily Nutrition Log', path: '/nutrition', icon: UtensilsCrossed },
-    { name: 'Exercise Catalog', path: '/exercises', icon: BookOpen },
-    { name: 'Club Feed', path: '/community', icon: Users },
+    { name: 'Smart Meal Scanner', path: '/scanner', icon: Compass },
+    { name: 'Daily Food Log', path: '/nutrition', icon: UtensilsCrossed },
+    { name: 'Exercise Library', path: '/exercises', icon: BookOpen },
+    { name: 'Community Feed', path: '/community', icon: Users },
   ];
 
   const adminNavItems = [
-    { name: 'Coach & Audit Hub', path: '/admin', icon: ShieldCheck, adminOnly: true },
+    { name: 'Coach Dashboard', path: '/admin', icon: ShieldCheck, adminOnly: true },
   ];
 
   const navItems = role === 'admin' ? [...athleteNavItems, ...adminNavItems] : athleteNavItems;
@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div>
             <div className="flex items-center justify-between px-3">
               <p className="text-[10px] font-mono font-bold tracking-widest text-[#848E9C] uppercase">
-                Exchange Telemetry
+                Menu
               </p>
               <span className="flex h-1.5 w-1.5 rounded-full bg-[#C8FF00] animate-ping" />
             </div>
@@ -92,31 +92,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </nav>
           </div>
 
-          {/* Quick Telemetry Card */}
-          <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-2.5 shadow-okx-card">
-            <div className="flex items-center justify-between text-xs font-mono">
+          {/* Privacy & Engine Card */}
+          <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-2.5 shadow-cyber-card">
+            <div className="flex items-center justify-between text-xs font-medium">
               <span className="text-[#848E9C] flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> RLS Security
+                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> Data Protection
               </span>
-              <span className="text-[#00D26A] font-bold">STRICT</span>
+              <span className="text-[#00D26A] font-bold">Encrypted</span>
             </div>
             <div className="w-full bg-[#1e232d] rounded-full h-1 overflow-hidden">
               <div className="bg-gradient-to-r from-[#C8FF00] to-[#00D26A] h-1 rounded-full w-full" />
             </div>
-            <div className="flex justify-between text-[10px] text-[#848E9C] font-mono">
-              <span>pgvector 384d</span>
-              <span>USDA & FNRI</span>
+            <div className="flex justify-between text-[10px] text-[#848E9C] font-medium">
+              <span>AI Search Ready</span>
+              <span>FNRI & USDA Grounded</span>
             </div>
           </div>
         </div>
 
         {/* Bottom System Footer */}
         <div className="p-4 border-t border-[#1e232d] bg-[#07080a] text-center">
-          <p className="text-[10px] font-mono text-[#848E9C]">
-            NutriSync-RAG &bull; BSIT 4A
+          <p className="text-[10px] text-[#848E9C]">
+            NutriSync &bull; Activity & Nutrition
           </p>
-          <p className="text-[9px] font-mono text-[#C8FF00]/70 mt-0.5">
-            Yuri D. Salise &bull; OKX Cyber Theme
+          <p className="text-[9px] text-[#C8FF00]/80 mt-0.5">
+            Athlete Pro Mode &bull; Yuri D. Salise
           </p>
         </div>
       </aside>

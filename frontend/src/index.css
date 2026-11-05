@@ -15,7 +15,7 @@
   }
 }
 
-/* OKX Crypto-Grade Custom Scrollbar */
+/* High-Precision Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -34,19 +34,19 @@
   background: #C8FF00;
 }
 
-/* OKX Glassmorphic & Cyber Utilities */
-.okx-card {
+/* Glassmorphic & Cyber Athletic Utilities */
+.cyber-card {
   background: #12151b;
   border: 1px solid #1e232d;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.okx-card:hover {
+.cyber-card:hover {
   border-color: #2a313f;
 }
 
-.okx-card-active {
+.cyber-card-active {
   border-color: rgba(200, 255, 0, 0.4);
   box-shadow: 0 0 25px -4px rgba(200, 255, 0, 0.25);
 }
@@ -65,7 +65,8 @@
   }
 }
 
-.animate-okx-pulse {
+.animate-pulse-glow,
+.animate-pulse-glow {
   animation: pulseGlow 2.5s infinite ease-in-out;
 }
 

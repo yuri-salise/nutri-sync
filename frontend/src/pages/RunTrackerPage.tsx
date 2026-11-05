@@ -73,7 +73,7 @@ export const RunTrackerPage: React.FC = () => {
       className: 'dark-tiles',
     }).addTo(map);
 
-    // Glowing OKX Neon Lime Polyline
+    // Glowing Neon Lime Polyline
     const polyline = L.polyline([], {
       color: '#C8FF00',
       weight: 5,
@@ -207,10 +207,10 @@ export const RunTrackerPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Navigation className="h-6 w-6 text-[#C8FF00]" />
-            <span>GPS Road & Trail Run Telemetry</span>
+            <span>GPS Run Tracker</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Live browser geolocation & Leaflet Dark tracking with surface-adjusted calorie expenditure
+            Track your outdoor runs live with GPS. Calories burned automatically sync to your daily nutrition targets.
           </p>
         </div>
 
@@ -234,7 +234,7 @@ export const RunTrackerPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Trail (+25% Energy)
+            Trail (+25% Burn)
           </button>
         </div>
       </div>
@@ -259,19 +259,19 @@ export const RunTrackerPage: React.FC = () => {
       {/* Main Map & Live HUD Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map Container */}
-        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-okx-card relative h-[450px]">
+        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-cyber-card relative h-[450px]">
           <div ref={mapContainerRef} className="w-full h-full" />
 
           {/* Map Overlay Badge */}
           <div className="absolute top-4 left-4 z-[500] px-3 py-1.5 rounded-xl bg-[#000000]/80 backdrop-blur-md border border-[#1e232d] text-xs font-mono text-white flex items-center gap-2">
             <span className={`h-2 w-2 rounded-full ${isTracking ? 'bg-[#C8FF00] animate-ping' : 'bg-[#848E9C]'}`} />
-            <span>{isTracking ? 'LIVE GPS STREAMING' : 'GPS STANDBY'}</span>
+            <span>{isTracking ? 'RECORDING RUN' : 'READY TO RUN'}</span>
           </div>
 
           {/* Floating Controls */}
           <div className="absolute bottom-4 left-4 right-4 z-[500] flex items-center justify-between pointer-events-auto">
             <div className="px-3.5 py-2 rounded-xl bg-[#000000]/80 backdrop-blur-md border border-[#1e232d] text-xs font-mono text-[#C8FF00] font-bold">
-              {routeCoordinates.length} waypoints recorded
+              {routeCoordinates.length} GPS points recorded
             </div>
 
             {!isTracking ? (
@@ -280,7 +280,7 @@ export const RunTrackerPage: React.FC = () => {
                 className="px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-xs flex items-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all transform hover:scale-105"
               >
                 <Play className="h-4 w-4 fill-black" />
-                <span>START TRACKING</span>
+                <span>START RUN</span>
               </button>
             ) : (
               <button
@@ -289,7 +289,7 @@ export const RunTrackerPage: React.FC = () => {
                 className="px-6 py-3 rounded-2xl bg-[#F6465D] text-white font-bold text-xs flex items-center gap-2 shadow-glow-red hover:bg-[#ff3b30] transition-all"
               >
                 <Square className="h-4 w-4 fill-white" />
-                <span>{saving ? 'SYNCHRONIZING...' : 'FINISH & SYNC'}</span>
+                <span>{saving ? 'SAVING RUN...' : 'FINISH RUN'}</span>
               </button>
             )}
           </div>
@@ -297,15 +297,15 @@ export const RunTrackerPage: React.FC = () => {
 
         {/* Live HUD Dashboard */}
         <div className="space-y-4">
-          <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#848E9C] flex items-center gap-2">
+          <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#848E9C] flex items-center gap-2">
               <Gauge className="h-4 w-4 text-[#C8FF00]" />
-              <span>Real-Time Run HUD</span>
+              <span>Live Run Stats</span>
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-mono text-[#848E9C] uppercase">Distance</span>
+                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Distance</span>
                 <p className="text-2xl font-black font-mono text-white mt-1">
                   {distanceKm.toFixed(2)}
                   <span className="text-xs text-[#848E9C] ml-1">km</span>
@@ -313,7 +313,7 @@ export const RunTrackerPage: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-mono text-[#848E9C] uppercase">Elapsed</span>
+                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Time</span>
                 <p className="text-2xl font-black font-mono text-white mt-1">
                   {Math.floor(durationSec / 60)
                     .toString()
@@ -324,7 +324,7 @@ export const RunTrackerPage: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-mono text-[#848E9C] uppercase">Avg Pace</span>
+                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Avg Pace</span>
                 <p className="text-2xl font-black font-mono text-[#00E5FF] mt-1">
                   {paceMinPerKm}
                   <span className="text-xs text-[#848E9C] ml-1">/km</span>
@@ -332,7 +332,7 @@ export const RunTrackerPage: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-mono text-[#848E9C] uppercase">Calories</span>
+                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Calories</span>
                 <p className="text-2xl font-black font-mono text-[#C8FF00] mt-1">
                   {estCalories}
                   <span className="text-xs text-[#848E9C] ml-1">kcal</span>
@@ -353,10 +353,10 @@ export const RunTrackerPage: React.FC = () => {
           <div className="p-5 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#C8FF00]">
               <Sparkles className="h-4 w-4" />
-              <span>Metabolism Scaler</span>
+              <span>Dynamic Calorie Bonus</span>
             </div>
             <p className="text-[11px] text-[#848E9C] leading-relaxed">
-              When synced, this run adds ~{estCalories} kcal to your dynamic daily ceiling and increases carbohydrate targets for glycogen replenishment.
+              Completing this run automatically adds ~{estCalories} kcal and extra carbohydrates to your daily goal to help you refuel and recover.
             </p>
           </div>
         </div>
@@ -366,19 +366,19 @@ export const RunTrackerPage: React.FC = () => {
       <div className="space-y-4 pt-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Clock className="h-4 w-4 text-[#C8FF00]" />
-          <span>Recorded GPS Sessions ({runs.length})</span>
+          <span>Past Runs ({runs.length})</span>
         </h3>
 
         {runs.length === 0 ? (
           <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-            No runs logged yet. Click "Start Tracking" to map your first road or trail route.
+            No runs logged yet. Click "Start Run" to track your first outdoor route.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {runs.map((r) => (
               <div
                 key={r.id}
-                className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-colors space-y-3"
+                className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-colors space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

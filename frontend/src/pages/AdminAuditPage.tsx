@@ -160,7 +160,7 @@ export const AdminAuditPage: React.FC = () => {
               {pendingExercises.map((ex) => (
                 <div
                   key={ex.id}
-                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-4"
+                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-4"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -223,7 +223,7 @@ export const AdminAuditPage: React.FC = () => {
               {ragLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3"
+                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-0.5">
@@ -288,7 +288,7 @@ export const AdminAuditPage: React.FC = () => {
               {knowledgeItems.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] space-y-2 shadow-okx-card"
+                  className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] space-y-2 shadow-cyber-card"
                 >
                   <div className="flex items-start justify-between">
                     <p className="text-xs font-bold text-white leading-snug">{item.food_name}</p>

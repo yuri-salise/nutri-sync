@@ -89,15 +89,15 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* OKX Crypto-Ticker Ribbon */}
+      {/* Top Calorie & Activity Status Cards */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-2 md:grid-cols-4 gap-3"
       >
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card relative overflow-hidden group">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card relative overflow-hidden group">
           <div className="flex items-center justify-between text-xs text-[#848E9C]">
-            <span className="font-mono uppercase tracking-wider">Dynamic Ceiling</span>
+            <span className="font-medium uppercase tracking-wider">Daily Calorie Goal</span>
             <Flame className="h-4 w-4 text-[#C8FF00]" />
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
@@ -106,15 +106,15 @@ export const DashboardPage: React.FC = () => {
             </span>
             <span className="text-xs font-mono text-[#848E9C]">kcal</span>
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] font-mono text-[#00D26A]">
+          <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#00D26A]">
             <TrendingUp className="h-3 w-3" />
-            <span>+{Math.round(burnedKcal)} kcal active</span>
+            <span>+{Math.round(burnedKcal)} kcal from workouts</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card relative overflow-hidden group">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card relative overflow-hidden group">
           <div className="flex items-center justify-between text-xs text-[#848E9C]">
-            <span className="font-mono uppercase tracking-wider">Total Consumed</span>
+            <span className="font-medium uppercase tracking-wider">Calories Eaten</span>
             <UtensilsCrossed className="h-4 w-4 text-[#00E5FF]" />
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
@@ -123,14 +123,14 @@ export const DashboardPage: React.FC = () => {
             </span>
             <span className="text-xs font-mono text-[#848E9C]">kcal</span>
           </div>
-          <div className="mt-1 text-[11px] font-mono text-[#848E9C]">
-            <span>{kcalPct}% of daily budget</span>
+          <div className="mt-1 text-[11px] font-medium text-[#848E9C]">
+            <span>{kcalPct}% of daily goal</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card relative overflow-hidden group">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card relative overflow-hidden group">
           <div className="flex items-center justify-between text-xs text-[#848E9C]">
-            <span className="font-mono uppercase tracking-wider">Budget Balance</span>
+            <span className="font-medium uppercase tracking-wider">Remaining</span>
             <Zap className="h-4 w-4 text-[#FFB800]" />
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
@@ -139,44 +139,44 @@ export const DashboardPage: React.FC = () => {
             </span>
             <span className="text-xs font-mono text-[#848E9C]">kcal</span>
           </div>
-          <div className="mt-1 text-[11px] font-mono text-[#848E9C]">
-            <span>{remainingKcal >= 0 ? 'Surplus room' : 'Calorie deficit'}</span>
+          <div className="mt-1 text-[11px] font-medium text-[#848E9C]">
+            <span>{remainingKcal >= 0 ? 'Calories left to eat' : 'Over daily target'}</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card relative overflow-hidden group">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card relative overflow-hidden group">
           <div className="flex items-center justify-between text-xs text-[#848E9C]">
-            <span className="font-mono uppercase tracking-wider">Activity Sessions</span>
+            <span className="font-medium uppercase tracking-wider">Workouts Logged</span>
             <Activity className="h-4 w-4 text-[#C8FF00]" />
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-black font-mono text-white tracking-tight">
               {workouts.length}
             </span>
-            <span className="text-xs font-mono text-[#848E9C]">logged</span>
+            <span className="text-xs font-mono text-[#848E9C]">today</span>
           </div>
-          <div className="mt-1 text-[11px] font-mono text-[#C8FF00] flex items-center gap-1">
+          <div className="mt-1 text-[11px] font-medium text-[#C8FF00] flex items-center gap-1">
             <Award className="h-3 w-3" />
-            <span>PR Tracked</span>
+            <span>PRs Monitored</span>
           </div>
         </div>
       </motion.div>
 
-      {/* Main Hero: Dynamic Telemetry Terminal */}
+      {/* Main Hero: Daily Overview */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#12151b] via-[#0d1015] to-[#000000] border border-[#1e232d] shadow-2xl relative overflow-hidden"
       >
-        {/* Neon laser accent line */}
+        {/* Accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C8FF00] to-transparent opacity-70" />
 
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="space-y-4 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#C8FF00]/10 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#C8FF00]/10 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Real-Time Biometric & Activity Synchronization</span>
+              <span>Smart Calorie & Activity Sync</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white font-poppins">
@@ -184,7 +184,7 @@ export const DashboardPage: React.FC = () => {
             </h1>
 
             <p className="text-sm text-[#848E9C] leading-relaxed">
-              Your metabolic ceiling dynamically adapts to mechanical energy expended from heavy gym sets and GPS road/trail runs. Macro allocations auto-scale to accelerate recovery.
+              Your calorie and nutrient goals automatically increase whenever you log gym workouts or outdoor runs, helping you recover stronger and hit your goals.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -193,21 +193,21 @@ export const DashboardPage: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold bg-[#C8FF00] text-black hover:bg-[#d4ff33] shadow-glow-lime transition-all transform hover:-translate-y-0.5"
               >
                 <Compass className="h-4 w-4" />
-                <span>RAG AI Food Scan</span>
+                <span>Scan Meal with AI</span>
               </Link>
               <Link
                 to="/workouts"
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold bg-[#181c24] hover:bg-[#202530] text-white border border-[#2a313f] transition-all"
               >
                 <Dumbbell className="h-4 w-4 text-[#C8FF00]" />
-                <span>Log Split</span>
+                <span>Log Workout</span>
               </Link>
               <Link
                 to="/runs"
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold bg-[#181c24] hover:bg-[#202530] text-white border border-[#2a313f] transition-all"
               >
                 <MapPin className="h-4 w-4 text-[#00E5FF]" />
-                <span>GPS Run</span>
+                <span>Track Run</span>
               </Link>
             </div>
           </div>
@@ -245,8 +245,8 @@ export const DashboardPage: React.FC = () => {
               <span className="text-3xl font-black font-mono text-white tracking-tight">
                 {kcalPct}%
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#848E9C]">
-                Daily Ceiling
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#848E9C]">
+                of Daily Goal
               </span>
               <span className="text-xs font-mono font-bold text-[#C8FF00]">
                 {Math.round(consumedKcal)} / {Math.round(dynamicKcal)}
@@ -256,18 +256,18 @@ export const DashboardPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Dynamic Macro Allocation Order-Book Cards */}
+      {/* Macro Breakdown Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Protein */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3"
+          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
         >
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-white flex items-center gap-1.5 font-poppins">
-              <span className="h-2 w-2 rounded-full bg-[#00E5FF] shadow-glow-cyan" /> Protein Pace
+              <span className="h-2 w-2 rounded-full bg-[#00E5FF] shadow-glow-cyan" /> Protein
             </span>
             <span className="font-mono text-[#00E5FF] font-bold">{proteinPct}%</span>
           </div>
@@ -282,7 +282,7 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <p className="text-[11px] text-[#848E9C]">
-            Muscle protein synthesis & repair allocation
+            Supports muscle repair, strength, and recovery
           </p>
         </motion.div>
 
@@ -291,11 +291,11 @@ export const DashboardPage: React.FC = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3"
+          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
         >
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-white flex items-center gap-1.5 font-poppins">
-              <span className="h-2 w-2 rounded-full bg-[#C8FF00] shadow-glow-lime" /> Dynamic Carbs
+              <span className="h-2 w-2 rounded-full bg-[#C8FF00] shadow-glow-lime" /> Carbohydrates
             </span>
             <span className="font-mono text-[#C8FF00] font-bold">{carbsPct}%</span>
           </div>
@@ -310,7 +310,7 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <p className="text-[11px] text-[#848E9C]">
-            Glycogen replenish: scaled by workout + GPS runs
+            Primary energy fuel: auto-scales with your workouts
           </p>
         </motion.div>
 
@@ -319,11 +319,11 @@ export const DashboardPage: React.FC = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3"
+          className="p-5 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
         >
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-white flex items-center gap-1.5 font-poppins">
-              <span className="h-2 w-2 rounded-full bg-[#FFB800] shadow-glow-amber" /> Essential Lipids
+              <span className="h-2 w-2 rounded-full bg-[#FFB800] shadow-glow-amber" /> Healthy Fats
             </span>
             <span className="font-mono text-[#FFB800] font-bold">{fatPct}%</span>
           </div>
@@ -338,24 +338,24 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <p className="text-[11px] text-[#848E9C]">
-            Hormonal baseline & cellular integrity target
+            Essential for hormonal balance and overall vitality
           </p>
         </motion.div>
       </div>
 
-      {/* Energy Expended Breakdown & Recent Ledgers */}
+      {/* Energy Expended Breakdown & Recent Meals */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Activity Expenditure Ledger */}
+        {/* Activity Expenditure */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-4"
+          className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-4"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Flame className="h-4 w-4 text-[#C8FF00]" />
-              <span>Activity Expenditure Breakdown</span>
+              <span>Calories Burned Today</span>
             </h3>
             <span className="text-xs font-mono text-[#C8FF00] font-bold">
               +{Math.round(burnedKcal)} kcal Total
@@ -369,7 +369,7 @@ export const DashboardPage: React.FC = () => {
                   <Dumbbell className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">Strength Resistance</p>
+                  <p className="text-xs font-semibold text-white">Strength Training</p>
                   <p className="text-[11px] text-[#848E9C]">
                     {workouts.length} session(s) logged
                   </p>
@@ -386,7 +386,7 @@ export const DashboardPage: React.FC = () => {
                   <MapPin className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">GPS Road & Trail Runs</p>
+                  <p className="text-xs font-semibold text-white">Outdoor Running</p>
                   <p className="text-[11px] text-[#848E9C]">
                     {(summary?.activity_burn.run_distance_km || 0).toFixed(1)} km recorded
                   </p>
@@ -403,8 +403,8 @@ export const DashboardPage: React.FC = () => {
                   <Zap className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">Basal Metabolic Rate (BMR)</p>
-                  <p className="text-[11px] text-[#848E9C]">Base daily maintenance allowance</p>
+                  <p className="text-xs font-semibold text-white">Base Energy Needs (BMR)</p>
+                  <p className="text-[11px] text-[#848E9C]">Calories your body burns at rest</p>
                 </div>
               </div>
               <span className="font-mono text-xs font-bold text-[#EAECEF]">
@@ -414,17 +414,17 @@ export const DashboardPage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Recent Meals Grounded in USDA/FNRI */}
+        {/* Recent Meals */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-4"
+          className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-4"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <UtensilsCrossed className="h-4 w-4 text-[#00E5FF]" />
-              <span>Recent Grounded Meals</span>
+              <span>Recent Meals</span>
             </h3>
             <Link to="/nutrition" className="text-xs font-mono text-[#00E5FF] hover:underline flex items-center gap-1">
               <span>View All</span>
@@ -452,7 +452,7 @@ export const DashboardPage: React.FC = () => {
               ))
             ) : (
               <div className="p-8 text-center text-xs text-[#848E9C] border border-dashed border-[#1e232d] rounded-2xl">
-                No meals recorded today. Tap "RAG AI Food Scan" to estimate meals in natural language.
+                No meals logged yet today. Tap "Scan Meal with AI" to quickly add your food.
               </div>
             )}
           </div>

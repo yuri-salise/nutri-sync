@@ -92,10 +92,10 @@ export const NutritionLogPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <UtensilsCrossed className="h-6 w-6 text-[#C8FF00]" />
-            <span>Daily Nutrition Intake Ledger</span>
+            <span>Daily Food Log</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Verified intake logs grounded in USDA & FNRI nutritional databases
+            Track your daily meals, calories, and macros with verified nutrition data.
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export const NutritionLogPage: React.FC = () => {
 
       {/* Aggregate Order-Book Tickers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
           <span className="text-[10px] font-mono text-[#848E9C] uppercase">Total Calories</span>
           <p className="text-2xl font-black font-mono text-[#C8FF00] mt-1">
             {Math.round(totalCalories).toLocaleString()}
@@ -118,7 +118,7 @@ export const NutritionLogPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
           <span className="text-[10px] font-mono text-[#848E9C] uppercase">Protein</span>
           <p className="text-2xl font-black font-mono text-[#00E5FF] mt-1">
             {totalProtein.toFixed(1)}
@@ -126,7 +126,7 @@ export const NutritionLogPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card">
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
           <span className="text-[10px] font-mono text-[#848E9C] uppercase">Carbohydrates</span>
           <p className="text-2xl font-black font-mono text-white mt-1">
             {totalCarbs.toFixed(1)}
@@ -134,8 +134,8 @@ export const NutritionLogPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-okx-card">
-          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Lipids / Fat</span>
+        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
+          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Fat</span>
           <p className="text-2xl font-black font-mono text-[#FFB800] mt-1">
             {totalFat.toFixed(1)}
             <span className="text-xs text-[#848E9C] ml-1">g</span>
@@ -156,20 +156,20 @@ export const NutritionLogPage: React.FC = () => {
           </div>
         ) : logs.length === 0 ? (
           <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-            No meals logged today. Use "RAG AI Food Scan" or "Manual Entry" above to add meals.
+            No meals logged today yet. Use "Scan Meal with AI" or "Manual Entry" above to add your food.
           </div>
         ) : (
           logs.map((log) => (
             <div
               key={log.id}
-              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-white">{log.meal_name}</span>
                   {log.rag_scan_id && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30">
-                      RAG VERIFIED
+                      AI VERIFIED
                     </span>
                   )}
                 </div>

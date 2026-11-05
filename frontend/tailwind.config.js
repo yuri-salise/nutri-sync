@@ -8,8 +8,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        // OKX Crypto Exchange Theme Tokens
-        okx: {
+        // High-Performance Cyber Athletic Theme Tokens
+        cyber: {
           black: '#000000',
           dark: '#07080a',
           surface: '#0d1015',
@@ -27,7 +27,6 @@ export default {
           text: '#EAECEF',
           pure: '#FFFFFF',
         },
-        // Athletic Palette adapted to OKX High-Tech Theme
         athletic: {
           bg: '#000000',
           card: '#12151b',
@@ -52,14 +51,14 @@ export default {
         'glow-cyan': '0 0 25px -4px rgba(0, 229, 255, 0.4)',
         'glow-amber': '0 0 25px -4px rgba(255, 184, 0, 0.4)',
         'glow-red': '0 0 25px -4px rgba(246, 70, 93, 0.4)',
-        'okx-card': '0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-        'okx-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(200, 255, 0, 0.25)',
+        'cyber-card': '0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        'cyber-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(200, 255, 0, 0.25)',
       },
       backgroundImage: {
-        'okx-gradient-primary': 'linear-gradient(135deg, #C8FF00 0%, #00D26A 100%)',
-        'okx-gradient-dark': 'linear-gradient(180deg, #12151b 0%, #07080a 100%)',
-        'okx-gradient-glow': 'radial-gradient(circle at 50% 0%, rgba(200, 255, 0, 0.12) 0%, transparent 70%)',
-        'okx-grid': 'linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+        'cyber-gradient-primary': 'linear-gradient(135deg, #C8FF00 0%, #00D26A 100%)',
+        'cyber-gradient-dark': 'linear-gradient(180deg, #12151b 0%, #07080a 100%)',
+        'cyber-gradient-glow': 'radial-gradient(circle at 50% 0%, rgba(200, 255, 0, 0.12) 0%, transparent 70%)',
+        'cyber-grid': 'linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
       }
     },
   },

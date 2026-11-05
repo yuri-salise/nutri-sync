@@ -11,9 +11,9 @@ import {
 export const BottomNav: React.FC = () => {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Strength', path: '/workouts', icon: Dumbbell },
-    { name: 'GPS Run', path: '/runs', icon: MapPin },
-    { name: 'AI Scan', path: '/scanner', icon: Compass },
+    { name: 'Workouts', path: '/workouts', icon: Dumbbell },
+    { name: 'Runs', path: '/runs', icon: MapPin },
+    { name: 'Scan Meal', path: '/scanner', icon: Compass },
     { name: 'Food Log', path: '/nutrition', icon: UtensilsCrossed },
   ];
 

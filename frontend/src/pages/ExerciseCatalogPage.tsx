@@ -70,7 +70,7 @@ export const ExerciseCatalogPage: React.FC = () => {
       });
       setName('');
       setShowSubmitModal(false);
-      setSuccessMsg('Custom movement submitted! Pending audit and verification by Coach/Administrator.');
+      setSuccessMsg('New exercise submitted! It has been sent for coach review.');
       fetchExercises();
     } catch (err: any) {
       alert(err.message || 'Failed to submit custom exercise.');
@@ -86,10 +86,10 @@ export const ExerciseCatalogPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <BookOpen className="h-6 w-6 text-[#C8FF00]" />
-            <span>Movement & Exercise Catalog</span>
+            <span>Exercise Library</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Verified compound lifts, isolation movements, and metabolic equivalent (MET) standards
+            Explore exercises, target muscle groups, and calorie burn estimates.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export const ExerciseCatalogPage: React.FC = () => {
           className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#C8FF00] text-black hover:bg-[#d4ff33] shadow-glow-lime flex items-center gap-2 transition-all self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
-          <span>Propose Custom Lift</span>
+          <span>Add Custom Exercise</span>
         </button>
       </div>
 
@@ -114,7 +114,7 @@ export const ExerciseCatalogPage: React.FC = () => {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card">
+      <div className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
         <div className="relative">
           <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-[#848E9C]" />
           <input
@@ -159,7 +159,7 @@ export const ExerciseCatalogPage: React.FC = () => {
           {exercises.map((ex) => (
             <div
               key={ex.id}
-              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-all space-y-3 group"
+              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-all space-y-3 group"
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
@@ -214,7 +214,7 @@ export const ExerciseCatalogPage: React.FC = () => {
               <div className="flex items-center justify-between pb-2 border-b border-[#1e232d]">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Plus className="h-4 w-4 text-[#C8FF00]" />
-                  <span>Propose Custom Exercise Movement</span>
+                  <span>Add New Exercise</span>
                 </h3>
                 <button
                   onClick={() => setShowSubmitModal(false)}
@@ -226,7 +226,7 @@ export const ExerciseCatalogPage: React.FC = () => {
 
               <form onSubmit={handleCreateExercise} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#848E9C]">Movement Name</label>
+                  <label className="text-xs font-semibold text-[#848E9C]">Exercise Name</label>
                   <input
                     type="text"
                     required
