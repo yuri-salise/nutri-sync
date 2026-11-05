@@ -5,7 +5,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RagScanRequest(BaseModel):
-    query_input: str = Field(..., min_length=2, max_length=1000, description="Natural language meal description or food item.")
+    query_input: str = Field(
+        ...,
+        min_length=2,
+        max_length=1000,
+        description="Natural language meal description or food item.",
+    )
     image_base64: Optional[str] = Field(None, description="Optional meal photo base64 string.")
 
 

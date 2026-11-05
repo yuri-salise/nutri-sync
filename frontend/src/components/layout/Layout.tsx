@@ -7,13 +7,16 @@ export const Layout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#000000] text-[#EAECEF] flex flex-col font-poppins selection:bg-[#C8FF00] selection:text-black">
+      {/* Background subtle radial ambient glow */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(200,255,0,0.035)_0%,transparent_60%)]" />
+
       <Navbar
         onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         isMobileMenuOpen={mobileMenuOpen}
       />
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative z-10">
         <Sidebar
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}

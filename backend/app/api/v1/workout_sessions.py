@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import settings
 from app.core.security import TokenPayload, require_roles
 from app.db.models import User, WorkoutSession, WorkoutSet
-from app.db.session import get_db
+from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.workout import (
     WorkoutSessionCreate,
@@ -25,7 +25,7 @@ router = APIRouter(tags=["Workouts"])
 @router.get(
     "/workout-sessions",
     response_model=PaginatedResponse[WorkoutSessionResponse],
-    summary="List workout sessions with pagination and filtering"
+    summary="List workout sessions with pagination and filtering",
 )
 async def list_workout_sessions(
     page: int = Query(1, ge=1),
@@ -33,9 +33,10 @@ async def list_workout_sessions(
     split_title: Optional[str] = Query(None),
     only_mine: bool = Query(True),
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     query = select(WorkoutSession).options(
         selectinload(WorkoutSession.sets).selectinload(WorkoutSet.exercise)
     )
@@ -62,12 +63,7 @@ async def list_workout_sessions(
 
     return PaginatedResponse(
         data=sessions,
-        meta=PaginationMeta(
-            page=page,
-            limit=limit,
-            total=total,
-            total_pages=total_pages
-        )
+        meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages),
     )
 
 
@@ -75,15 +71,16 @@ async def list_workout_sessions(
     "/workout-sessions",
     response_model=WorkoutSessionResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Log a workout session with sets and automatic PR detection"
+    summary="Log a workout session with sets and automatic PR detection",
 )
 async def create_workout_session(
     payload: WorkoutSessionCreate,
     response: Response,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     user = await db.get(User, user_id)
     weight = user.weight_kg if user else 70.0
 
@@ -110,12 +107,7 @@ async def create_workout_session(
         max_pr_stmt = (
             select(func.coalesce(func.max(WorkoutSet.weight_kg), 0.0))
             .join(WorkoutSession, WorkoutSet.session_id == WorkoutSession.id)
-            .where(
-                and_(
-                    WorkoutSession.user_id == user_id,
-                    WorkoutSet.exercise_id == s.exercise_id
-                )
-            )
+            .where(and_(WorkoutSession.user_id == user_id, WorkoutSet.exercise_id == s.exercise_id))
         )
         prev_max_res = await db.execute(max_pr_stmt)
         prev_max_weight = prev_max_res.scalar_one()
@@ -150,12 +142,12 @@ async def create_workout_session(
 @router.get(
     "/workout-sessions/{id}",
     response_model=WorkoutSessionResponse,
-    summary="Get single workout session by ID"
+    summary="Get single workout session by ID",
 )
 async def get_workout_session(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     stmt = (
         select(WorkoutSession)
@@ -172,9 +164,9 @@ async def get_workout_session(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Workout session {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -185,9 +177,9 @@ async def get_workout_session(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "This workout session is private.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     return session
@@ -196,13 +188,13 @@ async def get_workout_session(
 @router.put(
     "/workout-sessions/{id}",
     response_model=WorkoutSessionResponse,
-    summary="Update workout session metadata"
+    summary="Update workout session metadata",
 )
 async def update_workout_session(
     id: int,
     payload: WorkoutSessionUpdate,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     session = await db.get(WorkoutSession, id)
     if not session:
@@ -212,9 +204,9 @@ async def update_workout_session(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Workout session {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -225,9 +217,9 @@ async def update_workout_session(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only update your own sessions.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     for field, val in payload.model_dump(exclude_unset=True).items():
@@ -247,12 +239,12 @@ async def update_workout_session(
 @router.delete(
     "/workout-sessions/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a workout session"
+    summary="Delete a workout session",
 )
 async def delete_workout_session(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     session = await db.get(WorkoutSession, id)
     if not session:
@@ -262,9 +254,9 @@ async def delete_workout_session(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Workout session {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -275,9 +267,9 @@ async def delete_workout_session(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only delete your own sessions.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     await db.delete(session)
@@ -288,12 +280,12 @@ async def delete_workout_session(
 @router.patch(
     "/workout-sets/{id}/verify",
     response_model=WorkoutSetResponse,
-    summary="Coach/Admin PR Verification (Requirement B4, Core Feature 7)"
+    summary="Coach/Admin PR Verification (Requirement B4, Core Feature 7)",
 )
 async def verify_workout_set_pr(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     admin_id = int(token_payload.sub)
     w_set = await db.get(WorkoutSet, id)
@@ -304,9 +296,9 @@ async def verify_workout_set_pr(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Workout set {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     w_set.verified_by_id = admin_id

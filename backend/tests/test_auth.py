@@ -34,8 +34,7 @@ async def test_register_success_and_duplicate(client: AsyncClient):
 async def test_login_success_and_failure(client: AsyncClient, seed_test_users):
     # Success
     resp = await client.post(
-        "/api/v1/auth/login",
-        json={"email": "athlete@example.com", "password": "Password123!"}
+        "/api/v1/auth/login", json={"email": "athlete@example.com", "password": "Password123!"}
     )
     assert resp.status_code == 200
     token_data = resp.json()
@@ -44,8 +43,7 @@ async def test_login_success_and_failure(client: AsyncClient, seed_test_users):
 
     # Bad password (401)
     bad_resp = await client.post(
-        "/api/v1/auth/login",
-        json={"email": "athlete@example.com", "password": "WrongPassword!"}
+        "/api/v1/auth/login", json={"email": "athlete@example.com", "password": "WrongPassword!"}
     )
     assert bad_resp.status_code == 401
     err = bad_resp.json()
@@ -61,9 +59,7 @@ async def test_auth_me_profile(client: AsyncClient, seed_test_users, athlete_tok
 
     # Update profile
     patch_resp = await client.patch(
-        "/api/v1/auth/me",
-        headers=headers,
-        json={"weight_kg": 71.5, "base_kcal_goal": 2250.0}
+        "/api/v1/auth/me", headers=headers, json={"weight_kg": 71.5, "base_kcal_goal": 2250.0}
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["weight_kg"] == 71.5

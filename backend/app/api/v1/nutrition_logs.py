@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import TokenPayload, require_roles
 from app.db.models import NutritionLog
-from app.db.session import get_db
+from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.nutrition import NutritionLogCreate, NutritionLogResponse, NutritionLogUpdate
 
@@ -18,15 +18,16 @@ router = APIRouter(prefix="/nutrition-logs", tags=["Nutrition Logs"])
 @router.get(
     "",
     response_model=PaginatedResponse[NutritionLogResponse],
-    summary="List logged meals for current user"
+    summary="List logged meals for current user",
 )
 async def list_nutrition_logs(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     query = select(NutritionLog).where(NutritionLog.user_id == user_id)
 
     count_query = select(func.count()).select_from(query.subquery())
@@ -42,13 +43,7 @@ async def list_nutrition_logs(
     total_pages = math.ceil(total / limit) if total > 0 else 1
 
     return PaginatedResponse(
-        data=logs,
-        meta=PaginationMeta(
-            page=page,
-            limit=limit,
-            total=total,
-            total_pages=total_pages
-        )
+        data=logs, meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages)
     )
 
 
@@ -56,15 +51,16 @@ async def list_nutrition_logs(
     "",
     response_model=NutritionLogResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Save a confirmed meal log (Human confirmation of RAG scan or manual entry)"
+    summary="Save a confirmed meal log (Human confirmation of RAG scan or manual entry)",
 )
 async def create_nutrition_log(
     payload: NutritionLogCreate,
     response: Response,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     log = NutritionLog(
         user_id=user_id,
         meal_name=payload.meal_name,
@@ -83,15 +79,11 @@ async def create_nutrition_log(
     return log
 
 
-@router.get(
-    "/{id}",
-    response_model=NutritionLogResponse,
-    summary="Get single nutrition log"
-)
+@router.get("/{id}", response_model=NutritionLogResponse, summary="Get single nutrition log")
 async def get_nutrition_log(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     log = await db.get(NutritionLog, id)
     if not log:
@@ -101,9 +93,9 @@ async def get_nutrition_log(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Nutrition log {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -114,23 +106,19 @@ async def get_nutrition_log(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only view your own nutrition logs.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
     return log
 
 
-@router.put(
-    "/{id}",
-    response_model=NutritionLogResponse,
-    summary="Update nutrition log"
-)
+@router.put("/{id}", response_model=NutritionLogResponse, summary="Update nutrition log")
 async def update_nutrition_log(
     id: int,
     payload: NutritionLogUpdate,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     log = await db.get(NutritionLog, id)
     if not log:
@@ -140,9 +128,9 @@ async def update_nutrition_log(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Nutrition log {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -153,9 +141,9 @@ async def update_nutrition_log(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only edit your own nutrition logs.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     for field, val in payload.model_dump(exclude_unset=True).items():
@@ -166,15 +154,11 @@ async def update_nutrition_log(
     return log
 
 
-@router.delete(
-    "/{id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete nutrition log"
-)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete nutrition log")
 async def delete_nutrition_log(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     log = await db.get(NutritionLog, id)
     if not log:
@@ -184,9 +168,9 @@ async def delete_nutrition_log(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Nutrition log {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -197,9 +181,9 @@ async def delete_nutrition_log(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only delete your own nutrition logs.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     await db.delete(log)

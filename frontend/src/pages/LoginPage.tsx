@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Lock, Mail, AlertCircle, ArrowRight, Sparkles, Shield, User } from 'lucide-react';
 
@@ -58,27 +59,36 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col justify-center items-center px-4 sm:px-6">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen bg-[#000000] flex flex-col justify-center items-center px-4 sm:px-6 relative overflow-hidden font-poppins selection:bg-[#C8FF00] selection:text-black">
+      {/* Background radial glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(200,255,0,0.06)_0%,transparent_70%)] pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md space-y-6 relative z-10"
+      >
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 p-0.5 shadow-glow-emerald">
-            <div className="h-full w-full bg-[#0a0d14] rounded-[14px] flex items-center justify-center">
-              <Activity className="h-6 w-6 text-emerald-400" />
+          <div className="inline-flex h-14 w-14 rounded-2xl bg-gradient-to-br from-[#C8FF00] via-[#00D26A] to-[#00E5FF] p-[2px] shadow-glow-lime">
+            <div className="h-full w-full bg-[#000000] rounded-[14px] flex items-center justify-center">
+              <Activity className="h-7 w-7 text-[#C8FF00]" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Welcome to NutriSync-RAG</h1>
-          <p className="text-sm text-athletic-muted">
-            Activity-synchronized nutritional retrieval & workout platform
+          <h1 className="text-2xl font-black tracking-tight text-white font-poppins">
+            Welcome to NutriSync-RAG
+          </h1>
+          <p className="text-xs text-[#848E9C]">
+            High-Performance Activity-Synchronized Nutritional Retrieval
           </p>
         </div>
 
         {/* 1-Click Evaluation Demo Credentials Banner */}
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-athletic-border space-y-3">
+        <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-amber-400" /> Panel & Evaluation Quick Sign-In
+            <span className="font-semibold text-white flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-[#C8FF00]" /> 1-Click Demo Evaluation
             </span>
-            <span className="text-[11px] font-mono text-emerald-400">Password123!</span>
+            <span className="text-[11px] font-mono text-[#C8FF00]">Password123!</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -86,84 +96,81 @@ export const LoginPage: React.FC = () => {
               type="button"
               onClick={handleQuickAthlete}
               disabled={loading}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-500/10 border border-slate-700 hover:border-emerald-500/40 text-xs font-medium text-slate-200 hover:text-emerald-400 transition-all"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#07080a] hover:bg-[#181c24] border border-[#1e232d] hover:border-[#C8FF00]/40 text-xs font-semibold text-white hover:text-[#C8FF00] transition-all"
             >
-              <User className="h-3.5 w-3.5 text-emerald-400" />
+              <User className="h-3.5 w-3.5 text-[#C8FF00]" />
               <span>Athlete Yuri</span>
             </button>
             <button
               type="button"
               onClick={handleQuickAdmin}
               disabled={loading}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-800/80 hover:bg-cyan-500/10 border border-slate-700 hover:border-cyan-500/40 text-xs font-medium text-slate-200 hover:text-cyan-400 transition-all"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#07080a] hover:bg-[#181c24] border border-[#1e232d] hover:border-[#00E5FF]/40 text-xs font-semibold text-white hover:text-[#00E5FF] transition-all"
             >
-              <Shield className="h-3.5 w-3.5 text-cyan-400" />
+              <Shield className="h-3.5 w-3.5 text-[#00E5FF]" />
               <span>Coach Rinante</span>
             </button>
           </div>
         </div>
 
-        {/* Error notification (Requirement F3: server errors shown, not swallowed) */}
-        {error && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2.5 animate-shake">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
+        {/* Login Form Card */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-2xl space-y-5">
+          {error && (
+            <div className="p-3.5 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-xs flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#848E9C]">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-[#848E9C]" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="athlete@nutrisync.com"
+                  className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-[#848E9C] focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#848E9C]">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-[#848E9C]" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-[#848E9C] focus:outline-none transition-colors font-mono"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-2xl bg-[#C8FF00] text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
+            >
+              <span>{loading ? 'Authenticating...' : 'Sign In to Account'}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-[#848E9C]">
+            New to NutriSync?{' '}
+            <Link to="/register" className="text-[#C8FF00] font-semibold hover:underline">
+              Create athlete account
+            </Link>
           </div>
-        )}
-
-        {/* Main Login Form */}
-        <form onSubmit={handleSubmit} className="p-6 rounded-2xl bg-athletic-card border border-athletic-border space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-athletic-muted" /> Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="athlete@nutrisync.com"
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-athletic-muted" /> Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:opacity-95 shadow-glow-emerald transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {loading ? (
-              <span className="inline-block h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Sign In to Account</span>
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-athletic-muted">
-          Need an athlete profile?{' '}
-          <Link to="/register" className="text-emerald-400 font-medium hover:underline">
-            Register new account
-          </Link>
-        </p>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

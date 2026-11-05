@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Mail, Lock, User, Scale, Flame, ArrowRight, AlertCircle } from 'lucide-react';
 
@@ -65,32 +66,41 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-8">
-      <div className="w-full max-w-xl space-y-6">
+    <div className="min-h-screen bg-[#000000] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden font-poppins selection:bg-[#C8FF00] selection:text-black">
+      {/* Background glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(200,255,0,0.05)_0%,transparent_70%)] pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-xl space-y-6 relative z-10"
+      >
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 p-0.5 shadow-glow-emerald">
-            <div className="h-full w-full bg-[#0a0d14] rounded-[14px] flex items-center justify-center">
-              <Activity className="h-6 w-6 text-emerald-400" />
+          <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-[#C8FF00] via-[#00D26A] to-[#00E5FF] p-[2px] shadow-glow-lime">
+            <div className="h-full w-full bg-[#000000] rounded-[14px] flex items-center justify-center">
+              <Activity className="h-6 w-6 text-[#C8FF00]" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Create Your Athlete Profile</h1>
-          <p className="text-sm text-athletic-muted">
-            Configure dynamic TDEE baseline and activity synchronization
+          <h1 className="text-2xl font-black tracking-tight text-white font-poppins">
+            Create Athlete Profile
+          </h1>
+          <p className="text-xs text-[#848E9C]">
+            Configure dynamic metabolic baselines and biometrics
           </p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 rounded-2xl bg-athletic-card border border-athletic-border space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-2xl space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 text-athletic-muted" /> Full Name
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-[#C8FF00]" /> Full Name
               </label>
               <input
                 type="text"
@@ -98,13 +108,13 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Yuri Salise"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-athletic-muted" /> Email Address
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-[#C8FF00]" /> Email
               </label>
               <input
                 type="email"
@@ -112,136 +122,101 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="yuri@athlete.com"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-athletic-muted" /> Password
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> Password (min 8 chars)
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 8 characters"
+                placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none font-mono"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-athletic-muted" /> Confirm Password
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> Confirm Password
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-type password"
+                placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none font-mono"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-athletic-border">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                Role (Requirement B4)
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
-              >
-                <option value="athlete">Athlete / Member</option>
-                <option value="admin">Coach / Administrator</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Scale className="h-3.5 w-3.5 text-cyan-400" /> Body Weight (kg)
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1">
+                <Scale className="h-3.5 w-3.5 text-[#C8FF00]" /> Weight (kg)
               </label>
               <input
                 type="number"
                 step="0.5"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-athletic-border text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                required
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3 py-2 text-xs text-white font-mono focus:outline-none"
               />
             </div>
-          </div>
 
-          {/* Daily Base Goals */}
-          <div className="space-y-2 pt-2 border-t border-athletic-border">
-            <p className="text-xs font-semibold text-athletic-muted flex items-center gap-1">
-              <Flame className="h-3.5 w-3.5 text-amber-400" /> Base Daily Caloric & Macronutrient Targets
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="space-y-1">
-                <span className="text-[11px] text-athletic-muted">Base Calories</span>
-                <input
-                  type="number"
-                  value={baseKcal}
-                  onChange={(e) => setBaseKcal(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-lg bg-slate-900/90 border border-athletic-border text-slate-100 text-xs text-center"
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] text-emerald-400 font-medium">Protein (g)</span>
-                <input
-                  type="number"
-                  value={proteinG}
-                  onChange={(e) => setProteinG(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-lg bg-slate-900/90 border border-athletic-border text-slate-100 text-xs text-center"
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] text-cyan-400 font-medium">Carbs (g)</span>
-                <input
-                  type="number"
-                  value={carbsG}
-                  onChange={(e) => setCarbsG(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-lg bg-slate-900/90 border border-athletic-border text-slate-100 text-xs text-center"
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] text-amber-400 font-medium">Fat (g)</span>
-                <input
-                  type="number"
-                  value={fatG}
-                  onChange={(e) => setFatG(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-lg bg-slate-900/90 border border-athletic-border text-slate-100 text-xs text-center"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-[#C8FF00]" /> Base TDEE (kcal)
+              </label>
+              <input
+                type="number"
+                value={baseKcal}
+                onChange={(e) => setBaseKcal(e.target.value)}
+                required
+                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3 py-2 text-xs text-white font-mono focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#848E9C]">Account Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as any)}
+                className="w-full bg-[#07080a] border border-[#1e232d] rounded-2xl px-3 py-2 text-xs text-white focus:outline-none"
+              >
+                <option value="athlete">Athlete</option>
+                <option value="admin">Coach / Admin</option>
+              </select>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-4 py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:opacity-95 shadow-glow-emerald transition-all flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span className="inline-block h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Complete Registration</span>
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
-        </form>
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-2xl bg-[#C8FF00] text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
+            >
+              <span>{loading ? 'Initializing Profile...' : 'Complete Profile & Launch'}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
 
-        <p className="text-center text-xs text-athletic-muted">
-          Already registered?{' '}
-          <Link to="/login" className="text-emerald-400 font-medium hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </div>
+          <div className="text-center text-xs text-[#848E9C] pt-2">
+            Already registered?{' '}
+            <Link to="/login" className="text-[#C8FF00] font-semibold hover:underline">
+              Sign in to terminal
+            </Link>
+          </div>
+        </form>
+      </motion.div>
     </div>
   );
 };

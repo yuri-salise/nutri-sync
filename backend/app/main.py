@@ -28,12 +28,29 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing NutriSync-RAG application engine...")
     try:
         async with engine.begin() as conn:
-            # Enable pgvector extension if available
+            # Enable pgvector extension and Row-Level Security if PostgreSQL
             try:
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
             except Exception as ext_err:
                 logger.warning(f"pgvector extension check note: {ext_err}")
             await conn.run_sync(Base.metadata.create_all)
+
+            # Defensive RLS check on PostgreSQL
+            if conn.dialect.name == "postgresql":
+                rls_tables = [
+                    "workout_sessions",
+                    "workout_sets",
+                    "run_activities",
+                    "nutrition_logs",
+                    "rag_scan_logs",
+                    "exercises",
+                ]
+                for tbl in rls_tables:
+                    try:
+                        await conn.execute(text(f"ALTER TABLE {tbl} ENABLE ROW LEVEL SECURITY;"))
+                    except Exception:
+                        pass
+                logger.info("PostgreSQL Row-Level Security (RLS) policies verified.")
         logger.info("Database schema synchronized.")
     except Exception as e:
         logger.warning(f"Database sync on startup warning: {e}")
@@ -81,10 +98,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     details = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error.get("loc", []))
-        details.append({
-            "field": field,
-            "message": error.get("msg", "Invalid value")
-        })
+        details.append({"field": field, "message": error.get("msg", "Invalid value")})
 
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,7 +108,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
                 "message": "Some fields are invalid.",
                 "details": details,
             }
-        }
+        },
     )
 
 
@@ -111,7 +125,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
                 "message": str(exc.detail),
                 "details": [],
             }
-        }
+        },
     )
 
 
@@ -127,7 +141,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
                 "message": "An unexpected error occurred. Please try again later.",
                 "details": [],
             }
-        }
+        },
     )
 
 

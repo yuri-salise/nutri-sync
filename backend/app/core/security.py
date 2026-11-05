@@ -30,16 +30,15 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
-
 def create_access_token(
-    subject: Union[str, Any],
-    role: str,
-    expires_delta: Optional[timedelta] = None
+    subject: Union[str, Any], role: str, expires_delta: Optional[timedelta] = None
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
 
     to_encode = {
         "exp": expire,
@@ -75,7 +74,7 @@ def decode_token(token: str) -> TokenPayload:
                 "error": {
                     "code": "INVALID_TOKEN",
                     "message": "Could not validate authentication credentials.",
-                    "details": []
+                    "details": [],
                 }
             },
             headers={"WWW-Authenticate": "Bearer"},
@@ -87,6 +86,7 @@ def require_roles(allowed_roles: List[str]):
     Enforces role-based authorization (Requirement B4).
     Validates token and checks if user's role is in allowed_roles.
     """
+
     def role_checker(token: str = Depends(oauth2_scheme)) -> TokenPayload:
         payload = decode_token(token)
         if not payload.role or payload.role not in allowed_roles:
@@ -96,9 +96,10 @@ def require_roles(allowed_roles: List[str]):
                     "error": {
                         "code": "FORBIDDEN",
                         "message": f"Action requires one of the following roles: {', '.join(allowed_roles)}.",
-                        "details": []
+                        "details": [],
                     }
-                }
+                },
             )
         return payload
+
     return role_checker

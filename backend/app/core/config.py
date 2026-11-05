@@ -23,8 +23,12 @@ class Settings(BaseSettings):
     DB_USER: str = "nutrisync_user"
     DB_PASSWORD: str = "nutrisync_secure_password"
     DB_NAME: str = "nutrisync_db"
-    DATABASE_URL: str = "postgresql+asyncpg://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
-    DATABASE_URL_SYNC: str = "postgresql://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
+    )
+    DATABASE_URL_SYNC: str = (
+        "postgresql://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
+    )
 
     # CORS
     FRONTEND_ORIGIN: str = "http://localhost:5173"

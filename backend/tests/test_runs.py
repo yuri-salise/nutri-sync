@@ -13,7 +13,7 @@ async def test_run_activities_flow(client: AsyncClient, seed_test_users, athlete
         "duration_sec": 1800,
         "elevation_gain_m": 80.0,
         "is_public": True,
-        "route_geojson": '{"type":"LineString","coordinates":[[121.0,14.5],[121.1,14.6]]}'
+        "route_geojson": '{"type":"LineString","coordinates":[[121.0,14.5],[121.1,14.6]]}',
     }
     resp = await client.post("/api/v1/run-activities", json=payload, headers=headers)
     assert resp.status_code == 201

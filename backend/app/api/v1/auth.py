@@ -28,12 +28,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user account"
+    summary="Register a new user account",
 )
 async def register(
-    payload: RegisterRequest,
-    response: Response,
-    db: AsyncSession = Depends(get_db)
+    payload: RegisterRequest, response: Response, db: AsyncSession = Depends(get_db)
 ):
     stmt = select(User).where(User.email == payload.email)
     res = await db.execute(stmt)
@@ -46,9 +44,9 @@ async def register(
                 "error": {
                     "code": "DUPLICATE_RESOURCE",
                     "message": f"Email address '{payload.email}' is already registered.",
-                    "details": [{"field": "email", "message": "Email already registered."}]
+                    "details": [{"field": "email", "message": "Email already registered."}],
                 }
-            }
+            },
         )
 
     user = User(
@@ -75,12 +73,9 @@ async def register(
     response_model=TokenResponse,
     status_code=status.HTTP_200_OK,
     summary="User Login",
-    description="Authenticates credentials and returns JWT Bearer access and refresh tokens."
+    description="Authenticates credentials and returns JWT Bearer access and refresh tokens.",
 )
-async def login(
-    payload: LoginRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     stmt = select(User).where(User.email == payload.email)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
@@ -92,9 +87,9 @@ async def login(
                 "error": {
                     "code": "INVALID_CREDENTIALS",
                     "message": "Invalid email or password.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     access_token = create_access_token(subject=user.id, role=user.role)
@@ -108,14 +103,10 @@ async def login(
     )
 
 
-@router.get(
-    "/me",
-    response_model=UserResponse,
-    summary="Get current user profile"
-)
+@router.get("/me", response_model=UserResponse, summary="Get current user profile")
 async def get_current_user_profile(
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
     user = await db.get(User, user_id)
@@ -126,22 +117,18 @@ async def get_current_user_profile(
                 "error": {
                     "code": "USER_NOT_FOUND",
                     "message": "User account does not exist.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
     return user
 
 
-@router.patch(
-    "/me",
-    response_model=UserResponse,
-    summary="Update current user goals or weight"
-)
+@router.patch("/me", response_model=UserResponse, summary="Update current user goals or weight")
 async def update_current_user_profile(
     payload: UserUpdateRequest,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
     user = await db.get(User, user_id)
@@ -152,9 +139,9 @@ async def update_current_user_profile(
                 "error": {
                     "code": "USER_NOT_FOUND",
                     "message": "User account not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     for field, val in payload.model_dump(exclude_unset=True).items():

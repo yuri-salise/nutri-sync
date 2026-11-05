@@ -3,37 +3,106 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    border-color: #1e232d;
+  }
+
   body {
-    @apply bg-[#0a0d14] text-slate-100 font-sans;
-    -webkit-tap-highlight-color: transparent;
+    @apply bg-[#000000] text-[#EAECEF] font-poppins selection:bg-[#C8FF00] selection:text-black;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
-/* Custom Scrollbar */
+/* OKX Crypto-Grade Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0d14;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e2436;
+  background: #1e232d;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a334d;
+  background: #C8FF00;
 }
 
-/* Keyframes */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+/* OKX Glassmorphic & Cyber Utilities */
+.okx-card {
+  background: #12151b;
+  border: 1px solid #1e232d;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.okx-card:hover {
+  border-color: #2a313f;
+}
+
+.okx-card-active {
+  border-color: rgba(200, 255, 0, 0.4);
+  box-shadow: 0 0 25px -4px rgba(200, 255, 0, 0.25);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(200, 255, 0, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(200, 255, 0, 0.8);
+  }
+}
+
+.animate-okx-pulse {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radarSweep 3s linear infinite;
+}
+
+@keyframes tickerMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  display: flex;
+  width: max-content;
+  animation: tickerMove 25s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Leaflet Dark Filter for OpenStreetMap */
+.leaflet-container {
+  background: #07080a !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.dark-map .leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
 }

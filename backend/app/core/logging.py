@@ -8,11 +8,26 @@ class SensitiveDataFilter(logging.Filter):
     Sanitizes sensitive tokens, passwords, and authorization headers
     from logs to comply with Requirement B9 and OWASP Top 10.
     """
+
     PATTERNS = [
-        (re.compile(r'(password[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE), r'\1***REDACTED***\2'),
-        (re.compile(r'(token[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE), r'\1***REDACTED***\2'),
-        (re.compile(r'(authorization[\'"]?\s*[:=]\s*[\'"]?Bearer\s+)[^\'",\s]+([\'"]?)', re.IGNORECASE), r'\1***REDACTED***\2'),
-        (re.compile(r'(secret_key[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE), r'\1***REDACTED***\2'),
+        (
+            re.compile(r'(password[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE),
+            r"\1***REDACTED***\2",
+        ),
+        (
+            re.compile(r'(token[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE),
+            r"\1***REDACTED***\2",
+        ),
+        (
+            re.compile(
+                r'(authorization[\'"]?\s*[:=]\s*[\'"]?Bearer\s+)[^\'",\s]+([\'"]?)', re.IGNORECASE
+            ),
+            r"\1***REDACTED***\2",
+        ),
+        (
+            re.compile(r'(secret_key[\'"]?\s*[:=]\s*[\'"]?)[^\'",\s]+([\'"]?)', re.IGNORECASE),
+            r"\1***REDACTED***\2",
+        ),
     ]
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -30,7 +45,7 @@ def setup_logging() -> logging.Logger:
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter(
             fmt="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         handler.setFormatter(formatter)
         handler.addFilter(SensitiveDataFilter())

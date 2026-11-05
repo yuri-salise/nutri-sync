@@ -40,26 +40,24 @@ async def parse_csv_file(file_path: Path) -> List[Dict[str, Any]]:
                 fat = float(row["fat_per_100g"])
                 serving = row.get("serving_description", "100g portion").strip()
 
-                records.append({
-                    "food_name": food_name,
-                    "source_dataset": source_dataset,
-                    "kcal_per_100g": kcal,
-                    "protein_per_100g": protein,
-                    "carbs_per_100g": carbs,
-                    "fat_per_100g": fat,
-                    "serving_description": serving,
-                })
+                records.append(
+                    {
+                        "food_name": food_name,
+                        "source_dataset": source_dataset,
+                        "kcal_per_100g": kcal,
+                        "protein_per_100g": protein,
+                        "carbs_per_100g": carbs,
+                        "fat_per_100g": fat,
+                        "serving_description": serving,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Skipping malformed row {row_idx} in {file_path.name}: {e}")
 
     return records
 
 
-async def seed_dataset(
-    records: List[Dict[str, Any]],
-    batch_size: int = 50,
-    truncate: bool = False
-):
+async def seed_dataset(records: List[Dict[str, Any]], batch_size: int = 50, truncate: bool = False):
     """Computes vector embeddings and inserts records into PostgreSQL pgvector table."""
     # Ensure pgvector extension and table schema exist defensively
     async with engine.begin() as conn:
@@ -82,12 +80,14 @@ async def seed_dataset(
         logger.info(f"Starting vector seeding for {total} food items (Batch size: {batch_size})...")
 
         for i in range(0, total, batch_size):
-            batch = records[i:i + batch_size]
+            batch = records[i : i + batch_size]
             db_objects = []
 
             for item in batch:
                 # Semantic embedding of food name + description
-                text_to_embed = f"{item['food_name']} ({item['source_dataset']}) {item['serving_description']}"
+                text_to_embed = (
+                    f"{item['food_name']} ({item['source_dataset']}) {item['serving_description']}"
+                )
                 vector = generate_embedding(text_to_embed)
 
                 db_item = NutritionKnowledgeItem(
@@ -126,9 +126,13 @@ async def seed_dataset(
 async def main():
     parser = argparse.ArgumentParser(description="NutriSync-RAG USDA/FNRI CSV Dataset Seeder")
     parser.add_argument("--csv", type=str, help="Path to custom CSV file")
-    parser.add_argument("--source", type=str, default="CUSTOM", help="Source dataset name (FNRI or USDA)")
+    parser.add_argument(
+        "--source", type=str, default="CUSTOM", help="Source dataset name (FNRI or USDA)"
+    )
     parser.add_argument("--truncate", action="store_true", help="Truncate table before seeding")
-    parser.add_argument("--batch-size", type=int, default=50, help="Batch size for vector ingestion")
+    parser.add_argument(
+        "--batch-size", type=int, default=50, help="Batch size for vector ingestion"
+    )
     args = parser.parse_args()
 
     all_records = []

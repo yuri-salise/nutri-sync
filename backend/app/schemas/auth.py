@@ -6,7 +6,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=8, description="Password must be at least 8 characters long.")
+    password: str = Field(
+        ..., min_length=8, description="Password must be at least 8 characters long."
+    )
     full_name: str = Field(..., min_length=2, max_length=255)
     role: str = Field(default="athlete", pattern="^(athlete|admin)$")
     weight_kg: float = Field(default=70.0, gt=20.0, lt=400.0)

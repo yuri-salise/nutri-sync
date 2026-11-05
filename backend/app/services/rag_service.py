@@ -14,9 +14,7 @@ from app.services.embedding_service import cosine_similarity, generate_embedding
 
 
 async def search_knowledge_base_vector(
-    db: AsyncSession,
-    query_vector: List[float],
-    limit: int = 5
+    db: AsyncSession, query_vector: List[float], limit: int = 5
 ) -> List[NutritionKnowledgeItem]:
     """
     Retrieves top-k closest nutritional items using pgvector cosine distance.
@@ -26,9 +24,11 @@ async def search_knowledge_base_vector(
         # In PostgreSQL with pgvector:
         # query = select(NutritionKnowledgeItem).order_by(NutritionKnowledgeItem.embedding.cosine_distance(query_vector)).limit(limit)
         # We can execute using SQLAlchemy vector or raw text query
-        query = select(NutritionKnowledgeItem).order_by(
-            NutritionKnowledgeItem.embedding.cosine_distance(query_vector)
-        ).limit(limit)
+        query = (
+            select(NutritionKnowledgeItem)
+            .order_by(NutritionKnowledgeItem.embedding.cosine_distance(query_vector))
+            .limit(limit)
+        )
         result = await db.execute(query)
         items = result.scalars().all()
         return list(items)
@@ -38,14 +38,12 @@ async def search_knowledge_base_vector(
 
 
 async def search_knowledge_base_fallback(
-    db: AsyncSession,
-    query_text: str,
-    limit: int = 5
+    db: AsyncSession, query_text: str, limit: int = 5
 ) -> List[NutritionKnowledgeItem]:
     """
     Deterministic full-text SQL search fallback (Requirement T3).
     """
-    terms = re.findall(r'\b\w{3,}\b', query_text.lower())
+    terms = re.findall(r"\b\w{3,}\b", query_text.lower())
     if not terms:
         terms = [query_text.lower().strip()]
 
@@ -73,7 +71,7 @@ async def call_ollama_completion(prompt: str) -> Optional[str]:
                     "model": settings.OLLAMA_MODEL,
                     "prompt": prompt,
                     "stream": False,
-                }
+                },
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -84,10 +82,7 @@ async def call_ollama_completion(prompt: str) -> Optional[str]:
 
 
 async def execute_rag_scan(
-    db: AsyncSession,
-    user_id: int,
-    query_input: str,
-    image_base64: Optional[str] = None
+    db: AsyncSession, user_id: int, query_input: str, image_base64: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Executes the full Retrieval-Augmented Generation (RAG) nutrition pipeline:
@@ -126,16 +121,18 @@ async def execute_rag_scan(
 
     retrieved_summary = []
     for item in retrieved_items:
-        retrieved_summary.append({
-            "id": item.id,
-            "food_name": item.food_name,
-            "source_dataset": item.source_dataset,
-            "kcal_per_100g": item.kcal_per_100g,
-            "protein_per_100g": item.protein_per_100g,
-            "carbs_per_100g": item.carbs_per_100g,
-            "fat_per_100g": item.fat_per_100g,
-            "serving_description": item.serving_description,
-        })
+        retrieved_summary.append(
+            {
+                "id": item.id,
+                "food_name": item.food_name,
+                "source_dataset": item.source_dataset,
+                "kcal_per_100g": item.kcal_per_100g,
+                "protein_per_100g": item.protein_per_100g,
+                "carbs_per_100g": item.carbs_per_100g,
+                "fat_per_100g": item.fat_per_100g,
+                "serving_description": item.serving_description,
+            }
+        )
         # Default portion weighting (average of top 2 primary matches or single match)
         if len(retrieved_summary) <= 2:
             total_kcal += item.kcal_per_100g

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { Users, Dumbbell, MapPin, Award, Flame, Clock, ShieldCheck, Filter } from 'lucide-react';
 
@@ -24,160 +25,145 @@ export const CommunityFeedPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Users className="h-6 w-6 text-emerald-400" />
-            <span>Club & Community Training Feed</span>
+            <Users className="h-6 w-6 text-[#C8FF00]" />
+            <span>Club Training Feed & PR Ledger</span>
           </h1>
-          <p className="text-sm text-athletic-muted">
-            Public splits, verified member Personal Records (PRs), and GPS trail runs
+          <p className="text-sm text-[#848E9C]">
+            Verified Personal Records (PRs), lifting splits, and GPS trail routes shared by club athletes
           </p>
         </div>
 
         {/* Filter buttons */}
-        <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-2xl border border-athletic-border self-start sm:self-auto text-xs">
+        <div className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] self-start sm:self-auto text-xs">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               filterType === 'all'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
+                : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            All Activities
+            All Stream
           </button>
           <button
             onClick={() => setFilterType('workouts')}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               filterType === 'workouts'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
+                : 'text-[#848E9C] hover:text-white'
             }`}
           >
             Lifting Splits
           </button>
           <button
             onClick={() => setFilterType('runs')}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               filterType === 'runs'
-                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#00E5FF] text-black shadow-glow-cyan'
+                : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Trail Runs
+            GPS Runs
           </button>
         </div>
       </div>
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+          <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : feedItems.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-athletic-card border border-athletic-border text-athletic-muted text-xs">
+        <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
           No public training posts in the club feed yet.
         </div>
       ) : (
         <div className="space-y-4">
           {feedItems.map((item) => (
-            <div
+            <motion.div
               key={item.id}
-              className="p-6 rounded-3xl bg-athletic-card border border-athletic-border hover:border-slate-700 transition-colors space-y-4 shadow-xl"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-all space-y-4"
             >
-              {/* Card Header */}
+              {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div
                     className={`h-10 w-10 rounded-2xl flex items-center justify-center ${
                       item.type === 'workout'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                        ? 'bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30'
+                        : 'bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/30'
                     }`}
                   >
                     {item.type === 'workout' ? <Dumbbell className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-slate-100 text-sm leading-tight">{item.user_name}</h3>
-                    <p className="text-[11px] text-athletic-muted">
-                      {new Date(item.timestamp).toLocaleDateString(undefined, {
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{item.user?.full_name || 'Athlete'}</span>
+                      {item.has_pr && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime flex items-center gap-1">
+                          <Award className="h-3 w-3" /> VERIFIED PR
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-mono text-[#848E9C]">
+                      {new Date(item.date).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
-                    </p>
+                    </span>
                   </div>
                 </div>
 
-                {item.has_verified_pr && (
-                  <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 shadow-glow-amber">
-                    <Award className="h-3.5 w-3.5" />
-                    <span>Verified PR Claim</span>
-                  </span>
+                <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-[#C8FF00]">
+                  <Flame className="h-4 w-4" />
+                  <span>+{Math.round(item.burned_kcal)} kcal</span>
+                </div>
+              </div>
+
+              {/* Title & metrics */}
+              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-2">
+                <p className="text-sm font-semibold text-white">{item.title}</p>
+
+                {item.type === 'workout' && item.sets && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {item.sets.slice(0, 4).map((s: any, idx: number) => (
+                      <span
+                        key={idx}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono ${
+                          s.is_pr
+                            ? 'bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 font-bold'
+                            : 'bg-[#12151b] text-[#848E9C] border border-[#1e232d]'
+                        }`}
+                      >
+                        {s.exercise_name}: {s.weight_kg}kg &times; {s.reps}
+                      </span>
+                    ))}
+                    {item.sets.length > 4 && (
+                      <span className="text-[11px] font-mono text-[#848E9C] self-center">
+                        +{item.sets.length - 4} more
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {item.type === 'run' && (
+                  <div className="flex items-center gap-4 text-xs font-mono text-[#848E9C]">
+                    <span>Distance: <b className="text-white">{item.distance_km} km</b></span>
+                    <span>Duration: <b className="text-white">{Math.round(item.duration_sec / 60)} min</b></span>
+                    <span>Surface: <b className="text-[#00E5FF] uppercase">{item.surface_type}</b></span>
+                  </div>
                 )}
               </div>
-
-              {/* Title & Telemetry */}
-              <div className="space-y-1">
-                <h4 className="text-base font-bold text-white tracking-tight">{item.title}</h4>
-                <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-athletic-muted pt-1">
-                  {item.type === 'workout' ? (
-                    <>
-                      <span className="flex items-center gap-1 text-slate-300">
-                        <Clock className="h-3.5 w-3.5 text-cyan-400" /> {item.duration_min} mins
-                      </span>
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <Flame className="h-3.5 w-3.5" /> {Math.round(item.burned_kcal)} kcal
-                      </span>
-                      <span>{item.sets.length} sets completed</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-white font-bold">{item.distance_km} km</span>
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <Flame className="h-3.5 w-3.5" /> {Math.round(item.burned_kcal)} kcal
-                      </span>
-                      <span>{Math.round(item.elevation_gain_m)}m elevation</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Workout Sets Snapshot */}
-              {item.type === 'workout' && item.sets && (
-                <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-athletic-border space-y-1.5">
-                  {item.sets.slice(0, 4).map((s: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-xs font-mono text-slate-300">
-                      <span>{s.exercise}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400">{s.weight_kg}kg × {s.reps}</span>
-                        {s.is_pr && (
-                          <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 rounded">
-                            PR
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {item.sets.length > 4 && (
-                    <p className="text-[10px] text-athletic-muted font-mono pt-1">
-                      + {item.sets.length - 4} more sets
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Privacy badge for GPS runs */}
-              {item.type === 'run' && (
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>150m start/finish privacy zone applied (RA 10173)</span>
-                </div>
-              )}
-            </div>
+            </motion.div>
           ))}
         </div>
       )}

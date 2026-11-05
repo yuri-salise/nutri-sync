@@ -115,11 +115,48 @@ async def seed_demo_data():
         ohp_ex = created_exercises[6]
 
         sets = [
-            WorkoutSet(session_id=workout.id, exercise_id=bench_ex.id, set_no=1, reps=10, weight_kg=80.0, is_pr=False),
-            WorkoutSet(session_id=workout.id, exercise_id=bench_ex.id, set_no=2, reps=8, weight_kg=95.0, is_pr=False),
-            WorkoutSet(session_id=workout.id, exercise_id=bench_ex.id, set_no=3, reps=5, weight_kg=105.0, is_pr=True, verified_by_id=admin.id),
-            WorkoutSet(session_id=workout.id, exercise_id=ohp_ex.id, set_no=1, reps=8, weight_kg=50.0, is_pr=False),
-            WorkoutSet(session_id=workout.id, exercise_id=ohp_ex.id, set_no=2, reps=6, weight_kg=60.0, is_pr=True, verified_by_id=None),
+            WorkoutSet(
+                session_id=workout.id,
+                exercise_id=bench_ex.id,
+                set_no=1,
+                reps=10,
+                weight_kg=80.0,
+                is_pr=False,
+            ),
+            WorkoutSet(
+                session_id=workout.id,
+                exercise_id=bench_ex.id,
+                set_no=2,
+                reps=8,
+                weight_kg=95.0,
+                is_pr=False,
+            ),
+            WorkoutSet(
+                session_id=workout.id,
+                exercise_id=bench_ex.id,
+                set_no=3,
+                reps=5,
+                weight_kg=105.0,
+                is_pr=True,
+                verified_by_id=admin.id,
+            ),
+            WorkoutSet(
+                session_id=workout.id,
+                exercise_id=ohp_ex.id,
+                set_no=1,
+                reps=8,
+                weight_kg=50.0,
+                is_pr=False,
+            ),
+            WorkoutSet(
+                session_id=workout.id,
+                exercise_id=ohp_ex.id,
+                set_no=2,
+                reps=6,
+                weight_kg=60.0,
+                is_pr=True,
+                verified_by_id=None,
+            ),
         ]
         session.add_all(sets)
 
@@ -135,8 +172,8 @@ async def seed_demo_data():
                 [121.0620, 14.5610],
                 [121.0645, 14.5630],
                 [121.0670, 14.5665],
-                [121.0690, 14.5690]
-            ]
+                [121.0690, 14.5690],
+            ],
         }
         run = RunActivity(
             user_id=athlete.id,
@@ -173,7 +210,9 @@ async def seed_demo_data():
         session.add_all([meal1, meal2])
 
         await session.commit()
-        logger.info("Demo accounts, exercises, workout sessions, run activities, and nutrition logs successfully seeded!")
+        logger.info(
+            "Demo accounts, exercises, workout sessions, run activities, and nutrition logs successfully seeded!"
+        )
 
 
 if __name__ == "__main__":

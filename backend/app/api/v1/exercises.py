@@ -18,17 +18,19 @@ router = APIRouter(prefix="/exercises", tags=["Exercises"])
 @router.get(
     "",
     response_model=PaginatedResponse[ExerciseResponse],
-    summary="List exercises with pagination, filtering, and sorting (Requirement B6)"
+    summary="List exercises with pagination, filtering, and sorting (Requirement B6)",
 )
 async def list_exercises(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     muscle_group: Optional[str] = Query(None, description="Filter by muscle group"),
     category: Optional[str] = Query(None, description="Filter by exercise category"),
-    status_filter: Optional[str] = Query(None, alias="status", description="Filter by status (pending|approved)"),
+    status_filter: Optional[str] = Query(
+        None, alias="status", description="Filter by status (pending|approved)"
+    ),
     q: Optional[str] = Query(None, description="Search query string"),
     sort: Optional[str] = Query("-created_at", description="Sort field (prefix with - for desc)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     query = select(Exercise)
 
@@ -73,12 +75,7 @@ async def list_exercises(
 
     return PaginatedResponse(
         data=items,
-        meta=PaginationMeta(
-            page=page,
-            limit=limit,
-            total=total,
-            total_pages=total_pages
-        )
+        meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages),
     )
 
 
@@ -86,13 +83,13 @@ async def list_exercises(
     "",
     response_model=ExerciseResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create or submit a custom exercise"
+    summary="Create or submit a custom exercise",
 )
 async def create_exercise(
     payload: ExerciseCreate,
     response: Response,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
     exercise_status = "approved" if token_payload.role == "admin" else "pending"
@@ -113,11 +110,7 @@ async def create_exercise(
     return exercise
 
 
-@router.get(
-    "/{id}",
-    response_model=ExerciseResponse,
-    summary="Get single exercise by ID"
-)
+@router.get("/{id}", response_model=ExerciseResponse, summary="Get single exercise by ID")
 async def get_exercise(id: int, db: AsyncSession = Depends(get_db)):
     exercise = await db.get(Exercise, id)
     if not exercise:
@@ -127,9 +120,9 @@ async def get_exercise(id: int, db: AsyncSession = Depends(get_db)):
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Exercise with ID {id} does not exist.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
     return exercise
 
@@ -137,13 +130,13 @@ async def get_exercise(id: int, db: AsyncSession = Depends(get_db)):
 @router.patch(
     "/{id}",
     response_model=ExerciseResponse,
-    summary="Update an exercise (Admins can approve/reject; Creators can update fields)"
+    summary="Update an exercise (Admins can approve/reject; Creators can update fields)",
 )
 async def update_exercise(
     id: int,
     payload: ExerciseUpdate,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     exercise = await db.get(Exercise, id)
     if not exercise:
@@ -153,9 +146,9 @@ async def update_exercise(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Exercise with ID {id} does not exist.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -166,9 +159,9 @@ async def update_exercise(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only update exercises that you created.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     # Only admin can change status to approved/rejected
@@ -179,9 +172,9 @@ async def update_exercise(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "Only coaches or administrators can approve/reject exercise submissions.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     for field, val in payload.model_dump(exclude_unset=True).items():
@@ -192,15 +185,11 @@ async def update_exercise(
     return exercise
 
 
-@router.delete(
-    "/{id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete an exercise"
-)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an exercise")
 async def delete_exercise(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     exercise = await db.get(Exercise, id)
     if not exercise:
@@ -210,9 +199,9 @@ async def delete_exercise(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Exercise with ID {id} does not exist.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -223,9 +212,9 @@ async def delete_exercise(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only delete exercises you created.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     await db.delete(exercise)

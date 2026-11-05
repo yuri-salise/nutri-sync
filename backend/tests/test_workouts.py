@@ -4,10 +4,7 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_workout_session_and_pr_detection(
-    client: AsyncClient,
-    seed_test_users,
-    athlete_token,
-    admin_token
+    client: AsyncClient, seed_test_users, athlete_token, admin_token
 ):
     headers_athlete = {"Authorization": f"Bearer {athlete_token}"}
     headers_admin = {"Authorization": f"Bearer {admin_token}"}
@@ -21,7 +18,7 @@ async def test_workout_session_and_pr_detection(
             {"exercise_id": 1, "set_no": 1, "reps": 10, "weight_kg": 70.0},
             {"exercise_id": 1, "set_no": 2, "reps": 8, "weight_kg": 85.0},
             {"exercise_id": 1, "set_no": 3, "reps": 5, "weight_kg": 100.0, "is_pr": True},
-        ]
+        ],
     }
     resp = await client.post("/api/v1/workout-sessions", json=payload, headers=headers_athlete)
     assert resp.status_code == 201
@@ -49,5 +46,7 @@ async def test_workout_session_and_pr_detection(
     assert verify_resp.json()["verified_by_id"] == 2
 
     # 5. Delete session
-    del_resp = await client.delete(f"/api/v1/workout-sessions/{session_id}", headers=headers_athlete)
+    del_resp = await client.delete(
+        f"/api/v1/workout-sessions/{session_id}", headers=headers_athlete
+    )
     assert del_resp.status_code == 204

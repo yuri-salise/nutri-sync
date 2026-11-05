@@ -31,17 +31,13 @@ async def test_exercise_crud_flow(client: AsyncClient, seed_test_users, athlete_
 
     # 3. Athlete attempts to approve (forbidden 403)
     forbidden_resp = await client.patch(
-        f"/api/v1/exercises/{ex_id}",
-        json={"status": "approved"},
-        headers=headers_athlete
+        f"/api/v1/exercises/{ex_id}", json={"status": "approved"}, headers=headers_athlete
     )
     assert forbidden_resp.status_code == 403
 
     # 4. Admin approves custom exercise (success 200)
     admin_approve_resp = await client.patch(
-        f"/api/v1/exercises/{ex_id}",
-        json={"status": "approved"},
-        headers=headers_admin
+        f"/api/v1/exercises/{ex_id}", json={"status": "approved"}, headers=headers_admin
     )
     assert admin_approve_resp.status_code == 200
     assert admin_approve_resp.json()["status"] == "approved"

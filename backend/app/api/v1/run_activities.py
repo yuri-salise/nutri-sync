@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import TokenPayload, require_roles
 from app.db.models import RunActivity, User
-from app.db.session import get_db
+from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.run import RunActivityCreate, RunActivityResponse, RunActivityUpdate
 
@@ -17,9 +17,7 @@ router = APIRouter(prefix="/run-activities", tags=["Runs"])
 
 
 @router.get(
-    "",
-    response_model=PaginatedResponse[RunActivityResponse],
-    summary="List GPS run activities"
+    "", response_model=PaginatedResponse[RunActivityResponse], summary="List GPS run activities"
 )
 async def list_run_activities(
     page: int = Query(1, ge=1),
@@ -27,9 +25,10 @@ async def list_run_activities(
     surface_type: Optional[str] = Query(None, description="road or trail"),
     only_mine: bool = Query(True),
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     query = select(RunActivity)
 
     if only_mine and token_payload.role != "admin":
@@ -53,13 +52,7 @@ async def list_run_activities(
     total_pages = math.ceil(total / limit) if total > 0 else 1
 
     return PaginatedResponse(
-        data=runs,
-        meta=PaginationMeta(
-            page=page,
-            limit=limit,
-            total=total,
-            total_pages=total_pages
-        )
+        data=runs, meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages)
     )
 
 
@@ -67,15 +60,16 @@ async def list_run_activities(
     "",
     response_model=RunActivityResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Record a GPS road or trail run activity"
+    summary="Record a GPS road or trail run activity",
 )
 async def create_run_activity(
     payload: RunActivityCreate,
     response: Response,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    await set_rls_context(db, user_id=user_id, role=token_payload.role)
     user = await db.get(User, user_id)
     weight = user.weight_kg if user else 70.0
 
@@ -84,7 +78,9 @@ async def create_run_activity(
     burned = payload.burned_kcal
     if burned is None:
         multiplier = 1.15 if payload.surface_type == "trail" else 1.0
-        burned = round(1.036 * weight * payload.distance_km * multiplier + (payload.elevation_gain_m * 0.05), 1)
+        burned = round(
+            1.036 * weight * payload.distance_km * multiplier + (payload.elevation_gain_m * 0.05), 1
+        )
 
     run = RunActivity(
         user_id=user_id,
@@ -105,15 +101,11 @@ async def create_run_activity(
     return run
 
 
-@router.get(
-    "/{id}",
-    response_model=RunActivityResponse,
-    summary="Get single run activity"
-)
+@router.get("/{id}", response_model=RunActivityResponse, summary="Get single run activity")
 async def get_run_activity(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     run = await db.get(RunActivity, id)
     if not run:
@@ -123,23 +115,19 @@ async def get_run_activity(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Run activity {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
     return run
 
 
-@router.patch(
-    "/{id}",
-    response_model=RunActivityResponse,
-    summary="Update run activity"
-)
+@router.patch("/{id}", response_model=RunActivityResponse, summary="Update run activity")
 async def update_run_activity(
     id: int,
     payload: RunActivityUpdate,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     run = await db.get(RunActivity, id)
     if not run:
@@ -149,9 +137,9 @@ async def update_run_activity(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Run activity {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -162,9 +150,9 @@ async def update_run_activity(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only edit your own run activities.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     for field, val in payload.model_dump(exclude_unset=True).items():
@@ -175,15 +163,11 @@ async def update_run_activity(
     return run
 
 
-@router.delete(
-    "/{id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete run activity"
-)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete run activity")
 async def delete_run_activity(
     id: int,
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     run = await db.get(RunActivity, id)
     if not run:
@@ -193,9 +177,9 @@ async def delete_run_activity(
                 "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": f"Run activity {id} not found.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     user_id = int(token_payload.sub)
@@ -206,9 +190,9 @@ async def delete_run_activity(
                 "error": {
                     "code": "FORBIDDEN",
                     "message": "You can only delete your own run activities.",
-                    "details": []
+                    "details": [],
                 }
-            }
+            },
         )
 
     await db.delete(run)

@@ -8,9 +8,7 @@ from app.db.models import NutritionLog, RunActivity, User, WorkoutSession
 
 
 async def calculate_daily_activity_synced_summary(
-    db: AsyncSession,
-    user: User,
-    target_date: datetime = None
+    db: AsyncSession, user: User, target_date: datetime = None
 ) -> Dict[str, Any]:
     """
     Computes dynamic activity-synced macronutrient targets based on:
@@ -22,18 +20,20 @@ async def calculate_daily_activity_synced_summary(
     if target_date is None:
         target_date = datetime.now(timezone.utc)
 
-    start_of_day = datetime(target_date.year, target_date.month, target_date.day, 0, 0, 0, tzinfo=timezone.utc)
+    start_of_day = datetime(
+        target_date.year, target_date.month, target_date.day, 0, 0, 0, tzinfo=timezone.utc
+    )
     end_of_day = start_of_day + timedelta(days=1)
 
     # 1. Sum Workout Session calories burned today
     stmt_workouts = select(
         func.coalesce(func.sum(WorkoutSession.burned_kcal), 0.0),
-        func.coalesce(func.sum(WorkoutSession.duration_min), 0)
+        func.coalesce(func.sum(WorkoutSession.duration_min), 0),
     ).where(
         and_(
             WorkoutSession.user_id == user.id,
             WorkoutSession.session_date >= start_of_day,
-            WorkoutSession.session_date < end_of_day
+            WorkoutSession.session_date < end_of_day,
         )
     )
     res_workouts = await db.execute(stmt_workouts)
@@ -43,12 +43,12 @@ async def calculate_daily_activity_synced_summary(
     stmt_runs = select(
         func.coalesce(func.sum(RunActivity.burned_kcal), 0.0),
         func.coalesce(func.sum(RunActivity.distance_km), 0.0),
-        func.coalesce(func.sum(RunActivity.duration_sec), 0)
+        func.coalesce(func.sum(RunActivity.duration_sec), 0),
     ).where(
         and_(
             RunActivity.user_id == user.id,
             RunActivity.recorded_at >= start_of_day,
-            RunActivity.recorded_at < end_of_day
+            RunActivity.recorded_at < end_of_day,
         )
     )
     res_runs = await db.execute(stmt_runs)
@@ -74,16 +74,18 @@ async def calculate_daily_activity_synced_summary(
         func.coalesce(func.sum(NutritionLog.protein_g), 0.0),
         func.coalesce(func.sum(NutritionLog.carbs_g), 0.0),
         func.coalesce(func.sum(NutritionLog.fat_g), 0.0),
-        func.count(NutritionLog.id)
+        func.count(NutritionLog.id),
     ).where(
         and_(
             NutritionLog.user_id == user.id,
             NutritionLog.logged_at >= start_of_day,
-            NutritionLog.logged_at < end_of_day
+            NutritionLog.logged_at < end_of_day,
         )
     )
     res_nutri = await db.execute(stmt_nutrition)
-    consumed_kcal, consumed_protein, consumed_carbs, consumed_fat, logged_meals_count = res_nutri.one()
+    consumed_kcal, consumed_protein, consumed_carbs, consumed_fat, logged_meals_count = (
+        res_nutri.one()
+    )
 
     remaining_kcal = round(dynamic_kcal_goal - float(consumed_kcal), 1)
     remaining_protein = round(dynamic_protein_goal - float(consumed_protein), 1)
@@ -125,5 +127,5 @@ async def calculate_daily_activity_synced_summary(
             "protein_g": remaining_protein,
             "carbs_g": remaining_carbs,
             "fat_g": remaining_fat,
-        }
+        },
     }

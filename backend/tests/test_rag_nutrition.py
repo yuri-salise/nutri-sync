@@ -4,10 +4,7 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_rag_nutrition_scan_and_audit(
-    client: AsyncClient,
-    seed_test_users,
-    athlete_token,
-    admin_token
+    client: AsyncClient, seed_test_users, athlete_token, admin_token
 ):
     headers_athlete = {"Authorization": f"Bearer {athlete_token}"}
     headers_admin = {"Authorization": f"Bearer {admin_token}"}
@@ -16,7 +13,9 @@ async def test_rag_nutrition_scan_and_audit(
     scan_payload = {
         "query_input": "Chicken adobo with steamed rice and egg",
     }
-    resp = await client.post("/api/v1/rag-nutrition-scans", json=scan_payload, headers=headers_athlete)
+    resp = await client.post(
+        "/api/v1/rag-nutrition-scans", json=scan_payload, headers=headers_athlete
+    )
     assert resp.status_code == 201
     assert "Location" in resp.headers
     data = resp.json()
@@ -37,7 +36,9 @@ async def test_rag_nutrition_scan_and_audit(
         "fat_g": data["predicted_macros"]["fat_g"],
         "rag_scan_id": scan_id,
     }
-    log_resp = await client.post("/api/v1/nutrition-logs", json=log_payload, headers=headers_athlete)
+    log_resp = await client.post(
+        "/api/v1/nutrition-logs", json=log_payload, headers=headers_athlete
+    )
     assert log_resp.status_code == 201
     assert log_resp.json()["meal_name"] == log_payload["meal_name"]
 

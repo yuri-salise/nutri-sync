@@ -10,7 +10,11 @@ from app.db.session import get_db
 router = APIRouter(tags=["Health"])
 
 
-@router.get("/health", summary="Health Check", description="Returns service status, git commit ID, and database connectivity.")
+@router.get(
+    "/health",
+    summary="Health Check",
+    description="Returns service status, git commit ID, and database connectivity.",
+)
 async def health_check(db: AsyncSession = Depends(get_db)):
     db_status = "connected"
     try:
@@ -25,7 +29,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
                 "version": settings.APP_VERSION,
                 "database": db_status,
                 "app": settings.APP_NAME,
-            }
+            },
         )
 
     return {

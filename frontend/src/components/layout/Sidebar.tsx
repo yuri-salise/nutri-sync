@@ -11,6 +11,8 @@ import {
   Users,
   ShieldCheck,
   ChevronRight,
+  ShieldAlert,
+  Lock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,10 +27,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Strength & PRs', path: '/workouts', icon: Dumbbell },
     { name: 'GPS Run Tracker', path: '/runs', icon: MapPin },
-    { name: 'RAG Nutrition Scanner', path: '/scanner', icon: Compass },
+    { name: 'RAG Nutrition AI', path: '/scanner', icon: Compass },
     { name: 'Daily Nutrition Log', path: '/nutrition', icon: UtensilsCrossed },
     { name: 'Exercise Catalog', path: '/exercises', icon: BookOpen },
-    { name: 'Community Splits', path: '/community', icon: Users },
+    { name: 'Club Feed', path: '/community', icon: Users },
   ];
 
   const adminNavItems = [
@@ -42,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/80 backdrop-blur-md lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -50,16 +52,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Sidebar container */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-30 w-64 border-r border-athletic-border bg-[#0a0d14] flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-16 bottom-0 left-0 z-30 w-64 border-r border-[#1e232d] bg-[#000000] flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="py-6 px-4 space-y-6 overflow-y-auto">
           {/* Main Navigation */}
           <div>
-            <p className="px-3 text-[11px] font-semibold tracking-wider text-athletic-muted uppercase">
-              Athletic Performance
-            </p>
+            <div className="flex items-center justify-between px-3">
+              <p className="text-[10px] font-mono font-bold tracking-widest text-[#848E9C] uppercase">
+                Exchange Telemetry
+              </p>
+              <span className="flex h-1.5 w-1.5 rounded-full bg-[#C8FF00] animate-ping" />
+            </div>
             <nav className="mt-3 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -69,44 +74,50 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     to={item.path}
                     onClick={onClose}
                     className={({ isActive }) =>
-                      `group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                         isActive
-                          ? 'bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 text-emerald-400 border border-emerald-500/30 shadow-glow-emerald'
-                          : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/60'
+                          ? 'bg-[#12151b] text-[#C8FF00] border border-[#C8FF00]/40 shadow-glow-lime'
+                          : 'text-[#848E9C] hover:text-[#EAECEF] hover:bg-[#12151b]/60 border border-transparent'
                       }`
                     }
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 text-athletic-muted group-hover:text-emerald-400 transition-colors" />
+                      <Icon className="h-4 w-4 transition-transform group-hover:scale-110" />
                       <span>{item.name}</span>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-athletic-muted" />
+                    <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-[#848E9C]" />
                   </NavLink>
                 );
               })}
             </nav>
           </div>
 
-          {/* Quick Stats Pill */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-athletic-border space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-athletic-muted">RAG Vector Base</span>
-              <span className="text-emerald-400 font-mono font-bold">pgvector 384d</span>
+          {/* Quick Telemetry Card */}
+          <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-2.5 shadow-okx-card">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#848E9C] flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> RLS Security
+              </span>
+              <span className="text-[#00D26A] font-bold">STRICT</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 h-1.5 rounded-full w-full animate-pulse" />
+            <div className="w-full bg-[#1e232d] rounded-full h-1 overflow-hidden">
+              <div className="bg-gradient-to-r from-[#C8FF00] to-[#00D26A] h-1 rounded-full w-full" />
             </div>
-            <div className="flex justify-between text-[11px] text-athletic-muted font-mono">
-              <span>FNRI & USDA Grounded</span>
-              <span>100% Free/OSS</span>
+            <div className="flex justify-between text-[10px] text-[#848E9C] font-mono">
+              <span>pgvector 384d</span>
+              <span>USDA & FNRI</span>
             </div>
           </div>
         </div>
 
-        {/* Footer info */}
-        <div className="p-4 border-t border-athletic-border text-xs text-athletic-muted font-mono flex items-center justify-between">
-          <span>ITSD 85 Capstone</span>
-          <span className="text-emerald-400/80">v1.0.0</span>
+        {/* Bottom System Footer */}
+        <div className="p-4 border-t border-[#1e232d] bg-[#07080a] text-center">
+          <p className="text-[10px] font-mono text-[#848E9C]">
+            NutriSync-RAG &bull; BSIT 4A
+          </p>
+          <p className="text-[9px] font-mono text-[#C8FF00]/70 mt-0.5">
+            Yuri D. Salise &bull; OKX Cyber Theme
+          </p>
         </div>
       </aside>
     </>

@@ -15,11 +15,14 @@ def get_sentence_transformer_model():
         return _model
     try:
         from sentence_transformers import SentenceTransformer
+
         logger.info(f"Loading local SentenceTransformer model: {settings.EMBEDDING_MODEL_NAME}")
         _model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME)
         return _model
     except Exception as e:
-        logger.warning(f"SentenceTransformer not loaded ({e}). Using deterministic 384-d semantic embedding generator.")
+        logger.warning(
+            f"SentenceTransformer not loaded ({e}). Using deterministic 384-d semantic embedding generator."
+        )
         return None
 
 
@@ -44,7 +47,7 @@ def generate_embedding(text: str) -> List[float]:
     dim = settings.EMBEDDING_DIMENSION
     vec = np.zeros(dim, dtype=np.float32)
     clean_text = text.lower().strip()
-    words = re.findall(r'\b\w+\b', clean_text)
+    words = re.findall(r"\b\w+\b", clean_text)
 
     if not words:
         words = [clean_text]
@@ -57,7 +60,7 @@ def generate_embedding(text: str) -> List[float]:
 
         # Character bigrams for subword similarity
         for j in range(len(word) - 1):
-            bg_hash = hash(word[j:j+2])
+            bg_hash = hash(word[j : j + 2])
             bg_idx = abs(bg_hash) % dim
             vec[bg_idx] += 0.35
 

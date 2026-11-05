@@ -19,6 +19,7 @@ from sqlalchemy.ext.compiler import compiles
 def compile_vector_sqlite(type_, compiler, **kw):
     return "TEXT"
 
+
 from app.core.security import create_access_token, get_password_hash
 from app.db.base import Base
 from app.db.models import Exercise, NutritionKnowledgeItem, User

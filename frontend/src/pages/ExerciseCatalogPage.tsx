@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { Exercise } from '../types';
-import { BookOpen, Search, Plus, Filter, CheckCircle2, Clock, Dumbbell, X, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  Search,
+  Plus,
+  Filter,
+  CheckCircle2,
+  Clock,
+  Dumbbell,
+  X,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 
 export const ExerciseCatalogPage: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscle, setSelectedMuscle] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedMuscle, setSelectedMuscle] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   // Proposal Form State
@@ -58,7 +70,7 @@ export const ExerciseCatalogPage: React.FC = () => {
       });
       setName('');
       setShowSubmitModal(false);
-      setSuccessMsg('Exercise submitted successfully! Pending approval by a coach/administrator.');
+      setSuccessMsg('Custom movement submitted! Pending audit and verification by Coach/Administrator.');
       fetchExercises();
     } catch (err: any) {
       alert(err.message || 'Failed to submit custom exercise.');
@@ -68,63 +80,66 @@ export const ExerciseCatalogPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <BookOpen className="h-6 w-6 text-emerald-400" />
-            <span>Exercise & Movement Catalog</span>
+            <BookOpen className="h-6 w-6 text-[#C8FF00]" />
+            <span>Movement & Exercise Catalog</span>
           </h1>
-          <p className="text-sm text-athletic-muted">
-            Explore verified compound movements, isolation lifts, and submit custom exercises
+          <p className="text-sm text-[#848E9C]">
+            Verified compound lifts, isolation movements, and metabolic equivalent (MET) standards
           </p>
         </div>
 
         <button
           onClick={() => setShowSubmitModal(true)}
-          className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:opacity-90 shadow-glow-emerald flex items-center gap-2 transition-all self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#C8FF00] text-black hover:bg-[#d4ff33] shadow-glow-lime flex items-center gap-2 transition-all self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
-          <span>Propose Custom Movement</span>
+          <span>Propose Custom Lift</span>
         </button>
       </div>
 
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2.5">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-xs flex items-center gap-2.5 shadow-glow-green"
+        >
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
+          <span className="font-semibold">{successMsg}</span>
+        </motion.div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-athletic-card border border-athletic-border space-y-4">
+      <div className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-okx-card">
         <div className="relative">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-athletic-muted" />
+          <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-[#848E9C]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search exercises by name or muscle group (e.g. Bench, Squat, Lat Pulldown)..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-athletic-border text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500"
+            placeholder="Search exercises by name (e.g. Barbell Squat, Lat Pulldown)..."
+            className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-[#848E9C] focus:outline-none transition-colors"
           />
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-athletic-border/60">
-          <span className="text-[11px] text-athletic-muted flex items-center gap-1 font-semibold uppercase">
-            <Filter className="h-3 w-3" /> Muscle:
-          </span>
-          {muscleGroups.map((m) => (
+        {/* Muscle group filter pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-mono text-[#848E9C] mr-1">Muscle:</span>
+          {muscleGroups.map((mg) => (
             <button
-              key={m}
-              onClick={() => setSelectedMuscle(m === 'All' ? '' : m)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition-all ${
-                (m === 'All' && !selectedMuscle) || selectedMuscle === m
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-athletic-border'
+              key={mg}
+              onClick={() => setSelectedMuscle(mg)}
+              className={`px-3 py-1 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
+                selectedMuscle === mg
+                  ? 'bg-[#C8FF00] text-black shadow-glow-lime'
+                  : 'bg-[#07080a] border border-[#1e232d] text-[#848E9C] hover:text-white'
               }`}
             >
-              {m}
+              {mg}
             </button>
           ))}
         </div>
@@ -132,145 +147,154 @@ export const ExerciseCatalogPage: React.FC = () => {
 
       {/* Exercises Grid */}
       {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+        <div className="p-12 text-center">
+          <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       ) : exercises.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-athletic-card border border-athletic-border text-athletic-muted text-xs">
-          No exercises matched your search filters.
+        <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
+          No exercises found matching your filter criteria.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {exercises.map((ex) => (
             <div
               key={ex.id}
-              className="p-5 rounded-2xl bg-athletic-card border border-athletic-border hover:border-slate-700 transition-colors space-y-3"
+              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-okx-card hover:border-[#2a313f] transition-all space-y-3 group"
             >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-bold text-slate-100 text-sm">{ex.name}</h3>
-                {ex.status === 'approved' ? (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-medium flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Approved
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-medium flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Pending Review
-                  </span>
-                )}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-white group-hover:text-[#C8FF00] transition-colors">
+                    {ex.name}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-mono uppercase bg-[#07080a] border border-[#1e232d] text-[#00E5FF]">
+                      {ex.muscle_group}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-mono uppercase bg-[#07080a] border border-[#1e232d] text-[#848E9C]">
+                      {ex.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-2 rounded-xl bg-[#07080a] border border-[#1e232d] text-right font-mono">
+                  <span className="text-[9px] text-[#848E9C] block">MET</span>
+                  <span className="text-xs font-bold text-[#C8FF00]">{ex.met_value.toFixed(1)}</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 text-xs">
-                <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-athletic-border text-slate-300 capitalize font-medium">
-                  {ex.muscle_group}
+              <div className="pt-2 border-t border-[#1e232d] flex items-center justify-between text-[11px] font-mono text-[#848E9C]">
+                <span>Status:</span>
+                <span
+                  className={
+                    ex.status === 'approved'
+                      ? 'text-[#00D26A] font-bold'
+                      : ex.status === 'pending'
+                      ? 'text-[#FFB800] font-bold'
+                      : 'text-[#F6465D]'
+                  }
+                >
+                  {ex.status.toUpperCase()}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-athletic-border text-slate-400 capitalize">
-                  {ex.category}
-                </span>
-              </div>
-
-              <div className="pt-2 border-t border-athletic-border/60 flex items-center justify-between text-[11px] text-athletic-muted font-mono">
-                <span>Metabolic Cost (MET):</span>
-                <span className="text-emerald-400 font-bold">{ex.met_value} MET</span>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Propose Exercise Modal */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md p-6 rounded-3xl bg-athletic-card border border-athletic-border space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-emerald-400" /> Propose Custom Movement
-              </h3>
-              <button
-                onClick={() => setShowSubmitModal(false)}
-                className="p-1 rounded-lg text-athletic-muted hover:text-white hover:bg-slate-800"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateExercise} className="space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Exercise Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Bulgarian Split Squat with Dumbbells"
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-athletic-border text-slate-100 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Target Muscle</label>
-                  <select
-                    value={muscleGroup}
-                    onChange={(e) => setMuscleGroup(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-athletic-border text-slate-100 capitalize focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="chest">Chest</option>
-                    <option value="back">Back</option>
-                    <option value="legs">Legs</option>
-                    <option value="shoulders">Shoulders</option>
-                    <option value="arms">Arms</option>
-                    <option value="core">Core</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-athletic-border text-slate-100 capitalize focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="compound">Compound</option>
-                    <option value="isolation">Isolation</option>
-                    <option value="bodyweight">Bodyweight</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-300">MET Value (Metabolic Equivalent)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={metValue}
-                  onChange={(e) => setMetValue(e.target.value)}
-                  min="1"
-                  max="20"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-athletic-border text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
-                />
-                <span className="text-[10px] text-athletic-muted">Standard resistance training: 5.0 - 7.5 MET</span>
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
+      {/* Propose Modal */}
+      <AnimatePresence>
+        {showSubmitModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-[#1e232d]">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-[#C8FF00]" />
+                  <span>Propose Custom Exercise Movement</span>
+                </h3>
                 <button
-                  type="button"
                   onClick={() => setShowSubmitModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+                  className="p-1 text-[#848E9C] hover:text-white"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 rounded-xl font-semibold bg-emerald-500 text-black hover:bg-emerald-400 shadow-glow-emerald"
-                >
-                  {submitting ? 'Submitting...' : 'Submit for Review'}
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleCreateExercise} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#848E9C]">Movement Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Incline Smith Machine Press"
+                    className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[#848E9C]">Target Muscle</label>
+                    <select
+                      value={muscleGroup}
+                      onChange={(e) => setMuscleGroup(e.target.value)}
+                      className="w-full bg-[#07080a] border border-[#1e232d] rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                    >
+                      {muscleGroups.filter((m) => m !== 'All').map((m) => (
+                        <option key={m} value={m}>
+                          {m.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[#848E9C]">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-[#07080a] border border-[#1e232d] rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                    >
+                      <option value="compound">Compound</option>
+                      <option value="isolation">Isolation</option>
+                      <option value="bodyweight">Bodyweight</option>
+                      <option value="cardio">Cardio</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#848E9C]">MET Intensity Value (1.0 - 16.0)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1.0"
+                    max="16.0"
+                    value={metValue}
+                    onChange={(e) => setMetValue(e.target.value)}
+                    className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-3 rounded-xl bg-[#C8FF00] text-black font-bold text-xs hover:bg-[#d4ff33] shadow-glow-lime transition-all"
+                  >
+                    {submitting ? 'Submitting...' : 'Submit to Coach Moderation'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
