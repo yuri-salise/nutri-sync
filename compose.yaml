@@ -45,6 +45,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
     networks:
       - internal-net
 

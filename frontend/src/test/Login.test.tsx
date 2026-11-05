@@ -14,7 +14,7 @@ describe('LoginPage Component (Requirement Q2)', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText(/Welcome to NutriSync-RAG/i)).toBeInTheDocument();
+    expect(screen.getByText(/Welcome to NutriSync/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/athlete@nutrisync.com/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sign In to Account/i })).toBeInTheDocument();
     expect(screen.getByText(/Athlete Yuri/i)).toBeInTheDocument();

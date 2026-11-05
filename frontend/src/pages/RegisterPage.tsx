@@ -82,10 +82,10 @@ export const RegisterPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white font-poppins">
-            Create Athlete Profile
+            Create Your Account
           </h1>
           <p className="text-xs text-[#848E9C]">
-            Configure dynamic metabolic baselines and biometrics
+            Set up your fitness goals and daily nutrition targets
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export const RegisterPage: React.FC = () => {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-[#C8FF00]" /> Base TDEE (kcal)
+                <Flame className="h-3.5 w-3.5 text-[#C8FF00]" /> Daily Calorie Goal (kcal)
               </label>
               <input
                 type="number"

@@ -102,10 +102,10 @@ export const AdminAuditPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <ShieldCheck className="h-6 w-6 text-[#00E5FF]" />
-            <span>Coach Administration & RAG Audit Console</span>
+            <span>Coach & Administrator Dashboard</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Exercise moderation, RAG inference traceability (T4), and pgvector 384-d knowledge management
+            Review custom exercise proposals, inspect AI meal scan history, and browse the verified food database.
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export const AdminAuditPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Pending Lifts ({pendingExercises.length})
+            Pending Exercises ({pendingExercises.length})
           </button>
           <button
             onClick={() => setActiveTab('rag_logs')}
@@ -129,7 +129,7 @@ export const AdminAuditPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            RAG Traceability (T4)
+            AI Scan History
           </button>
           <button
             onClick={() => setActiveTab('knowledge')}
@@ -139,7 +139,7 @@ export const AdminAuditPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Vector Knowledge
+            Food Database
           </button>
         </div>
       </div>

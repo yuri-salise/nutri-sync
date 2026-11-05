@@ -75,10 +75,10 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white font-poppins">
-            Welcome to NutriSync-RAG
+            Welcome to NutriSync
           </h1>
           <p className="text-xs text-[#848E9C]">
-            High-Performance Activity-Synchronized Nutritional Retrieval
+            Smart Workout, Run & Nutrition Tracking
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export const LoginPage: React.FC = () => {
         <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-white flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-[#C8FF00]" /> 1-Click Demo Evaluation
+              <Sparkles className="h-4 w-4 text-[#C8FF00]" /> Quick Demo Login
             </span>
             <span className="text-[11px] font-mono text-[#C8FF00]">Password123!</span>
           </div>
