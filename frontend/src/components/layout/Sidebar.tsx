@@ -111,12 +111,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Bottom System Footer */}
-        <div className="p-4 border-t border-[#1e232d] bg-[#07080a] text-center">
-          <p className="text-[10px] text-[#848E9C]">
-            NutriSync &bull; Activity & Nutrition
+        <div className="p-4 border-t border-[#1e232d] bg-[#07080a] text-center space-y-0.5">
+          <p className="text-[11px] font-semibold text-white tracking-wide">
+            NutriSync Pro <span className="text-[#C8FF00] font-mono text-[10px]">v1.0</span>
           </p>
-          <p className="text-[9px] text-[#C8FF00]/80 mt-0.5">
-            Athlete Pro Mode &bull; Yuri D. Salise
+          <p className="text-[10px] text-[#848E9C]">
+            Smart Workout & Nutrition Engine
           </p>
         </div>
       </aside>

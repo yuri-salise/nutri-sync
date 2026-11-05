@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const AdminAuditPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'exercises' | 'rag_logs' | 'knowledge'>('exercises');
+  const [activeTab, setActiveTab] = useState<'exercises' | 'rag_logs' | 'knowledge' | 'info'>('exercises');
 
   // Exercise Moderation
   const [pendingExercises, setPendingExercises] = useState<Exercise[]>([]);
@@ -140,6 +140,16 @@ export const AdminAuditPage: React.FC = () => {
             }`}
           >
             Food Database
+          </button>
+          <button
+            onClick={() => setActiveTab('info')}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              activeTab === 'info'
+                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
+                : 'text-[#848E9C] hover:text-white'
+            }`}
+          >
+            Capstone Credits
           </button>
         </div>
       </div>
@@ -308,6 +318,83 @@ export const AdminAuditPage: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab 4: Project & Capstone Information */}
+      {activeTab === 'info' && (
+        <div className="space-y-6">
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#12151b] via-[#0d1015] to-[#000000] border border-[#1e232d] shadow-2xl space-y-6">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#C8FF00] font-bold">
+                Academic Capstone Specification
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+                NutriSync-RAG: Activity-Synced Nutrition & Workout Tracking
+              </h2>
+              <p className="text-xs text-[#848E9C] mt-1">
+                ITSD 85 &bull; Special Topics in Software Development &bull; Academic Year 2026–2027
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
+                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Developer / Student</span>
+                <p className="text-sm font-bold text-white">Yuri D. Salise</p>
+                <p className="text-[11px] text-[#00E5FF] font-mono">Solo Full-Stack Architect</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
+                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Course & Section</span>
+                <p className="text-sm font-bold text-white">ITSD 85</p>
+                <p className="text-[11px] text-[#C8FF00] font-mono">BSIT 4A</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
+                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Instructor / Coach</span>
+                <p className="text-sm font-bold text-white">Coach Rinante Buntod</p>
+                <p className="text-[11px] text-[#848E9C] font-mono">Project Evaluator</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
+                <span className="text-[10px] text-[#848E9C] font-mono uppercase">System Version</span>
+                <p className="text-sm font-bold text-white">v1.0.0-production</p>
+                <p className="text-[11px] text-[#00D26A] font-mono">Docker Compose + Caddy</p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                ITSD 85 Rubric Architecture Compliance
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs font-mono">
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">F1–F6</span>
+                  <span className="text-[10px] text-[#848E9C]">Frontend SPA</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">B1–B9</span>
+                  <span className="text-[10px] text-[#848E9C]">FastAPI REST</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">D1–D4</span>
+                  <span className="text-[10px] text-[#848E9C]">Postgres & RLS</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">Q1–Q5</span>
+                  <span className="text-[10px] text-[#848E9C]">Pytest & Coverage</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">DP1–DP6</span>
+                  <span className="text-[10px] text-[#848E9C]">Caddy Proxy</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
+                  <span className="text-[#00D26A] font-bold block">T1–T6</span>
+                  <span className="text-[10px] text-[#848E9C]">Traceability</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

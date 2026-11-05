@@ -106,7 +106,7 @@ export const RegisterPage: React.FC = () => {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Yuri Salise"
+                placeholder="Alex Rivera"
                 required
                 className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
               />
@@ -120,7 +120,7 @@ export const RegisterPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="yuri@athlete.com"
+                placeholder="athlete@example.com"
                 required
                 className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
               />
