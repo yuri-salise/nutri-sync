@@ -1,0 +1,19 @@
+{
+  "name": "NutriSync-RAG Athletic AI",
+  "short_name": "NutriSync",
+  "description": "Activity-Synchronized Nutritional Retrieval & Geolocation Workout Platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

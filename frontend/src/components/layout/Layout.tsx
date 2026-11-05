@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
+import { BottomNav } from './BottomNav';
 
 export const Layout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -23,11 +24,14 @@ export const Layout: React.FC = () => {
         />
 
         <main className="flex-1 lg:pl-64 transition-all duration-300">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 pb-24 lg:pb-8 animate-fade-in">
             <Outlet />
           </div>
         </main>
       </div>
+
+      {/* Mobile-Native Bottom Navigation Bar */}
+      <BottomNav />
     </div>
   );
 };

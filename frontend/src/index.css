@@ -97,12 +97,14 @@
   animation-play-state: paused;
 }
 
-/* Leaflet Dark Filter for OpenStreetMap */
+/* Leaflet Dark Filter for OpenStreetMap (100% Free, Zero API Keys) */
 .leaflet-container {
   background: #07080a !important;
   font-family: 'Poppins', sans-serif !important;
 }
 
-.dark-map .leaflet-tile {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+.dark-map .leaflet-tile,
+.dark-tiles,
+img.leaflet-tile.dark-tiles {
+  filter: brightness(0.7) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.35) !important;
 }

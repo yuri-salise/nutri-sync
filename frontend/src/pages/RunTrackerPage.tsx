@@ -67,10 +67,10 @@ export const RunTrackerPage: React.FC = () => {
       attributionControl: false,
     }).setView(initialCoords, 15);
 
-    // CartoDB Dark Matter tiles for ultra-sleek OKX dark theme
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Free OpenStreetMap tile server with dark inverted styling (no API key required)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      className: 'dark-tiles',
     }).addTo(map);
 
     // Glowing OKX Neon Lime Polyline
