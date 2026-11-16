@@ -4,8 +4,8 @@ import { api } from '../services/api';
 import { Exercise, RagScanLog, FoodItemSummary } from '../types';
 import {
   ShieldCheck,
-  CheckCircle2,
-  XCircle,
+  Plus,
+  Trash2,
   Clock,
   Compass,
   Database,
@@ -19,9 +19,13 @@ import {
 export const AdminAuditPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'exercises' | 'rag_logs' | 'knowledge' | 'info'>('exercises');
 
-  // Exercise Moderation
-  const [pendingExercises, setPendingExercises] = useState<Exercise[]>([]);
-  const [moderating, setModerating] = useState<number | null>(null);
+  // Built-in exercise library (shared with every user)
+  const [libraryExercises, setLibraryExercises] = useState<Exercise[]>([]);
+  const [libraryQuery, setLibraryQuery] = useState('');
+  const [newExName, setNewExName] = useState('');
+  const [newExMuscle, setNewExMuscle] = useState('chest');
+  const [libraryError, setLibraryError] = useState<string | null>(null);
+  const [libraryBusy, setLibraryBusy] = useState(false);
 
   // RAG Logs
   const [ragLogs, setRagLogs] = useState<RagScanLog[]>([]);
@@ -33,17 +37,17 @@ export const AdminAuditPage: React.FC = () => {
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
 
   useEffect(() => {
-    loadPendingExercises();
+    loadLibrary();
     loadRagLogs();
     loadKnowledgeBase();
   }, []);
 
-  const loadPendingExercises = async () => {
+  const loadLibrary = async () => {
     try {
-      const res = await api.getExercises({ status: 'pending', limit: 50 });
-      setPendingExercises(res.data);
-    } catch (err) {
-      console.error('Failed to load pending exercises:', err);
+      const res = await api.getExercises({ limit: 100, sort: 'name' });
+      setLibraryExercises(res.data.filter((e) => e.status === 'approved'));
+    } catch (err: any) {
+      setLibraryError(err.message || 'Failed to load the exercise library.');
     }
   };
 
@@ -71,29 +75,40 @@ export const AdminAuditPage: React.FC = () => {
     }
   };
 
-  const handleApproveExercise = async (id: number) => {
-    setModerating(id);
+  const handleAddLibraryExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newExName.trim();
+    if (name.length < 2) {
+      setLibraryError('Exercise name needs at least 2 characters.');
+      return;
+    }
+    setLibraryBusy(true);
+    setLibraryError(null);
     try {
-      await api.updateExercise(id, { status: 'approved' });
-      setPendingExercises((prev) => prev.filter((e) => e.id !== id));
+      // Coach-created exercises go straight into the shared library.
+      const created = await api.createExercise({ name, muscle_group: newExMuscle, category: 'compound', met_value: 6 });
+      setLibraryExercises((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewExName('');
     } catch (err: any) {
-      alert(err.message || 'Failed to approve exercise.');
+      setLibraryError(err.message || 'Failed to add exercise.');
     } finally {
-      setModerating(null);
+      setLibraryBusy(false);
     }
   };
 
-  const handleRejectExercise = async (id: number) => {
-    setModerating(id);
+  const handleRemoveLibraryExercise = async (ex: Exercise) => {
+    if (!window.confirm(`Remove "${ex.name}" from the library? It will disappear from routines that use it.`)) return;
     try {
-      await api.updateExercise(id, { status: 'rejected' });
-      setPendingExercises((prev) => prev.filter((e) => e.id !== id));
+      await api.deleteExercise(ex.id);
+      setLibraryExercises((prev) => prev.filter((e) => e.id !== ex.id));
     } catch (err: any) {
-      alert(err.message || 'Failed to reject exercise.');
-    } finally {
-      setModerating(null);
+      setLibraryError(err.message || 'Failed to remove exercise.');
     }
   };
+
+  const visibleLibrary = libraryExercises.filter((e) =>
+    `${e.name} ${e.muscle_group}`.toLowerCase().includes(libraryQuery.trim().toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -105,7 +120,7 @@ export const AdminAuditPage: React.FC = () => {
             <span>Coach & Administrator Dashboard</span>
           </h1>
           <p className="text-sm text-[#848E9C]">
-            Review custom exercise proposals, inspect AI meal scan history, and browse the verified food database.
+            Manage the built-in exercise library, inspect AI meal scan history, and browse the verified food database.
           </p>
         </div>
 
@@ -119,7 +134,7 @@ export const AdminAuditPage: React.FC = () => {
                 : 'text-[#848E9C] hover:text-white'
             }`}
           >
-            Pending Exercises ({pendingExercises.length})
+            Exercise Library ({libraryExercises.length})
           </button>
           <button
             onClick={() => setActiveTab('rag_logs')}
@@ -154,59 +169,77 @@ export const AdminAuditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab 1: Exercise Moderation */}
+      {/* Tab 1: Built-in exercise library (users add their own private exercises without approval) */}
       {activeTab === 'exercises' && (
         <div className="space-y-4">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#848E9C]">
-            Lifts Awaiting Coach Review ({pendingExercises.length})
-          </h3>
+          <p className="text-sm text-[#848E9C]">
+            These exercises show up for every athlete. Athletes can also add their own private exercises
+            from the Workouts screen; those don’t need your approval.
+          </p>
 
-          {pendingExercises.length === 0 ? (
-            <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-              No exercises pending review. The movement catalog is fully audited.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingExercises.map((ex) => (
-                <div
-                  key={ex.id}
-                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{ex.name}</h4>
-                      <p className="text-xs text-[#848E9C]">
-                        Muscle: <span className="text-[#00E5FF] uppercase font-mono">{ex.muscle_group}</span> &bull;{' '}
-                        Category: <span className="text-white uppercase font-mono">{ex.category}</span>
-                      </p>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-xl bg-[#07080a] border border-[#1e232d] text-xs font-mono text-[#C8FF00]">
-                      MET: {ex.met_value}
-                    </span>
-                  </div>
+          <form onSubmit={handleAddLibraryExercise} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+            <label className="text-xs text-[#848E9C] space-y-1">
+              <span>Exercise name</span>
+              <input
+                value={newExName}
+                onChange={(e) => setNewExName(e.target.value)}
+                placeholder="e.g. Goblet Squat"
+                className="w-full h-11 rounded-xl bg-[#07080a] border border-[#1e232d] px-3 text-sm text-white focus:border-[#C8FF00] focus:outline-none"
+              />
+            </label>
+            <label className="text-xs text-[#848E9C] space-y-1">
+              <span>Muscle</span>
+              <select
+                value={newExMuscle}
+                onChange={(e) => setNewExMuscle(e.target.value)}
+                className="w-full h-11 rounded-xl bg-[#07080a] border border-[#1e232d] px-2 text-sm text-white capitalize"
+              >
+                {['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full body', 'cardio'].map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={libraryBusy}
+              className="h-11 px-5 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" /> Add to library
+            </button>
+          </form>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-[#1e232d]">
-                    <button
-                      onClick={() => handleApproveExercise(ex.id)}
-                      disabled={moderating === ex.id}
-                      className="flex-1 py-2 rounded-xl bg-[#00D26A] text-black font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#00c05e] transition-all disabled:opacity-50"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      onClick={() => handleRejectExercise(ex.id)}
-                      disabled={moderating === ex.id}
-                      className="flex-1 py-2 rounded-xl bg-[#F6465D]/20 text-[#F6465D] border border-[#F6465D]/30 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F6465D]/30 transition-all disabled:opacity-50"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      <span>Reject</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {libraryError && (
+            <p role="alert" className="text-sm text-[#F6465D]">{libraryError}</p>
           )}
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#848E9C]" />
+            <input
+              aria-label="Search library"
+              value={libraryQuery}
+              onChange={(e) => setLibraryQuery(e.target.value)}
+              placeholder="Search library"
+              className="w-full h-11 pl-9 pr-3 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm text-white focus:border-[#C8FF00] focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {visibleLibrary.map((ex) => (
+              <div key={ex.id} className="p-3 rounded-2xl bg-[#12151b] border border-[#1e232d] flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{ex.name}</p>
+                  <p className="text-xs text-[#848E9C] capitalize">{ex.muscle_group} · {ex.category}</p>
+                </div>
+                <button
+                  onClick={() => handleRemoveLibraryExercise(ex)}
+                  aria-label={`Remove ${ex.name}`}
+                  className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

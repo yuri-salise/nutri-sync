@@ -1,496 +1,786 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { api } from '../services/api';
-import { Exercise, WorkoutSession, WorkoutSet } from '../types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Dumbbell,
-  Plus,
-  Trash2,
   Award,
-  Clock,
-  Flame,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  Sparkles,
-  Zap,
-  Timer,
+  Check,
   ChevronRight,
+  Clock,
+  Dumbbell,
+  History,
+  Minus,
+  Play,
+  Plus,
+  RotateCcw,
+  Save,
+  Trash2,
+  X,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
+import { api } from '../services/api';
+import { Exercise, WorkoutRoutine, WorkoutSession } from '../types';
+import { RestTimer } from '../components/workout/RestTimer';
+import { ExercisePicker } from '../components/workout/ExercisePicker';
+import { Overlay } from '../components/workout/Overlay';
+import {
+  ActiveExercise,
+  ActiveWorkout,
+  DEFAULT_REST_SEC,
+  buildLastPerformance,
+  exerciseFromHistory,
+  formatKg,
+  groupSessionSets,
+  loadActiveWorkout,
+  newKey,
+  routineInputFromWorkout,
+  saveActiveWorkout,
+  workoutFromRoutine,
+  workoutFromSession,
+} from '../components/workout/workoutState';
+
+type View = 'train' | 'history';
+const REST_OPTIONS = [60, 90, 120, 180];
+
+const formatClock = (sec: number) => {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+};
+
+const formatRest = (sec: number) => (sec % 60 === 0 ? `${sec / 60}:00` : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`);
 
 export const WorkoutLoggerPage: React.FC = () => {
+  const [view, setView] = useState<View>('train');
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [routines, setRoutines] = useState<WorkoutRoutine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'log' | 'history'>('log');
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Form State
-  const [splitTitle, setSplitTitle] = useState('Push Day A - Upper Hypertrophy');
-  const [durationMin, setDurationMin] = useState(60);
-  const [isPublic, setIsPublic] = useState(true);
-  const [sets, setSets] = useState<
-    Array<{ exercise_id: number; set_no: number; reps: number; weight_kg: number }>
-  >([
-    { exercise_id: 1, set_no: 1, reps: 10, weight_kg: 80 },
-    { exercise_id: 1, set_no: 2, reps: 8, weight_kg: 95 },
-    { exercise_id: 1, set_no: 3, reps: 5, weight_kg: 105 },
-  ]);
+  const [workout, setWorkoutState] = useState<ActiveWorkout | null>(() => loadActiveWorkout());
+  const [now, setNow] = useState(Date.now());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [shareToFeed, setShareToFeed] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [summary, setSummary] = useState<{ session: WorkoutSession; workout: ActiveWorkout } | null>(null);
 
-  // Rest Timer State
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-
-  useEffect(() => {
-    loadData();
+  const setWorkout = useCallback((next: ActiveWorkout | null | ((w: ActiveWorkout | null) => ActiveWorkout | null)) => {
+    setWorkoutState((prev) => {
+      const value = typeof next === 'function' ? next(prev) : next;
+      saveActiveWorkout(value);
+      return value;
+    });
   }, []);
 
-  useEffect(() => {
-    let interval: any = null;
-    if (timerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [timerRunning]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [exRes, sessRes] = await Promise.all([
+      const [exRes, sessRes, routineRes] = await Promise.all([
         api.getExercises({ limit: 100 }),
-        api.getWorkouts({ limit: 20, only_mine: true }),
+        api.getWorkouts({ limit: 50, only_mine: true }),
+        api.getRoutines({ limit: 50 }),
       ]);
       setExercises(exRes.data);
       setSessions(sessRes.data);
-      if (exRes.data.length > 0 && sets[0].exercise_id === 1) {
-        setSets((prev) => prev.map((s) => ({ ...s, exercise_id: exRes.data[0].id })));
-      }
+      setRoutines(routineRes.data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load workouts.');
+      setError(err.message || 'We couldn’t load your workouts.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleAddSet = () => {
-    const lastSet = sets[sets.length - 1];
-    setSets([
-      ...sets,
-      {
-        exercise_id: lastSet ? lastSet.exercise_id : exercises[0]?.id || 1,
-        set_no: sets.length + 1,
-        reps: lastSet ? lastSet.reps : 10,
-        weight_kg: lastSet ? lastSet.weight_kg : 60,
-      },
-    ]);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleRemoveSet = (idx: number) => {
-    const updated = sets.filter((_, i) => i !== idx).map((s, i) => ({ ...s, set_no: i + 1 }));
-    setSets(updated);
-  };
+  useEffect(() => {
+    if (!workout) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [workout]);
 
-  const handleUpdateSet = (index: number, field: string, value: any) => {
-    const updated = [...sets];
-    updated[index] = { ...updated[index], [field]: value };
-    setSets(updated);
-  };
+  const lastPerf = useMemo(() => buildLastPerformance(sessions), [sessions]);
 
-  const calculate1RM = (weight: number, reps: number) => {
-    if (reps <= 0 || weight <= 0) return 0;
-    return Math.round(weight * (1 + reps / 30));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!splitTitle.trim()) {
-      setError('Please provide a workout split title.');
-      return;
-    }
-    if (sets.length === 0) {
-      setError('Please add at least one exercise set.');
-      return;
-    }
-
-    setSubmitting(true);
+  // ---------------------------------------------------------------- starting
+  const begin = (w: ActiveWorkout) => {
     setError(null);
-    setSuccessMsg(null);
+    setNotice(null);
+    setSummary(null);
+    setWorkout(w);
+    setView('train');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const startEmpty = () =>
+    begin({
+      title: `Workout ${new Date().toLocaleDateString(undefined, { weekday: 'long' })}`,
+      startedAt: Date.now(),
+      routineId: null,
+      exercises: [],
+      restEndsAt: null,
+      restTotalSec: 0,
+    });
+
+  // ---------------------------------------------------------------- editing
+  const updateExercise = (key: string, fn: (ex: ActiveExercise) => ActiveExercise) =>
+    setWorkout((w) => (w ? { ...w, exercises: w.exercises.map((ex) => (ex.key === key ? fn(ex) : ex)) } : w));
+
+  const addExercise = (exercise: Exercise) => {
+    setWorkout((w) =>
+      w ? { ...w, exercises: [...w.exercises, exerciseFromHistory(exercise, lastPerf.get(exercise.id))] } : w
+    );
+    setPickerOpen(false);
+  };
+
+  const updateSet = (exKey: string, setKey: string, patch: Partial<{ weight: number; reps: number }>) =>
+    updateExercise(exKey, (ex) => ({
+      ...ex,
+      sets: ex.sets.map((s) => (s.key === setKey ? { ...s, ...patch } : s)),
+    }));
+
+  const toggleDone = (ex: ActiveExercise, setKey: string) => {
+    const set = ex.sets.find((s) => s.key === setKey);
+    if (!set) return;
+    if (!set.done && set.reps < 1) {
+      setError('Enter how many reps you did before ticking the set.');
+      return;
+    }
+    setError(null);
+    const markingDone = !set.done;
+    setWorkout((w) =>
+      w
+        ? {
+            ...w,
+            exercises: w.exercises.map((e) =>
+              e.key === ex.key ? { ...e, sets: e.sets.map((s) => (s.key === setKey ? { ...s, done: !s.done } : s)) } : e
+            ),
+            // Rest timer starts automatically when a set is ticked.
+            restEndsAt: markingDone && ex.restSec > 0 ? Date.now() + ex.restSec * 1000 : w.restEndsAt,
+            restTotalSec: markingDone && ex.restSec > 0 ? ex.restSec : w.restTotalSec,
+          }
+        : w
+    );
+  };
+
+  const addSet = (ex: ActiveExercise) => {
+    const last = ex.sets[ex.sets.length - 1];
+    updateExercise(ex.key, (e) => ({
+      ...e,
+      sets: [...e.sets, { key: newKey(), weight: last?.weight ?? 0, reps: last?.reps ?? 10, done: false }],
+    }));
+  };
+
+  const removeSet = (ex: ActiveExercise, setKey: string) =>
+    updateExercise(ex.key, (e) => ({ ...e, sets: e.sets.filter((s) => s.key !== setKey) }));
+
+  const removeExercise = (key: string) =>
+    setWorkout((w) => (w ? { ...w, exercises: w.exercises.filter((e) => e.key !== key) } : w));
+
+  const cycleRest = (ex: ActiveExercise) => {
+    const idx = REST_OPTIONS.indexOf(ex.restSec);
+    updateExercise(ex.key, (e) => ({ ...e, restSec: REST_OPTIONS[(idx + 1) % REST_OPTIONS.length] }));
+  };
+
+  const adjustRest = useCallback(
+    (delta: number) =>
+      setWorkout((w) =>
+        w && w.restEndsAt ? { ...w, restEndsAt: Math.max(Date.now(), w.restEndsAt + delta * 1000), restTotalSec: Math.max(1, w.restTotalSec + delta) } : w
+      ),
+    [setWorkout]
+  );
+  const dismissRest = useCallback(() => setWorkout((w) => (w ? { ...w, restEndsAt: null } : w)), [setWorkout]);
+
+  const discardWorkout = () => {
+    if (window.confirm('Discard this workout? Nothing will be saved.')) {
+      setWorkout(null);
+      setFinishOpen(false);
+    }
+  };
+
+  // ---------------------------------------------------------------- finishing
+  const doneSets = workout?.exercises.flatMap((ex) => ex.sets.filter((s) => s.done)) ?? [];
+  const totalSets = workout?.exercises.reduce((n, ex) => n + ex.sets.length, 0) ?? 0;
+
+  const openFinish = () => {
+    if (!workout) return;
+    if (doneSets.length === 0) {
+      setError('Tick at least one set (the ✓ button) before finishing.');
+      return;
+    }
+    setError(null);
+    setFinishOpen(true);
+  };
+
+  const saveWorkout = async () => {
+    if (!workout) return;
+    const title = workout.title.trim();
+    if (title.length < 2) {
+      setError('Give your workout a name (at least 2 letters).');
+      setFinishOpen(false);
+      return;
+    }
+    setSaving(true);
     try {
-      const newSession = await api.createWorkout({
-        split_title: splitTitle,
-        duration_min: durationMin,
-        is_public: isPublic,
+      const sets = workout.exercises.flatMap((ex) =>
+        ex.sets
+          .filter((s) => s.done)
+          .map((s, i) => ({ exercise_id: ex.exercise.id, set_no: i + 1, reps: s.reps, weight_kg: s.weight }))
+      );
+      const session = await api.createWorkout({
+        split_title: title,
+        duration_min: Math.max(1, Math.round((Date.now() - workout.startedAt) / 60000)),
+        is_public: shareToFeed,
         sets,
       });
-
-      const prSets = newSession.sets.filter((s) => s.is_pr);
-      if (prSets.length > 0) {
-        setSuccessMsg(`Awesome work! You achieved ${prSets.length} new Personal Record(s)!`);
-      } else {
-        setSuccessMsg('Workout saved successfully!');
-      }
-
+      setSummary({ session, workout });
+      setWorkout(null);
+      setFinishOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       loadData();
-      setActiveTab('history');
     } catch (err: any) {
-      setError(err.message || 'Failed to save workout.');
+      setError(err.message || 'We couldn’t save your workout. Your sets are still here, so try again.');
+      setFinishOpen(false);
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
+  // ---------------------------------------------------------------- routines
+  const saveAsRoutine = async (name: string, source: ActiveExercise[], routineId: number | null) => {
+    const items = routineInputFromWorkout(source);
+    if (!items.length) return;
+    try {
+      if (routineId) {
+        await api.updateRoutine(routineId, { exercises: items });
+        setNotice(`Routine “${name}” updated with today’s weights.`);
+      } else {
+        await api.createRoutine({ name, exercises: items });
+        setNotice(`Saved “${name}”. Next time, just tap it to start.`);
+      }
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Could not save the routine.');
+    }
+  };
+
+  const promptSaveRoutine = (defaultName: string, source: ActiveExercise[]) => {
+    const name = window.prompt('Name this routine', defaultName)?.trim();
+    if (!name) return;
+    if (name.length < 2) {
+      setError('Routine names need at least 2 letters.');
+      return;
+    }
+    saveAsRoutine(name, source, null);
+  };
+
+  const deleteRoutine = async (r: WorkoutRoutine) => {
+    if (!window.confirm(`Delete the routine “${r.name}”? Your past workouts stay.`)) return;
+    try {
+      await api.deleteRoutine(r.id);
+      setRoutines((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (err: any) {
+      setError(err.message || 'Could not delete the routine.');
+    }
+  };
+
+  const renameRoutine = async (r: WorkoutRoutine) => {
+    const name = window.prompt('Rename routine', r.name)?.trim();
+    if (!name || name === r.name) return;
+    try {
+      await api.updateRoutine(r.id, { name });
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Could not rename the routine.');
+    }
+  };
+
+  const lastSession = sessions[0];
+  const isNewUser = !loading && sessions.length === 0 && routines.length === 0;
+
+  // ================================================================= render
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Dumbbell className="h-6 w-6 text-[#C8FF00]" />
-            <span>Workouts & Personal Records</span>
+            <span>{workout ? 'Workout in progress' : 'Workouts'}</span>
           </h1>
-          <p className="text-sm text-[#848E9C]">
-            Log your exercises, sets, and reps. We automatically calculate your 1-Rep Max and celebrate new Personal Records.
-          </p>
+          {!workout && (
+            <p className="text-sm text-[#848E9C] mt-1">What are you training today?</p>
+          )}
         </div>
-
-        {/* Tab switch */}
-        <div className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] text-xs">
-          <button
-            onClick={() => setActiveTab('log')}
-            className={`px-4 py-1.5 rounded-lg font-semibold transition-all ${
-              activeTab === 'log'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
-            }`}
-          >
-            Log Workout
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`px-4 py-1.5 rounded-lg font-semibold transition-all ${
-              activeTab === 'history'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
-            }`}
-          >
-            Past Workouts ({sessions.length})
-          </button>
-        </div>
+        {!workout && (
+          <div role="tablist" className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] text-sm self-start">
+            {(['train', 'history'] as const).map((v) => (
+              <button
+                key={v}
+                role="tab"
+                aria-selected={view === v}
+                onClick={() => setView(v)}
+                className={`px-4 py-2 rounded-lg font-semibold ${view === v ? 'bg-[#C8FF00] text-black' : 'text-[#848E9C] hover:text-white'}`}
+              >
+                {v === 'train' ? 'Train' : `History (${sessions.length})`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {successMsg && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-xs flex items-center gap-2.5 shadow-glow-green"
-        >
-          <CheckCircle className="h-4 w-4 shrink-0" />
-          <span className="font-semibold">{successMsg}</span>
-        </motion.div>
-      )}
-
       {error && (
-        <div className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-xs flex items-center gap-2.5">
+        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{error}</span>
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} aria-label="Dismiss" className="p-1">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {notice && (
+        <div className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-sm flex items-center gap-2.5">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{notice}</span>
+          <button onClick={() => setNotice(null)} aria-label="Dismiss" className="p-1">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
-      {activeTab === 'log' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Form */}
-          <div className="lg:col-span-2 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#C8FF00]" />
-                  <span>Workout Details</span>
-                </h3>
+      {/* ---------------------------------------------------- summary */}
+      {summary && !workout && (
+        <WorkoutSummary
+          summary={summary}
+          onSaveRoutine={() =>
+            summary.workout.routineId
+              ? saveAsRoutine(summary.workout.title, summary.workout.exercises, summary.workout.routineId)
+              : promptSaveRoutine(summary.workout.title, summary.workout.exercises)
+          }
+          onClose={() => setSummary(null)}
+        />
+      )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Workout Name</label>
-                    <input
-                      type="text"
-                      value={splitTitle}
-                      onChange={(e) => setSplitTitle(e.target.value)}
-                      placeholder="e.g. Chest & Triceps"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none transition-colors"
-                    />
-                  </div>
+      {/* ---------------------------------------------------- active workout */}
+      {workout && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+            <label htmlFor="workout-title" className="text-xs text-[#848E9C]">
+              Workout name
+            </label>
+            <input
+              id="workout-title"
+              value={workout.title}
+              onChange={(e) => setWorkout((w) => (w ? { ...w, title: e.target.value } : w))}
+              className="w-full bg-transparent text-lg font-bold text-white focus:outline-none border-b border-[#1e232d] focus:border-[#C8FF00] pb-1"
+            />
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1.5 text-[#848E9C]">
+                <Clock className="h-4 w-4" />
+                <span className="font-mono text-white">{formatClock(Math.floor((now - workout.startedAt) / 1000))}</span>
+              </span>
+              <span className="text-[#848E9C]">
+                <span className="text-white font-semibold">{doneSets.length}</span> of {totalSets} sets done
+              </span>
+            </div>
+          </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Duration (minutes)</label>
-                    <input
-                      type="number"
-                      value={durationMin}
-                      onChange={(e) => setDurationMin(parseInt(e.target.value) || 0)}
-                      min="5"
-                      max="300"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors font-mono"
-                    />
-                  </div>
+          {workout.exercises.length === 0 && (
+            <div className="p-6 rounded-3xl border border-dashed border-[#2a313f] text-center space-y-2">
+              <p className="text-white font-semibold">Let’s add your first exercise</p>
+              <p className="text-sm text-[#848E9C]">
+                Pick from the list or create your own. After each set, tap ✓ and your rest timer starts.
+              </p>
+            </div>
+          )}
+
+          {workout.exercises.map((ex) => (
+            <div key={ex.key} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-white break-words">{ex.exercise.name}</h3>
+                  <p className="text-xs text-[#848E9C]">
+                    {ex.lastTime ? `Last time: ${ex.lastTime}` : 'First time logging this one'}
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    checked={isPublic}
-                    onChange={(e) => setIsPublic(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#1e232d] bg-[#07080a] text-[#C8FF00] focus:ring-0"
-                  />
-                  <label htmlFor="isPublic" className="text-xs text-[#848E9C]">
-                    Share to Club Community Feed
-                  </label>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => cycleRest(ex)}
+                    className="h-9 px-2.5 rounded-lg bg-[#07080a] border border-[#1e232d] text-xs text-[#B7BDC6]"
+                    aria-label={`Rest time ${formatRest(ex.restSec)}, tap to change`}
+                  >
+                    Rest {formatRest(ex.restSec)}
+                  </button>
+                  <button
+                    onClick={() => removeExercise(ex.key)}
+                    aria-label={`Remove ${ex.exercise.name}`}
+                    className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
 
-              {/* Set Matrix Table */}
-              <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Award className="h-4 w-4 text-[#C8FF00]" />
-                    <span>Exercises & Sets</span>
-                  </h3>
+              <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center text-xs text-[#848E9C] px-1">
+                <span>Set</span>
+                <span>kg</span>
+                <span>Reps</span>
+                <span className="text-center">Done</span>
+                <span />
+              </div>
+
+              {ex.sets.map((s, i) => (
+                <div
+                  key={s.key}
+                  className={`grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center rounded-xl px-1 py-1 ${s.done ? 'bg-[#00D26A]/10' : ''}`}
+                >
+                  <span className="text-sm font-mono text-[#848E9C] text-center">{i + 1}</span>
+                  <input
+                    aria-label={`Set ${i + 1} weight in kg`}
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={0.5}
+                    value={s.weight}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => updateSet(ex.key, s.key, { weight: Math.max(0, Number(e.target.value) || 0) })}
+                    className="h-11 w-full min-w-0 rounded-xl bg-[#07080a] border border-[#1e232d] text-center text-base font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                  />
+                  <input
+                    aria-label={`Set ${i + 1} reps`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={s.reps}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => updateSet(ex.key, s.key, { reps: Math.max(0, Math.round(Number(e.target.value) || 0)) })}
+                    className="h-11 w-full min-w-0 rounded-xl bg-[#07080a] border border-[#1e232d] text-center text-base font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                  />
                   <button
-                    type="button"
-                    onClick={handleAddSet}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#181c24] hover:bg-[#222733] text-[#C8FF00] border border-[#C8FF00]/30 flex items-center gap-1.5 transition-all"
+                    onClick={() => toggleDone(ex, s.key)}
+                    aria-pressed={s.done}
+                    aria-label={s.done ? `Undo set ${i + 1}` : `Mark set ${i + 1} done`}
+                    className={`h-11 w-11 rounded-xl flex items-center justify-center border transition-colors ${
+                      s.done ? 'bg-[#00D26A] border-[#00D26A] text-black' : 'bg-[#07080a] border-[#2a313f] text-[#848E9C] hover:border-[#C8FF00]'
+                    }`}
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Add Set</span>
+                    <Check className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => removeSet(ex, s.key)}
+                    aria-label={`Remove set ${i + 1}`}
+                    className="h-11 w-7 flex items-center justify-center text-[#5E6673] hover:text-[#F6465D]"
+                  >
+                    <Minus className="h-4 w-4" />
                   </button>
                 </div>
+              ))}
 
-                <div className="space-y-3">
-                  {sets.map((set, idx) => {
-                    const est1RM = calculate1RM(set.weight_kg, set.reps);
-                    return (
-                      <div
-                        key={idx}
-                        className="p-3.5 rounded-2xl bg-[#07080a] border border-[#1e232d] flex flex-wrap sm:flex-nowrap items-center gap-3 transition-colors hover:border-[#2a313f]"
-                      >
-                        <span className="text-xs font-mono font-bold text-[#848E9C] w-6 text-center">
-                          #{set.set_no}
-                        </span>
+              <button
+                onClick={() => addSet(ex)}
+                className="w-full h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-[#B7BDC6] flex items-center justify-center gap-1.5 hover:text-white"
+              >
+                <Plus className="h-4 w-4" /> Add set
+              </button>
+            </div>
+          ))}
 
-                        <div className="flex-1 min-w-[140px]">
-                          <select
-                            value={set.exercise_id}
-                            onChange={(e) =>
-                              handleUpdateSet(idx, 'exercise_id', parseInt(e.target.value))
-                            }
-                            className="w-full bg-[#12151b] border border-[#1e232d] rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8FF00]"
-                          >
-                            {exercises.map((ex) => (
-                              <option key={ex.id} value={ex.id}>
-                                {ex.name} ({ex.muscle_group})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="w-full h-12 rounded-2xl border border-[#C8FF00]/40 text-[#C8FF00] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#C8FF00]/10"
+          >
+            <Plus className="h-5 w-5" /> Add exercise
+          </button>
 
-                        <div className="w-24">
-                          <div className="flex items-center bg-[#12151b] border border-[#1e232d] rounded-xl px-2 py-1">
-                            <input
-                              type="number"
-                              value={set.weight_kg}
-                              onChange={(e) =>
-                                handleUpdateSet(idx, 'weight_kg', parseFloat(e.target.value) || 0)
-                              }
-                              step="0.5"
-                              min="0"
-                              className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
-                            />
-                            <span className="text-[10px] text-[#848E9C] font-mono">kg</span>
-                          </div>
-                        </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={discardWorkout}
+              className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-[#F6465D] font-semibold text-sm"
+            >
+              Discard
+            </button>
+            <button
+              onClick={openFinish}
+              className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm shadow-glow-lime"
+            >
+              Finish workout
+            </button>
+          </div>
+        </div>
+      )}
 
-                        <div className="w-20">
-                          <div className="flex items-center bg-[#12151b] border border-[#1e232d] rounded-xl px-2 py-1">
-                            <input
-                              type="number"
-                              value={set.reps}
-                              onChange={(e) =>
-                                handleUpdateSet(idx, 'reps', parseInt(e.target.value) || 0)
-                              }
-                              min="1"
-                              className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
-                            />
-                            <span className="text-[10px] text-[#848E9C] font-mono">reps</span>
-                          </div>
-                        </div>
+      {/* ---------------------------------------------------- start screen */}
+      {!workout && view === 'train' && (
+        <div className="space-y-5">
+          {isNewUser && (
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#1e232d] space-y-3">
+              <p className="text-base font-bold text-white">New here? It’s 3 steps:</p>
+              <ol className="space-y-2 text-sm text-[#B7BDC6] list-decimal pl-5">
+                <li>Start a workout and add the exercises you’re doing.</li>
+                <li>After each set, tap ✓. Your rest timer starts on its own.</li>
+                <li>Finish, then save it as a routine so next time is one tap.</li>
+              </ol>
+            </div>
+          )}
 
-                        <div className="w-20 text-center">
-                          <span className="text-[10px] font-mono text-[#00E5FF] font-semibold">
-                            ~{est1RM}kg 1RM
-                          </span>
-                        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={startEmpty}
+              className="p-5 rounded-3xl bg-[#C8FF00] text-black text-left flex items-center justify-between gap-3 shadow-glow-lime"
+            >
+              <span>
+                <span className="block text-base font-black">Start empty workout</span>
+                <span className="block text-sm opacity-80">Add exercises as you go</span>
+              </span>
+              <Play className="h-6 w-6 fill-black shrink-0" />
+            </button>
+            {lastSession && (
+              <button
+                onClick={() => begin(workoutFromSession(lastSession, lastPerf))}
+                className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] text-left flex items-center justify-between gap-3 hover:border-[#2a313f]"
+              >
+                <span className="min-w-0">
+                  <span className="block text-base font-bold text-white">Repeat last workout</span>
+                  <span className="block text-sm text-[#848E9C] truncate">{lastSession.split_title}</span>
+                </span>
+                <RotateCcw className="h-5 w-5 text-[#C8FF00] shrink-0" />
+              </button>
+            )}
+          </div>
 
+          <div className="space-y-3">
+            <h2 className="text-base font-bold text-white">My routines</h2>
+            {loading ? (
+              <div className="h-24 rounded-3xl bg-[#12151b] animate-pulse" />
+            ) : routines.length === 0 ? (
+              <p className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C]">
+                No routines yet. Finish a workout and tap <span className="text-white font-semibold">Save as routine</span>, or
+                save one from your history.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {routines.map((r) => (
+                  <div key={r.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-bold text-white break-words">{r.name}</h3>
+                        <p className="text-xs text-[#848E9C]">
+                          {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'}
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => renameRoutine(r)} className="h-9 px-2 rounded-lg text-xs text-[#848E9C] hover:text-white">
+                          Rename
+                        </button>
                         <button
-                          type="button"
-                          onClick={() => handleRemoveSet(idx)}
-                          disabled={sets.length === 1}
-                          className="p-1.5 text-[#848E9C] hover:text-[#F6465D] hover:bg-[#F6465D]/10 rounded-lg transition-colors disabled:opacity-30"
+                          onClick={() => deleteRoutine(r)}
+                          aria-label={`Delete ${r.name}`}
+                          className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-3.5 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm tracking-wide hover:bg-[#d4ff33] shadow-glow-lime transition-all disabled:opacity-50"
-                  >
-                    {submitting ? 'Saving Workout & Checking PRs...' : 'Save Workout'}
-                  </button>
-                </div>
+                    </div>
+                    <p className="text-sm text-[#B7BDC6] line-clamp-2">
+                      {r.exercises.map((e) => e.exercise?.name).filter(Boolean).join(' · ')}
+                    </p>
+                    <button
+                      onClick={() => begin(workoutFromRoutine(r, lastPerf))}
+                      className="w-full h-11 rounded-xl bg-[#C8FF00]/10 border border-[#C8FF00]/40 text-[#C8FF00] font-bold text-sm flex items-center justify-center gap-1.5"
+                    >
+                      Start <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            </form>
-          </div>
-
-          {/* Right Rail: Rest Stopwatch & Auto 1RM Formula */}
-          <div className="space-y-6">
-            {/* Rest Timer */}
-            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card text-center">
-              <div className="flex items-center justify-between text-xs text-[#848E9C]">
-                <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                  <Timer className="h-4 w-4 text-[#C8FF00]" /> Rest Timer
-                </span>
-                <span className={`h-2 w-2 rounded-full ${timerRunning ? 'bg-[#00D26A] animate-pulse' : 'bg-[#848E9C]'}`} />
-              </div>
-
-              <div className="py-2">
-                <span className="text-4xl font-black font-mono text-white tracking-tight">
-                  {Math.floor(timerSeconds / 60)
-                    .toString()
-                    .padStart(2, '0')}
-                  :
-                  {(timerSeconds % 60).toString().padStart(2, '0')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTimerRunning(!timerRunning)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    timerRunning
-                      ? 'bg-[#F6465D] text-white shadow-glow-red'
-                      : 'bg-[#C8FF00] text-black shadow-glow-lime'
-                  }`}
-                >
-                  {timerRunning ? 'Pause' : 'Start Rest'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimerRunning(false);
-                    setTimerSeconds(0);
-                  }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#181c24] text-[#848E9C] hover:text-white border border-[#1e232d]"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
-
-            {/* 1RM Mechanics Card */}
-            <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-cyber-card">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-[#C8FF00]" /> How PRs Are Calculated
-              </h4>
-              <p className="text-[11px] text-[#848E9C] leading-relaxed">
-                Your estimated 1-Rep Max (1RM) is automatically calculated on each set using the standard strength formula:
-              </p>
-              <div className="p-2.5 rounded-xl bg-[#07080a] border border-[#1e232d] text-center font-mono text-xs text-[#00E5FF]">
-                1RM = Weight &times; (1 + Reps / 30)
-              </div>
-              <p className="text-[10px] text-[#848E9C]">
-                Whenever your lift beats your previous personal best, an official Personal Record (PR) is automatically saved!
-              </p>
-            </div>
+            )}
           </div>
         </div>
-      ) : (
-        /* History View */
-        <div className="space-y-4">
+      )}
+
+      {/* ---------------------------------------------------- history */}
+      {!workout && view === 'history' && (
+        <div className="space-y-3">
           {sessions.length === 0 ? (
-            <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-              No workouts logged yet. Switch to "Log Workout" to track your first training session.
+            <div className="p-8 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C] space-y-2">
+              <History className="h-6 w-6 mx-auto text-[#5E6673]" />
+              <p>Your finished workouts will show up here.</p>
             </div>
           ) : (
-            sessions.map((sess) => (
-              <div
-                key={sess.id}
-                className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card hover:border-[#2a313f] transition-colors"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>{sess.split_title}</span>
-                      {sess.sets.some((s) => s.is_pr) && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime">
-                          NEW PR
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-xs text-[#848E9C]">
-                      {new Date(sess.session_date).toLocaleDateString(undefined, {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs font-mono">
-                    <span className="flex items-center gap-1 text-[#848E9C]">
-                      <Clock className="h-3.5 w-3.5" /> {sess.duration_min} min
-                    </span>
-                    <span className="flex items-center gap-1 text-[#C8FF00] font-bold">
-                      <Flame className="h-3.5 w-3.5" /> +{Math.round(sess.burned_kcal)} kcal
-                    </span>
-                  </div>
-                </div>
-
-                {/* Sets Pill Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-2">
-                  {sess.sets.map((st) => (
-                    <div
-                      key={st.id}
-                      className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
-                        st.is_pr
-                          ? 'bg-[#C8FF00]/10 border-[#C8FF00]/40 text-[#C8FF00]'
-                          : 'bg-[#07080a] border-[#1e232d] text-[#848E9C]'
-                      }`}
-                    >
-                      <span className="font-semibold text-white truncate max-w-[130px]">
-                        {st.exercise?.name || 'Exercise'}
-                      </span>
-                      <span className="font-mono">
-                        {st.weight_kg}kg &times; {st.reps}
-                      </span>
+            sessions.map((s) => {
+              const groups = groupSessionSets(s);
+              const prCount = s.sets.filter((x) => x.is_pr).length;
+              return (
+                <div key={s.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-white break-words">{s.split_title}</h3>
+                      <p className="text-xs text-[#848E9C]">
+                        {new Date(s.session_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ·{' '}
+                        {s.duration_min} min · {Math.round(s.burned_kcal)} kcal
+                      </p>
                     </div>
-                  ))}
+                    {prCount > 0 && (
+                      <span className="shrink-0 px-2.5 py-1 rounded-full bg-[#FFB800]/15 text-[#FFB800] text-xs font-bold flex items-center gap-1">
+                        <Award className="h-3.5 w-3.5" /> {prCount} PR{prCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-1 text-sm">
+                    {groups.map((g) => (
+                      <li key={g.name} className="flex justify-between gap-3">
+                        <span className="text-[#EAECEF] truncate">
+                          {g.name} {g.pr && <Award className="inline h-3.5 w-3.5 text-[#FFB800]" />}
+                        </span>
+                        <span className="text-[#848E9C] font-mono shrink-0">
+                          {g.sets} × {g.reps}
+                          {g.topWeight > 0 ? ` @ ${formatKg(g.topWeight)} kg` : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => begin(workoutFromSession(s, lastPerf))}
+                      className="h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white flex items-center justify-center gap-1.5"
+                    >
+                      <RotateCcw className="h-4 w-4" /> Do again
+                    </button>
+                    <button
+                      onClick={() => promptSaveRoutine(s.split_title, workoutFromSession(s, lastPerf).exercises)}
+                      className="h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white flex items-center justify-center gap-1.5"
+                    >
+                      <Save className="h-4 w-4" /> Save as routine
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
+
+      {/* ---------------------------------------------------- overlays */}
+      {workout?.restEndsAt && (
+        <RestTimer endsAt={workout.restEndsAt} totalSec={workout.restTotalSec || DEFAULT_REST_SEC} onAdjust={adjustRest} onDismiss={dismissRest} />
+      )}
+
+      {pickerOpen && workout && (
+        <ExercisePicker
+          exercises={exercises}
+          alreadyAdded={workout.exercises.map((e) => e.exercise.id)}
+          onPick={addExercise}
+          onCreated={(ex) => {
+            setExercises((prev) => [...prev, ex]);
+            addExercise(ex);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {finishOpen && workout && (
+        <Overlay>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="finish-title">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setFinishOpen(false)} aria-hidden="true" />
+          <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0d1015] border border-[#1e232d] p-5 space-y-4">
+            <h2 id="finish-title" className="text-lg font-bold text-white">
+              Finish workout?
+            </h2>
+            <p className="text-sm text-[#B7BDC6]">
+              You did <span className="text-white font-semibold">{doneSets.length}</span> set{doneSets.length === 1 ? '' : 's'} in{' '}
+              {formatClock(Math.floor((now - workout.startedAt) / 1000))}.
+              {totalSets > doneSets.length && (
+                <span className="block mt-1 text-[#FFB800]">
+                  {totalSets - doneSets.length} set{totalSets - doneSets.length === 1 ? ' isn’t' : 's aren’t'} ticked and won’t be saved.
+                </span>
+              )}
+            </p>
+            <label className="flex items-center gap-3 text-sm text-white">
+              <input
+                type="checkbox"
+                checked={shareToFeed}
+                onChange={(e) => setShareToFeed(e.target.checked)}
+                className="h-4 w-4 accent-[#C8FF00]"
+              />
+              Share to the community feed
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setFinishOpen(false)} className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm">
+                Keep going
+              </button>
+              <button
+                onClick={saveWorkout}
+                disabled={saving}
+                className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Save workout'}
+              </button>
+            </div>
+          </div>
+        </div>
+        </Overlay>
+      )}
     </div>
+  );
+};
+
+const WorkoutSummary: React.FC<{
+  summary: { session: WorkoutSession; workout: ActiveWorkout };
+  onSaveRoutine: () => void;
+  onClose: () => void;
+}> = ({ summary, onSaveRoutine, onClose }) => {
+  const { session, workout } = summary;
+  const prs = session.sets.filter((s) => s.is_pr);
+  const volume = session.sets.reduce((v, s) => v + s.weight_kg * s.reps, 0);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-5 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#C8FF00]/30 space-y-4"
+    >
+      <div>
+        <p className="text-xl font-black text-white">Workout saved. Nice job! 💪</p>
+        <p className="text-sm text-[#848E9C]">{session.split_title}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        {[
+          { label: 'Time', value: `${session.duration_min} min` },
+          { label: 'Sets', value: String(session.sets.length) },
+          { label: 'Volume', value: `${Math.round(volume).toLocaleString()} kg` },
+        ].map((s) => (
+          <div key={s.label} className="p-3 rounded-2xl bg-[#07080a] border border-[#1e232d]">
+            <p className="text-xs text-[#848E9C]">{s.label}</p>
+            <p className="text-base font-black font-mono text-white">{s.value}</p>
+          </div>
+        ))}
+      </div>
+      {prs.length > 0 && (
+        <div className="p-3 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 space-y-1">
+          <p className="text-sm font-bold text-[#FFB800] flex items-center gap-1.5">
+            <Award className="h-4 w-4" /> New personal record{prs.length > 1 ? 's' : ''}!
+          </p>
+          {prs.map((p) => (
+            <p key={p.id} className="text-sm text-white">
+              {p.exercise?.name}: {formatKg(p.weight_kg)} kg × {p.reps}
+            </p>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button
+          onClick={onSaveRoutine}
+          className="h-11 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-1.5"
+        >
+          <Save className="h-4 w-4" />
+          {workout.routineId ? 'Update routine with today’s weights' : 'Save as routine'}
+        </button>
+        <button onClick={onClose} className="h-11 rounded-xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm">
+          Done
+        </button>
+      </div>
+    </motion.div>
   );
 };

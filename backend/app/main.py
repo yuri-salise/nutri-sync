@@ -16,6 +16,7 @@ from app.api.v1.exercises import router as exercises_router
 from app.api.v1.nutrition_logs import router as nutrition_logs_router
 from app.api.v1.rag_nutrition import router as rag_router
 from app.api.v1.run_activities import router as runs_router
+from app.api.v1.workout_routines import router as routines_router
 from app.api.v1.workout_sessions import router as workouts_router
 from app.core.config import settings
 from app.core.logging import logger
@@ -150,6 +151,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(exercises_router, prefix=settings.API_V1_PREFIX)
 app.include_router(workouts_router, prefix=settings.API_V1_PREFIX)
+app.include_router(routines_router, prefix=settings.API_V1_PREFIX)
 app.include_router(runs_router, prefix=settings.API_V1_PREFIX)
 app.include_router(rag_router, prefix=settings.API_V1_PREFIX)
 app.include_router(nutrition_logs_router, prefix=settings.API_V1_PREFIX)
