@@ -116,6 +116,16 @@ export interface PredictedMacros {
   fat_g: number;
 }
 
+export interface ScannedMealItem {
+  query_text: string;
+  matched_food: FoodItemSummary | null;
+  grams: number;
+  macros: PredictedMacros;
+  match_score: number;
+  confidence: 'high' | 'low' | 'none';
+  alternatives: FoodItemSummary[];
+}
+
 export interface RagScanResult {
   scan_id: number;
   query_input: string;
@@ -125,6 +135,8 @@ export interface RagScanResult {
   latency_ms: number;
   top_similarity_score: number;
   predicted_macros: PredictedMacros;
+  items: ScannedMealItem[];
+  unmatched: string[];
   retrieved_items: FoodItemSummary[];
   model_version: string;
 }

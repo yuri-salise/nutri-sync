@@ -32,6 +32,20 @@ class PredictedMacros(BaseModel):
     fat_g: float
 
 
+class ScannedMealItem(BaseModel):
+    query_text: str = Field(
+        ..., description="The part of the meal description this item came from."
+    )
+    matched_food: Optional[FoodItemSummary] = Field(
+        None, description="Best matching food, or null when nothing credible was found."
+    )
+    grams: float = Field(..., description="Estimated portion in grams (0 when unmatched).")
+    macros: PredictedMacros
+    match_score: float = Field(..., description="Hybrid lexical + embedding score, 0-1.")
+    confidence: str = Field(..., description="high | low | none")
+    alternatives: List[FoodItemSummary] = Field(default_factory=list)
+
+
 class RagScanResponse(BaseModel):
     scan_id: int
     query_input: str
@@ -41,6 +55,8 @@ class RagScanResponse(BaseModel):
     latency_ms: float
     top_similarity_score: float
     predicted_macros: PredictedMacros
+    items: List[ScannedMealItem] = Field(default_factory=list)
+    unmatched: List[str] = Field(default_factory=list)
     retrieved_items: List[FoodItemSummary]
     model_version: str
 
