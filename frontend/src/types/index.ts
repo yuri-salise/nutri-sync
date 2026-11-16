@@ -85,9 +85,60 @@ export interface RoutineExerciseInput {
   rest_sec: number;
 }
 
+export type SportType = 'run' | 'walk' | 'ride' | 'hike';
+
+export interface FeedAuthor {
+  id: number;
+  name: string;
+}
+
+export interface FeedExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  top_weight_kg: number;
+  is_pr: boolean;
+}
+
+export interface FeedItem {
+  key: string;
+  type: 'workout' | 'run' | 'post';
+  id: number;
+  timestamp: string;
+  author: FeedAuthor;
+  title: string;
+  text?: string | null;
+  burned_kcal?: number | null;
+  duration_min?: number | null;
+  exercises?: FeedExercise[] | null;
+  prs_count?: number | null;
+  has_verified_pr?: boolean | null;
+  sport_type?: SportType | null;
+  surface_type?: string | null;
+  distance_km?: number | null;
+  duration_sec?: number | null;
+  elevation_gain_m?: number | null;
+  route?: [number, number][] | null;
+  route_hidden_ends: boolean;
+  kudos_count: number;
+  kudos_by_me: boolean;
+  comments_count: number;
+  mine: boolean;
+}
+
+export interface FeedComment {
+  id: number;
+  author: FeedAuthor;
+  body: string;
+  created_at: string;
+  mine: boolean;
+}
+
 export interface RunActivity {
   id: number;
   user_id: number;
+  sport_type: SportType;
+  title?: string | null;
   surface_type: 'road' | 'trail';
   distance_km: number;
   duration_sec: number;

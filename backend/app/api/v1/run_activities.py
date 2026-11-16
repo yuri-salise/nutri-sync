@@ -12,17 +12,22 @@ from app.db.models import RunActivity, User
 from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.run import RunActivityCreate, RunActivityResponse, RunActivityUpdate
+from app.services.activity_calories import estimate_burned_kcal
+from app.services.social import delete_social_for
 
 router = APIRouter(prefix="/run-activities", tags=["Runs"])
 
 
 @router.get(
-    "", response_model=PaginatedResponse[RunActivityResponse], summary="List GPS run activities"
+    "",
+    response_model=PaginatedResponse[RunActivityResponse],
+    summary="List GPS activities (run, walk, ride, hike)",
 )
 async def list_run_activities(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     surface_type: Optional[str] = Query(None, description="road or trail"),
+    sport_type: Optional[str] = Query(None, description="run | walk | ride | hike"),
     only_mine: bool = Query(True),
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
@@ -38,6 +43,8 @@ async def list_run_activities(
 
     if surface_type:
         query = query.where(RunActivity.surface_type == surface_type)
+    if sport_type:
+        query = query.where(RunActivity.sport_type == sport_type)
 
     count_query = select(func.count()).select_from(query.subquery())
     total_res = await db.execute(count_query)
@@ -60,7 +67,7 @@ async def list_run_activities(
     "",
     response_model=RunActivityResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Record a GPS road or trail run activity",
+    summary="Record a GPS activity (run, walk, ride or hike)",
 )
 async def create_run_activity(
     payload: RunActivityCreate,
@@ -73,17 +80,23 @@ async def create_run_activity(
     user = await db.get(User, user_id)
     weight = user.weight_kg if user else 70.0
 
-    # Calorie calculation: ACSM running expenditure formula approx: ~1.036 * weight_kg * distance_km
-    # Trail running adds ~15% extra metabolic cost due to uneven terrain and elevation
+    # Calories depend on the sport: running, walking, riding (by speed) and hiking each
+    # have their own formula (see services/activity_calories.py).
     burned = payload.burned_kcal
     if burned is None:
-        multiplier = 1.15 if payload.surface_type == "trail" else 1.0
-        burned = round(
-            1.036 * weight * payload.distance_km * multiplier + (payload.elevation_gain_m * 0.05), 1
+        burned = estimate_burned_kcal(
+            sport=payload.sport_type,
+            weight_kg=weight,
+            distance_km=payload.distance_km,
+            duration_sec=payload.duration_sec,
+            elevation_gain_m=payload.elevation_gain_m,
+            surface=payload.surface_type,
         )
 
     run = RunActivity(
         user_id=user_id,
+        sport_type=payload.sport_type,
+        title=(payload.title or "").strip() or None,
         surface_type=payload.surface_type,
         distance_km=payload.distance_km,
         duration_sec=payload.duration_sec,
@@ -195,6 +208,7 @@ async def delete_run_activity(
             },
         )
 
+    await delete_social_for(db, "run", run.id)
     await db.delete(run)
     await db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,170 +1,267 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertCircle, Loader2, Send, Users } from 'lucide-react';
 import { api } from '../services/api';
-import { Users, Dumbbell, MapPin, Award, Flame, Clock, ShieldCheck, Filter } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { FeedItem } from '../types';
+import { Avatar } from '../components/common/Avatar';
+import { FeedCard } from '../components/feed/FeedCard';
+
+type Filter = 'all' | 'workouts' | 'runs' | 'posts';
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'workouts', label: 'Workouts' },
+  { id: 'runs', label: 'Activities' },
+  { id: 'posts', label: 'Posts' },
+];
+const PAGE_SIZE = 10;
+const MAX_POST = 1000;
 
 export const CommunityFeedPage: React.FC = () => {
-  const [feedItems, setFeedItems] = useState<any[]>([]);
+  const { user, role } = useAuth();
+  const [filter, setFilter] = useState<Filter>('all');
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState('all');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [draft, setDraft] = useState('');
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [posting, setPosting] = useState(false);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const requestId = useRef(0);
+
+  const load = useCallback(async (nextPage: number, replace: boolean, f: Filter) => {
+    const id = ++requestId.current;
+    try {
+      if (replace) setLoading(true);
+      else setLoadingMore(true);
+      setError(null);
+      const res = await api.getCommunityFeed(nextPage, PAGE_SIZE, f);
+      if (id !== requestId.current) return; // a newer request replaced this one
+      setItems((prev) => {
+        const base = replace ? [] : prev;
+        const seen = new Set(base.map((i) => i.key));
+        return [...base, ...res.data.filter((i) => !seen.has(i.key))];
+      });
+      setPage(nextPage);
+      setTotalPages(res.meta.total_pages);
+    } catch (err: any) {
+      if (id === requestId.current) setError(err.message || 'We couldn’t load the feed.');
+    } finally {
+      if (id === requestId.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    loadFeed();
-  }, [filterType]);
+    load(1, true, filter);
+  }, [filter, load]);
 
-  const loadFeed = async () => {
+  const hasMore = page < totalPages;
+
+  // Load the next page when the bottom of the feed scrolls into view.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore || loading || loadingMore || error) return;
+    const obs = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && load(page + 1, false, filter),
+      { rootMargin: '300px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, loading, loadingMore, error, page, filter, load]);
+
+  const patchItem = (key: string, fn: (i: FeedItem) => FeedItem) =>
+    setItems((prev) => prev.map((i) => (i.key === key ? fn(i) : i)));
+
+  const toggleKudos = async (item: FeedItem) => {
+    const giving = !item.kudos_by_me;
+    patchItem(item.key, (i) => ({
+      ...i,
+      kudos_by_me: giving,
+      kudos_count: Math.max(0, i.kudos_count + (giving ? 1 : -1)),
+    }));
     try {
-      setLoading(true);
-      const res = await api.getCommunityFeed(1, 30, filterType === 'all' ? undefined : filterType);
-      setFeedItems(res.data);
-    } catch (err) {
-      console.error('Failed to load community feed:', err);
-    } finally {
-      setLoading(false);
+      if (giving) await api.giveKudos(item.type, item.id);
+      else await api.removeKudos(item.type, item.id);
+    } catch {
+      patchItem(item.key, (i) => ({ ...i, kudos_by_me: item.kudos_by_me, kudos_count: item.kudos_count }));
+      setError('Couldn’t update your kudos. Please try again.');
     }
   };
 
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Users className="h-6 w-6 text-[#C8FF00]" />
-            <span>Club Activity Feed</span>
-          </h1>
-          <p className="text-sm text-[#848E9C]">
-            See workouts, runs, and new personal records shared by teammates.
-          </p>
-        </div>
+  const changeCommentCount = (item: FeedItem, delta: number) =>
+    patchItem(item.key, (i) => ({ ...i, comments_count: Math.max(0, i.comments_count + delta) }));
 
-        {/* Filter buttons */}
-        <div className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] self-start sm:self-auto text-xs">
-          <button
-            onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-              filterType === 'all'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
-            }`}
-          >
-            All Activities
-          </button>
-          <button
-            onClick={() => setFilterType('workouts')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-              filterType === 'workouts'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
-            }`}
-          >
-            Workouts
-          </button>
-          <button
-            onClick={() => setFilterType('runs')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-              filterType === 'runs'
-                ? 'bg-[#00E5FF] text-black shadow-glow-cyan'
-                : 'text-[#848E9C] hover:text-white'
-            }`}
-          >
-            Runs
-          </button>
-        </div>
+  const deletePost = async (item: FeedItem) => {
+    if (!window.confirm('Delete this post? Its comments and kudos will be removed too.')) return;
+    try {
+      await api.deletePost(item.id);
+      setItems((prev) => prev.filter((i) => i.key !== item.key));
+    } catch (err: any) {
+      setError(err.message || 'Couldn’t delete that post.');
+    }
+  };
+
+  const submitPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const body = draft.trim();
+    if (!body || posting) return;
+    setPosting(true);
+    setError(null);
+    try {
+      const created = await api.createPost(body);
+      setDraft('');
+      setComposerOpen(false);
+      if (filter === 'all' || filter === 'posts') setItems((prev) => [created, ...prev]);
+      else setFilter('all');
+    } catch (err: any) {
+      setError(err.message || 'Couldn’t share your post.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const viewerName = user?.full_name ?? 'You';
+  const viewerId = user?.id ?? 0;
+
+  return (
+    <div className="space-y-4 max-w-2xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <Users className="h-6 w-6 text-[#C8FF00]" />
+          <span>Community</span>
+        </h1>
+        <p className="text-sm text-[#848E9C] mt-1">See what everyone is training, cheer them on, and share your own wins.</p>
       </div>
 
-      {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin" />
+      {/* Composer */}
+      <form onSubmit={submitPost} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+        <div className="flex items-start gap-3">
+          <Avatar name={viewerName} id={viewerId} />
+          <div className="flex-1 min-w-0">
+            <label htmlFor="post-body" className="sr-only">
+              Share an update
+            </label>
+            <textarea
+              id="post-body"
+              value={draft}
+              maxLength={MAX_POST}
+              rows={composerOpen ? 3 : 1}
+              onFocus={() => setComposerOpen(true)}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={`What's on your mind, ${viewerName.split(' ')[0]}?`}
+              className="w-full bg-[#07080a] border border-[#1e232d] rounded-2xl px-4 py-3 text-base text-white placeholder-[#848E9C] focus:border-[#C8FF00] focus:outline-none resize-none"
+            />
+          </div>
         </div>
-      ) : feedItems.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
-          No public training posts in the club feed yet.
+        {(composerOpen || draft) && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-[#848E9C]">
+              {draft.length}/{MAX_POST}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft('');
+                  setComposerOpen(false);
+                }}
+                className="h-10 px-4 rounded-xl text-sm text-[#848E9C] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!draft.trim() || posting}
+                className="h-10 px-5 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center gap-1.5 disabled:opacity-40"
+              >
+                <Send className="h-4 w-4" /> {posting ? 'Posting…' : 'Post'}
+              </button>
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-[#848E9C]">
+          Workouts and activities you share appear here automatically when you finish them.
+        </p>
+      </form>
+
+      {/* Filters */}
+      <div role="tablist" aria-label="Feed filter" className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.id}
+            role="tab"
+            aria-selected={filter === f.id}
+            onClick={() => setFilter(f.id)}
+            className={`shrink-0 h-10 px-4 rounded-full text-sm font-semibold border transition-colors ${
+              filter === f.id
+                ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
+                : 'bg-[#12151b] text-[#B7BDC6] border-[#1e232d] hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => load(1, true, filter)} className="font-semibold underline">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Feed */}
+      {loading ? (
+        <div className="space-y-4" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-48 rounded-3xl bg-[#12151b] border border-[#1e232d] animate-pulse" />
+          ))}
+        </div>
+      ) : items.length === 0 && !error ? (
+        <div className="p-10 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-2">
+          <p className="text-base font-bold text-white">It’s quiet in here</p>
+          <p className="text-sm text-[#848E9C]">
+            {filter === 'all' || filter === 'posts'
+              ? 'Be the first to post something above, or finish a workout and share it.'
+              : 'Nothing here yet. Finish a workout or activity and share it to get things started.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {feedItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-all space-y-4"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-10 w-10 rounded-2xl flex items-center justify-center ${
-                      item.type === 'workout'
-                        ? 'bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30'
-                        : 'bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/30'
-                    }`}
-                  >
-                    {item.type === 'workout' ? <Dumbbell className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{item.user?.full_name || 'Athlete'}</span>
-                      {item.has_pr && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 shadow-glow-lime flex items-center gap-1">
-                          <Award className="h-3 w-3" /> NEW PR
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[11px] font-mono text-[#848E9C]">
-                      {new Date(item.date).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-[#C8FF00]">
-                  <Flame className="h-4 w-4" />
-                  <span>+{Math.round(item.burned_kcal)} kcal</span>
-                </div>
-              </div>
-
-              {/* Title & metrics */}
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-2">
-                <p className="text-sm font-semibold text-white">{item.title}</p>
-
-                {item.type === 'workout' && item.sets && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {item.sets.slice(0, 4).map((s: any, idx: number) => (
-                      <span
-                        key={idx}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono ${
-                          s.is_pr
-                            ? 'bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30 font-bold'
-                            : 'bg-[#12151b] text-[#848E9C] border border-[#1e232d]'
-                        }`}
-                      >
-                        {s.exercise_name}: {s.weight_kg}kg &times; {s.reps}
-                      </span>
-                    ))}
-                    {item.sets.length > 4 && (
-                      <span className="text-[11px] font-mono text-[#848E9C] self-center">
-                        +{item.sets.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {item.type === 'run' && (
-                  <div className="flex items-center gap-4 text-xs font-mono text-[#848E9C]">
-                    <span>Distance: <b className="text-white">{item.distance_km} km</b></span>
-                    <span>Duration: <b className="text-white">{Math.round(item.duration_sec / 60)} min</b></span>
-                    <span>Surface: <b className="text-[#00E5FF] uppercase">{item.surface_type}</b></span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+          {items.map((item) => (
+            <FeedCard
+              key={item.key}
+              item={item}
+              viewerName={viewerName}
+              viewerId={viewerId}
+              isAdmin={role === 'admin'}
+              onToggleKudos={toggleKudos}
+              onCommentCount={changeCommentCount}
+              onDeletePost={deletePost}
+            />
           ))}
+
+          <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+            {loadingMore ? (
+              <Loader2 className="h-5 w-5 text-[#848E9C] animate-spin" aria-label="Loading more" />
+            ) : hasMore ? (
+              <button onClick={() => load(page + 1, false, filter)} className="h-10 px-5 rounded-xl bg-[#12151b] border border-[#1e232d] text-sm font-semibold text-white">
+                Load more
+              </button>
+            ) : (
+              <span className="text-sm text-[#5E6673]">You’re all caught up</span>
+            )}
+          </div>
         </div>
       )}
     </div>

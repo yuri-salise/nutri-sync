@@ -203,11 +203,11 @@ export const DashboardPage: React.FC = () => {
                 <span>Log Workout</span>
               </Link>
               <Link
-                to="/runs"
+                to="/record"
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold bg-[#181c24] hover:bg-[#202530] text-white border border-[#2a313f] transition-all"
               >
                 <MapPin className="h-4 w-4 text-[#00E5FF]" />
-                <span>Track Run</span>
+                <span>Record Activity</span>
               </Link>
             </div>
           </div>

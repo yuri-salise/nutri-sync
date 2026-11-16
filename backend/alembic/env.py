@@ -12,6 +12,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 import app.db.models  # noqa: F401
 import app.db.routine_models  # noqa: F401
+import app.db.social_models  # noqa: F401
 from app.core.config import settings
 from app.db.base import Base
 

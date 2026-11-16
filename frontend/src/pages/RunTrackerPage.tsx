@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
-import { RunActivity } from '../types';
+import { RunActivity, SportType } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { Overlay } from '../components/common/Overlay';
+import { SportIcon } from '../components/activity/SportIcon';
+import { RouteThumb, parseRoute } from '../components/activity/RouteThumb';
+import { SPORTS, estimateKcal, formatSpeed, parseApiDate, sportInfo } from '../utils/activity';
 import {
   Play,
   Pause,
@@ -14,6 +19,8 @@ import {
   AlertTriangle,
   Trash2,
   FlaskConical,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import L from 'leaflet';
 import {
@@ -45,7 +52,13 @@ export const RunTrackerPage: React.FC = () => {
   const centeredRef = useRef(false);
 
   const [runs, setRuns] = useState<RunActivity[]>([]);
-  const [surfaceType, setSurfaceType] = useState<'road' | 'trail'>('road');
+  const { user } = useAuth();
+  const [sport, setSport] = useState<SportType>('run');
+  const info = sportInfo(sport);
+  const surfaceType = info.surface;
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [shareToFeed, setShareToFeed] = useState(true);
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>('locating');
   const [currentFix, setCurrentFix] = useState<GpsFix | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -303,24 +316,36 @@ export const RunTrackerPage: React.FC = () => {
     setElapsedSec(0);
   };
 
-  const finishActivity = async () => {
-    stopTicking();
-    const finalTrack = trackRef.current;
-    const durationSec = Math.floor(accumulatedMsRef.current / 1000);
+  const defaultTitle = () => {
+    const h = new Date().getHours();
+    const part = h < 5 ? 'Night' : h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night';
+    return `${part} ${info.label}`;
+  };
 
-    if (finalTrack.distanceM < 50 || durationSec < 30) {
-      phaseRef.current = 'paused';
-      setPhase('paused');
-      setErrorMsg(
-        'That’s a bit short to save. Keep going, or tap Discard if you want to start over.'
-      );
+  const requestFinish = () => {
+    stopTicking();
+    const durationSec = Math.floor(accumulatedMsRef.current / 1000);
+    phaseRef.current = 'paused';
+    setPhase('paused');
+
+    if (trackRef.current.distanceM < 50 || durationSec < 30) {
+      setErrorMsg('That’s a bit short to save. Keep going, or tap Discard if you want to start over.');
       return;
     }
+    setErrorMsg(null);
+    setTitle(defaultTitle());
+    setFinishOpen(true);
+  };
 
+  const saveActivity = async () => {
+    const finalTrack = trackRef.current;
+    const durationSec = Math.floor(accumulatedMsRef.current / 1000);
     setSaving(true);
     setErrorMsg(null);
     try {
       await api.createRun({
+        sport_type: sport,
+        title: title.trim() || undefined,
         surface_type: surfaceType,
         distance_km: Math.round(finalTrack.distanceM) / 1000,
         duration_sec: durationSec,
@@ -329,17 +354,18 @@ export const RunTrackerPage: React.FC = () => {
           type: 'LineString',
           coordinates: finalTrack.points.map((p) => [p.lng, p.lat]),
         }),
-        is_public: true,
+        is_public: shareToFeed,
       });
       setSuccessMsg(
-        `Nice work! ${(finalTrack.distanceM / 1000).toFixed(2)} km saved. Your calorie target for today has been updated.`
+        `Nice work! ${(finalTrack.distanceM / 1000).toFixed(2)} km saved${shareToFeed ? ' and shared to the feed' : ''}. Your calorie target for today has been updated.`
       );
+      setFinishOpen(false);
       resetActivity();
       loadRuns();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
-      phaseRef.current = 'paused';
-      setPhase('paused');
-      setErrorMsg(err.message || 'We couldn’t save your run. Check your connection and try again.');
+      setFinishOpen(false);
+      setErrorMsg(err.message || 'We couldn’t save your activity. Your route is still here, so try Finish again.');
     } finally {
       setSaving(false);
     }
@@ -347,7 +373,9 @@ export const RunTrackerPage: React.FC = () => {
 
   // ------------------------------------------------------------- derived
   const distanceKm = track.distanceM / 1000;
-  const estCalories = Math.round(distanceKm * 65 * (surfaceType === 'trail' ? 1.25 : 1.0));
+  const estCalories = Math.round(
+    estimateKcal(sport, user?.weight_kg ?? 70, distanceKm, Math.max(elapsedSec, 1), track.elevationGainM, surfaceType)
+  );
 
   const statusText: Record<GpsStatus, string> = {
     locating: 'Finding your location…',
@@ -368,11 +396,11 @@ export const RunTrackerPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Navigation className="h-6 w-6 text-[#C8FF00]" />
-            <span>Record a Run</span>
+            <span>Record an Activity</span>
           </h1>
           <p className="text-sm text-[#848E9C] mt-1">
             {phase === 'idle'
-              ? 'Head outside, wait for the GPS to lock on, then tap Start.'
+              ? 'Pick your activity, wait for the GPS to lock on, then tap Start.'
               : phase === 'recording'
               ? 'Recording. Keep this screen open for the best accuracy.'
               : 'Paused. Resume when you’re ready, or finish to save.'}
@@ -380,17 +408,20 @@ export const RunTrackerPage: React.FC = () => {
         </div>
 
         {phase === 'idle' && (
-          <div role="group" aria-label="Surface" className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] text-sm self-start">
-            {(['road', 'trail'] as const).map((s) => (
+          <div role="group" aria-label="Activity type" className="grid grid-cols-4 gap-2 sm:w-96">
+            {SPORTS.map((sp) => (
               <button
-                key={s}
-                onClick={() => setSurfaceType(s)}
-                aria-pressed={surfaceType === s}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  surfaceType === s ? 'bg-[#C8FF00] text-black' : 'text-[#848E9C] hover:text-white'
+                key={sp.id}
+                onClick={() => setSport(sp.id)}
+                aria-pressed={sport === sp.id}
+                className={`h-16 rounded-2xl border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-all ${
+                  sport === sp.id
+                    ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
+                    : 'bg-[#12151b] text-[#B7BDC6] border-[#1e232d] hover:text-white'
                 }`}
               >
-                {s === 'road' ? 'Road' : 'Trail'}
+                <SportIcon sport={sp.id} className="h-5 w-5" />
+                {sp.label}
               </button>
             ))}
           </div>
@@ -471,7 +502,9 @@ export const RunTrackerPage: React.FC = () => {
               {[
                 { label: 'Distance', value: distanceKm.toFixed(2), unit: 'km', color: 'text-white' },
                 { label: 'Time', value: formatDuration(elapsedSec), unit: '', color: 'text-white' },
-                { label: 'Avg pace', value: formatPace(track.distanceM, elapsedSec), unit: '/km', color: 'text-[#00E5FF]' },
+                info.showSpeed
+                  ? { label: 'Avg speed', value: formatSpeed(track.distanceM, elapsedSec), unit: 'km/h', color: 'text-[#00E5FF]' }
+                  : { label: 'Avg pace', value: formatPace(track.distanceM, elapsedSec), unit: '/km', color: 'text-[#00E5FF]' },
                 { label: 'Climb', value: Math.round(track.elevationGainM).toString(), unit: 'm', color: 'text-[#FFB800]' },
               ].map((s) => (
                 <div key={s.label} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
@@ -515,11 +548,11 @@ export const RunTrackerPage: React.FC = () => {
                   <Play className="h-5 w-5 fill-black" /> Resume
                 </button>
                 <button
-                  onClick={finishActivity}
+                  onClick={requestFinish}
                   disabled={saving}
                   className="py-4 rounded-2xl bg-[#F6465D] text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Square className="h-5 w-5 fill-white" /> {saving ? 'Saving…' : 'Finish'}
+                  <Square className="h-5 w-5 fill-white" /> Finish
                 </button>
                 <button
                   onClick={resetActivity}
@@ -544,8 +577,8 @@ export const RunTrackerPage: React.FC = () => {
                     <FlaskConical className="h-4 w-4 text-[#B37FEB]" /> Demo mode
                   </span>
                   <span className="text-[#848E9C]">
-                    Simulates a run from your current spot. For trying the app indoors; demo runs
-                    are saved like real ones.
+                    Simulates an activity from your current spot. For trying the app indoors; demo
+                    activities are saved like real ones.
                   </span>
                 </span>
               </label>
@@ -558,7 +591,7 @@ export const RunTrackerPage: React.FC = () => {
               <span>Calorie bonus: ~{estCalories} kcal</span>
             </div>
             <p className="text-sm text-[#848E9C] leading-relaxed">
-              When you save this run, these calories are added to today’s food target so you can
+              When you save this activity, these calories are added to today’s food target so you can
               refuel properly.
             </p>
           </div>
@@ -569,61 +602,147 @@ export const RunTrackerPage: React.FC = () => {
       <div className="space-y-4 pt-2">
         <h2 className="text-base font-bold text-white flex items-center gap-2">
           <Clock className="h-4 w-4 text-[#C8FF00]" />
-          <span>Your past runs ({runs.length})</span>
+          <span>Your activities ({runs.length})</span>
         </h2>
 
         {runs.length === 0 ? (
           <div className="p-8 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C]">
-            No runs yet. Your first one will show up here.
+            Nothing recorded yet. Your first activity will show up here.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {runs.map((r) => (
-              <div
-                key={r.id}
-                className="p-4 sm:p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                        r.surface_type === 'trail'
-                          ? 'bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30'
-                          : 'bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/30'
-                      }`}
-                    >
-                      {r.surface_type}
-                    </span>
-                    <span className="text-sm text-[#848E9C] truncate">
-                      {new Date(r.recorded_at).toLocaleDateString()}
-                    </span>
+            {runs.map((r) => {
+              const sp = sportInfo(r.sport_type);
+              const route = parseRoute(r.route_geojson);
+              return (
+                <div key={r.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card flex gap-4">
+                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-center overflow-hidden">
+                    {route.length > 1 ? (
+                      <RouteThumb points={route} color={sp.color} />
+                    ) : (
+                      <span style={{ color: sp.color }}>
+                        <SportIcon sport={r.sport_type} className="h-8 w-8" />
+                      </span>
+                    )}
                   </div>
-                  <span className="font-mono text-sm font-bold text-[#C8FF00] shrink-0">
-                    +{Math.round(r.burned_kcal)} kcal
-                  </span>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div>
+                      <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                        <span style={{ color: sp.color }}>
+                          <SportIcon sport={r.sport_type} className="h-4 w-4" />
+                        </span>
+                        {r.title || sp.label}
+                      </p>
+                      <p className="text-xs text-[#848E9C] flex items-center gap-1.5">
+                        {parseApiDate(r.recorded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        <span aria-hidden="true">·</span>
+                        {r.is_public ? <Globe className="h-3 w-3" aria-label="Shared" /> : <Lock className="h-3 w-3" aria-label="Private" />}
+                        <span>{Math.round(r.burned_kcal)} kcal</span>
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <span className="text-xs text-[#848E9C] block">Distance</span>
+                        <span className="font-bold font-mono text-white">
+                          {r.distance_km.toFixed(2)}
+                          <span className="text-xs text-[#848E9C]"> km</span>
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-[#848E9C] block">Time</span>
+                        <span className="font-bold font-mono text-white">{formatDuration(r.duration_sec)}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-[#848E9C] block">{sp.showSpeed ? 'Speed' : 'Pace'}</span>
+                        <span className="font-bold font-mono text-white">
+                          {sp.showSpeed
+                            ? formatSpeed(r.distance_km * 1000, r.duration_sec)
+                            : formatPace(r.distance_km * 1000, r.duration_sec)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <span className="text-xs text-[#848E9C] block">Distance</span>
-                    <span className="font-bold font-mono text-white">{r.distance_km.toFixed(2)} km</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-[#848E9C] block">Time</span>
-                    <span className="font-bold font-mono text-white">{formatDuration(r.duration_sec)}</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-[#848E9C] block">Pace</span>
-                    <span className="font-bold font-mono text-white">
-                      {formatPace(r.distance_km * 1000, r.duration_sec)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Name it and share it, like finishing an activity in Strava */}
+      {finishOpen && (
+        <Overlay>
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="save-activity-title">
+            <div className="absolute inset-0 bg-black/70" onClick={() => !saving && setFinishOpen(false)} aria-hidden="true" />
+            <div className="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#0d1015] border border-[#1e232d] p-5 space-y-4">
+              <h2 id="save-activity-title" className="text-lg font-bold text-white">
+                Save your {info.label.toLowerCase()}
+              </h2>
+
+              <div className="h-40 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-center overflow-hidden">
+                {track.points.length > 1 ? (
+                  <RouteThumb points={track.points.map((pt) => [pt.lat, pt.lng] as [number, number])} color={info.color} />
+                ) : (
+                  <span className="text-sm text-[#848E9C]">No route to show</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: 'Distance', value: `${distanceKm.toFixed(2)} km` },
+                  { label: 'Time', value: formatDuration(elapsedSec) },
+                  { label: 'Calories', value: `${estCalories}` },
+                ].map((m) => (
+                  <div key={m.label} className="p-3 rounded-2xl bg-[#12151b] border border-[#1e232d]">
+                    <p className="text-xs text-[#848E9C]">{m.label}</p>
+                    <p className="text-base font-black font-mono text-white">{m.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <label className="block text-sm text-[#848E9C] space-y-1">
+                <span>Name</span>
+                <input
+                  value={title}
+                  maxLength={120}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full h-12 rounded-xl bg-[#07080a] border border-[#1e232d] px-3 text-base text-white focus:border-[#C8FF00] focus:outline-none"
+                />
+              </label>
+
+              <label className="flex items-start gap-3 text-sm text-white">
+                <input
+                  type="checkbox"
+                  checked={shareToFeed}
+                  onChange={(e) => setShareToFeed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[#C8FF00]"
+                />
+                <span>
+                  Share to the community feed
+                  <span className="block text-xs text-[#848E9C]">Others won’t see the first and last 200 m of your route.</span>
+                </span>
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setFinishOpen(false)}
+                  disabled={saving}
+                  className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm"
+                >
+                  Keep going
+                </button>
+                <button
+                  onClick={saveActivity}
+                  disabled={saving}
+                  className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm disabled:opacity-50"
+                >
+                  {saving ? 'Saving…' : 'Save activity'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Overlay>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, X } from 'lucide-react';
-import { Overlay } from './Overlay';
+import { Overlay } from '../common/Overlay';
 
 interface RestTimerProps {
   endsAt: number;

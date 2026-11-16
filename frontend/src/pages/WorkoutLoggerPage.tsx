@@ -21,7 +21,7 @@ import { api } from '../services/api';
 import { Exercise, WorkoutRoutine, WorkoutSession } from '../types';
 import { RestTimer } from '../components/workout/RestTimer';
 import { ExercisePicker } from '../components/workout/ExercisePicker';
-import { Overlay } from '../components/workout/Overlay';
+import { Overlay } from '../components/common/Overlay';
 import {
   ActiveExercise,
   ActiveWorkout,

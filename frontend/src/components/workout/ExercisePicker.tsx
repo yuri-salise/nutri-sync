@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search, X, Check } from 'lucide-react';
 import { api } from '../../services/api';
-import { Overlay } from './Overlay';
+import { Overlay } from '../common/Overlay';
 import { Exercise } from '../../types';
 
 export const MUSCLE_GROUPS = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full body', 'cardio'];
