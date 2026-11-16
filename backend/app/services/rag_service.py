@@ -1,167 +1,123 @@
 import json
-import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-import httpx
-from sqlalchemy import or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.logging import logger
 from app.db.models import NutritionKnowledgeItem, RagScanLog
-from app.services.embedding_service import cosine_similarity, generate_embedding
+from app.services.embedding_service import generate_embedding, get_sentence_transformer_model
+from app.services.meal_parser import FoodMatcher, MatchedItem, total_macros
+
+MATCHER_VERSION = "meal-parser v2.0 (hybrid lexical + embedding)"
+
+# The knowledge base is small (a few hundred rows) and changes only when re-seeded, so
+# one matcher with pre-computed name embeddings is kept per process.
+_matcher_cache: Optional[Tuple[Tuple[int, int, float], FoodMatcher]] = None
 
 
-async def search_knowledge_base_vector(
-    db: AsyncSession, query_vector: List[float], limit: int = 5
-) -> List[NutritionKnowledgeItem]:
-    """
-    Retrieves top-k closest nutritional items using pgvector cosine distance.
-    Falls back gracefully to SQL text matching if vector extension is unavailable.
-    """
-    try:
-        # In PostgreSQL with pgvector:
-        # query = select(NutritionKnowledgeItem).order_by(NutritionKnowledgeItem.embedding.cosine_distance(query_vector)).limit(limit)
-        # We can execute using SQLAlchemy vector or raw text query
-        query = (
-            select(NutritionKnowledgeItem)
-            .order_by(NutritionKnowledgeItem.embedding.cosine_distance(query_vector))
-            .limit(limit)
+async def _get_matcher(db: AsyncSession) -> FoodMatcher:
+    global _matcher_cache
+    sig_row = await db.execute(
+        select(
+            func.count(NutritionKnowledgeItem.id),
+            func.max(NutritionKnowledgeItem.id),
+            func.sum(NutritionKnowledgeItem.kcal_per_100g),
         )
-        result = await db.execute(query)
-        items = result.scalars().all()
-        return list(items)
-    except Exception as e:
-        logger.warning(f"Vector search exception ({e}), falling back to SQL text search.")
-        return []
+    )
+    count, max_id, kcal_sum = sig_row.one()
+    signature = (int(count or 0), int(max_id or 0), round(float(kcal_sum or 0.0), 2))
+    if _matcher_cache and _matcher_cache[0] == signature:
+        return _matcher_cache[1]
+
+    res = await db.execute(select(NutritionKnowledgeItem))
+    foods = list(res.scalars().all())
+    matcher = FoodMatcher(foods, embed=generate_embedding)
+    _matcher_cache = (signature, matcher)
+    logger.info(f"Built meal matcher over {len(foods)} knowledge-base foods")
+    return matcher
 
 
-async def search_knowledge_base_fallback(
-    db: AsyncSession, query_text: str, limit: int = 5
-) -> List[NutritionKnowledgeItem]:
-    """
-    Deterministic full-text SQL search fallback (Requirement T3).
-    """
-    terms = re.findall(r"\b\w{3,}\b", query_text.lower())
-    if not terms:
-        terms = [query_text.lower().strip()]
-
-    filters = [NutritionKnowledgeItem.food_name.ilike(f"%{term}%") for term in terms]
-    stmt = select(NutritionKnowledgeItem).where(or_(*filters)).limit(limit)
-    res = await db.execute(stmt)
-    items = list(res.scalars().all())
-
-    if not items:
-        # Return default top staple items if nothing matched
-        stmt_default = select(NutritionKnowledgeItem).limit(limit)
-        res_default = await db.execute(stmt_default)
-        items = list(res_default.scalars().all())
-
-    return items
+def _food_summary(food: NutritionKnowledgeItem) -> Dict[str, Any]:
+    return {
+        "id": food.id,
+        "food_name": food.food_name,
+        "source_dataset": food.source_dataset,
+        "kcal_per_100g": food.kcal_per_100g,
+        "protein_per_100g": food.protein_per_100g,
+        "carbs_per_100g": food.carbs_per_100g,
+        "fat_per_100g": food.fat_per_100g,
+        "serving_description": food.serving_description,
+    }
 
 
-async def call_ollama_completion(prompt: str) -> Optional[str]:
-    """Optional LLM completion via local Ollama instance."""
-    try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            resp = await client.post(
-                f"{settings.OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": settings.OLLAMA_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                },
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                return data.get("response")
-    except Exception as e:
-        logger.info(f"Ollama local instance unavailable ({e}). Using deterministic RAG synthesis.")
-    return None
+def _item_payload(item: MatchedItem) -> Dict[str, Any]:
+    return {
+        "query_text": item.query_text,
+        "matched_food": _food_summary(item.food) if item.food else None,
+        "grams": item.grams,
+        "macros": item.macros(),
+        "match_score": item.score,
+        "confidence": item.confidence,
+        "alternatives": [_food_summary(f) for f in item.alternatives],
+    }
 
 
 async def execute_rag_scan(
     db: AsyncSession, user_id: int, query_input: str, image_base64: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Executes the full Retrieval-Augmented Generation (RAG) nutrition pipeline:
-    1. Embeds query using 384-d semantic model
-    2. Retrieves top-k matching food items from USDA & FNRI knowledge base
-    3. Synthesizes activity-adjusted nutritional calculation
-    4. Logs transaction to rag_scan_logs for traceability (T4)
-    5. Returns result flagged with machine_generated=True (T6)
+    Retrieval-augmented nutrition estimate for a free-text meal:
+    1. Split the meal into food items and read each quantity ("1 cup", "200g", "2").
+    2. Retrieve the best FNRI/USDA food for each item (hybrid lexical + embedding score).
+    3. Scale per-100 g macros by the estimated grams and sum them.
+    4. Log the scan to rag_scan_logs for traceability (T4).
+    5. Flag the result as machine-generated and needing user confirmation (T6).
     """
     start_time = time.time()
-    used_fallback = False
+    # True when the neural embedding model is unavailable and the deterministic
+    # hash embedding is used instead (Requirement T3 graceful fallback).
+    used_fallback = get_sentence_transformer_model() is None
 
-    # 1. Generate query vector
-    query_vec = generate_embedding(query_input)
+    matcher = await _get_matcher(db)
+    items = matcher.match_meal(query_input) if matcher.foods else []
 
-    # 2. Retrieve top-k records
-    retrieved_items = await search_knowledge_base_vector(db, query_vec, limit=5)
-    if not retrieved_items:
-        used_fallback = True
-        retrieved_items = await search_knowledge_base_fallback(db, query_input, limit=5)
+    matched = [i for i in items if i.confidence != "none"]
+    calculated_macros = total_macros(items)
+    top_score = (sum(i.score for i in matched) / len(matched)) if matched else 0.0
 
-    # 3. Calculate similarity score
-    top_score = 0.85
-    if retrieved_items and retrieved_items[0].embedding is not None:
-        try:
-            top_score = cosine_similarity(query_vec, retrieved_items[0].embedding)
-        except Exception:
-            top_score = 0.88
-
-    # 4. Synthesize nutritional estimates from retrieved items
-    # Decompose or aggregate matched portions
-    total_kcal = 0.0
-    total_protein = 0.0
-    total_carbs = 0.0
-    total_fat = 0.0
-
-    retrieved_summary = []
-    for item in retrieved_items:
-        retrieved_summary.append(
-            {
-                "id": item.id,
-                "food_name": item.food_name,
-                "source_dataset": item.source_dataset,
-                "kcal_per_100g": item.kcal_per_100g,
-                "protein_per_100g": item.protein_per_100g,
-                "carbs_per_100g": item.carbs_per_100g,
-                "fat_per_100g": item.fat_per_100g,
-                "serving_description": item.serving_description,
-            }
-        )
-        # Default portion weighting (average of top 2 primary matches or single match)
-        if len(retrieved_summary) <= 2:
-            total_kcal += item.kcal_per_100g
-            total_protein += item.protein_per_100g
-            total_carbs += item.carbs_per_100g
-            total_fat += item.fat_per_100g
-
-    if not retrieved_items:
-        # Fallback default reasonable nutritional estimates if table was completely empty
-        total_kcal, total_protein, total_carbs, total_fat = 450.0, 30.0, 45.0, 15.0
-
-    calculated_macros = {
-        "calories": round(total_kcal, 1),
-        "protein_g": round(total_protein, 1),
-        "carbs_g": round(total_carbs, 1),
-        "fat_g": round(total_fat, 1),
-    }
+    retrieved: List[NutritionKnowledgeItem] = []
+    for i in items:
+        for food in ([i.food] if i.food else []) + i.alternatives:
+            if food not in retrieved:
+                retrieved.append(food)
 
     latency_ms = round((time.time() - start_time) * 1000.0, 2)
-    retrieved_ids = [item.id for item in retrieved_items]
+    embedder = settings.EMBEDDING_MODEL_NAME if not used_fallback else "hash-384"
+    model_version = f"{MATCHER_VERSION}; {embedder}; USDA/FNRI"
 
-    # 5. Log for Traceability (Requirement T4)
     scan_log = RagScanLog(
         user_id=user_id,
         query_input=query_input,
-        retrieved_item_ids=json.dumps(retrieved_ids),
+        retrieved_item_ids=json.dumps([f.id for f in retrieved]),
         top_similarity_score=float(top_score),
-        predicted_macros_json=json.dumps(calculated_macros),
-        model_version=f"{settings.EMBEDDING_MODEL_NAME} + USDA/FNRI RAG v1.0",
+        predicted_macros_json=json.dumps(
+            {
+                **calculated_macros,
+                "items": [
+                    {
+                        "query": i.query_text,
+                        "food_id": i.food.id if i.food else None,
+                        "grams": i.grams,
+                        "confidence": i.confidence,
+                    }
+                    for i in items
+                ],
+            }
+        ),
+        model_version=model_version[:100],
         latency_ms=latency_ms,
         used_fallback=used_fallback,
     )
@@ -178,6 +134,8 @@ async def execute_rag_scan(
         "latency_ms": latency_ms,
         "top_similarity_score": round(float(top_score), 4),
         "predicted_macros": calculated_macros,
-        "retrieved_items": retrieved_summary,
+        "items": [_item_payload(i) for i in items],
+        "unmatched": [i.query_text for i in items if i.confidence == "none"],
+        "retrieved_items": [_food_summary(f) for f in retrieved],
         "model_version": scan_log.model_version,
     }

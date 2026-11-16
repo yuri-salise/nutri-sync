@@ -1,312 +1,400 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../services/api';
-import { RagScanResult } from '../types';
+import { FoodItemSummary, PredictedMacros, RagScanResult } from '../types';
 import {
   Compass,
   Sparkles,
   Search,
-  CheckCircle,
   Database,
-  Clock,
-  Layers,
-  Flame,
-  ArrowRight,
   ShieldAlert,
   Info,
-  Cpu,
-  Zap,
   CheckCircle2,
   UtensilsCrossed,
+  HelpCircle,
+  Minus,
+  Plus,
+  X,
 } from 'lucide-react';
 
+interface EditableItem {
+  query_text: string;
+  food: FoodItemSummary | null;
+  grams: number;
+  confidence: 'high' | 'low' | 'none';
+  alternatives: FoodItemSummary[];
+  removed: boolean;
+}
+
+const macrosFor = (food: FoodItemSummary | null, grams: number): PredictedMacros => {
+  if (!food) return { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
+  const f = grams / 100;
+  return {
+    calories: food.kcal_per_100g * f,
+    protein_g: food.protein_per_100g * f,
+    carbs_g: food.carbs_per_100g * f,
+    fat_g: food.fat_per_100g * f,
+  };
+};
+
+/** Default grams for one serving, read from e.g. "1 cup (158g)". */
+const servingGrams = (food: FoodItemSummary): number => {
+  const m = food.serving_description.match(/\((\d+(?:\.\d+)?)\s*(?:g|ml)\)/i);
+  return m ? parseFloat(m[1]) : 100;
+};
+
 export const RagNutritionScannerPage: React.FC = () => {
-  const [queryInput, setQueryInput] = useState('Chicken Adobo with 1 cup garlic rice and a boiled egg');
+  const [queryInput, setQueryInput] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<RagScanResult | null>(null);
+  const [items, setItems] = useState<EditableItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmedSuccess, setConfirmedSuccess] = useState(false);
 
   const samplePrompts = [
-    'Chicken Adobo with 1 cup garlic rice and a boiled egg',
-    'Sinigang na Baboy with kangkong and 1 cup brown rice',
-    'Tinolang Manok with sayote and malunggay leaves',
-    'Grilled chicken breast with steamed broccoli and baked sweet potato',
-    'Tapsilog with sunny side up egg and atchara',
+    'Chicken adobo with 1 cup rice and a boiled egg',
+    'Sinigang na baboy with 1 cup brown rice',
+    '200g grilled chicken breast with broccoli',
+    'Tapsilog and a glass of buko juice',
+    '2 pandesal and 1 cup oatmeal',
   ];
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!queryInput.trim()) return;
+    if (queryInput.trim().length < 2) {
+      setError('Tell us what you ate first, e.g. "1 cup rice and chicken adobo".');
+      return;
+    }
 
     setScanning(true);
     setError(null);
     setConfirmedSuccess(false);
 
     try {
-      const result = await api.scanMealRAG(queryInput);
+      const result = await api.scanMealRAG(queryInput.trim());
+      if (!Array.isArray(result.items)) {
+        // An older API build returns totals only; don't crash, explain instead.
+        setScanResult(null);
+        setItems([]);
+        setError(
+          'The server is running an older version of the meal scanner. Please restart the backend and try again.'
+        );
+        return;
+      }
       setScanResult(result);
+      setItems(
+        result.items.map((it) => ({
+          query_text: it.query_text,
+          food: it.matched_food,
+          grams: it.grams,
+          confidence: it.confidence,
+          alternatives: it.alternatives ?? [],
+          removed: false,
+        }))
+      );
     } catch (err: any) {
-      setError(err.message || 'RAG Scan failed.');
+      setError(err.message || 'We could not analyze that meal. Please try again.');
     } finally {
       setScanning(false);
     }
   };
 
+  const updateItem = (idx: number, patch: Partial<EditableItem>) => {
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    setConfirmedSuccess(false);
+  };
+
+  const swapFood = (idx: number, food: FoodItemSummary) => {
+    const current = items[idx];
+    const others = [current.food, ...current.alternatives].filter(
+      (f): f is FoodItemSummary => !!f && f.id !== food.id
+    );
+    updateItem(idx, {
+      food,
+      grams: servingGrams(food),
+      confidence: 'high',
+      alternatives: others,
+    });
+  };
+
+  const activeItems = items.filter((it) => !it.removed && it.food && it.grams > 0);
+
+  const totals = useMemo(
+    () =>
+      activeItems.reduce(
+        (acc, it) => {
+          const m = macrosFor(it.food, it.grams);
+          return {
+            calories: acc.calories + m.calories,
+            protein_g: acc.protein_g + m.protein_g,
+            carbs_g: acc.carbs_g + m.carbs_g,
+            fat_g: acc.fat_g + m.fat_g,
+          };
+        },
+        { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 }
+      ),
+    [activeItems]
+  );
+
+  const needsReview = items.some((it) => !it.removed && it.confidence !== 'high');
+
   const handleConfirmAndSave = async () => {
-    if (!scanResult) return;
+    if (!scanResult || activeItems.length === 0) return;
     setConfirming(true);
+    setError(null);
     try {
       await api.createNutritionLog({
-        meal_name: scanResult.query_input,
-        total_kcal: scanResult.predicted_macros.calories,
-        protein_g: scanResult.predicted_macros.protein_g,
-        carbs_g: scanResult.predicted_macros.carbs_g,
-        fat_g: scanResult.predicted_macros.fat_g,
+        meal_name: scanResult.query_input.slice(0, 255),
+        total_kcal: Math.round(totals.calories * 10) / 10,
+        protein_g: Math.round(totals.protein_g * 10) / 10,
+        carbs_g: Math.round(totals.carbs_g * 10) / 10,
+        fat_g: Math.round(totals.fat_g * 10) / 10,
         rag_scan_id: scanResult.scan_id,
       });
       setConfirmedSuccess(true);
     } catch (err: any) {
-      alert(err.message || 'Failed to save confirmed nutrition log.');
+      setError(err.message || 'Failed to save this meal to your food log.');
     } finally {
       setConfirming(false);
     }
   };
 
-  const similarityScore = scanResult ? Math.round(scanResult.top_similarity_score * 100) : 0;
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Compass className="h-6 w-6 text-[#C8FF00]" />
-            <span>Smart Food & Meal Scanner</span>
-          </h1>
-          <p className="text-sm text-[#848E9C]">
-            Describe any meal in plain English or Tagalog. We match your food with official DOST-FNRI and USDA nutrition databases.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#12151b] border border-[#1e232d] text-[#848E9C]">
-          <Database className="h-3.5 w-3.5 text-[#00E5FF]" />
-          <span>Verified Databases: <span className="text-[#C8FF00] font-bold">FNRI & USDA</span></span>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <Compass className="h-6 w-6 text-[#C8FF00]" />
+          <span>Smart Meal Scanner</span>
+        </h1>
+        <p className="text-sm text-[#848E9C] mt-1">
+          Tell us what you ate, in English or Tagalog. Add amounts like “1 cup” or “200g” for a
+          better estimate.
+        </p>
       </div>
 
-      {/* Input Formulation Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card"
-      >
-        <form onSubmit={handleScan} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-[#C8FF00]" /> Describe What You Ate
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={queryInput}
-                onChange={(e) => setQueryInput(e.target.value)}
-                placeholder="Type your meal (e.g. 200g grilled chicken with 1 cup brown rice and broccoli)"
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl pl-4 pr-32 py-3.5 text-xs sm:text-sm text-white placeholder-[#848E9C] focus:outline-none transition-all shadow-inner"
-              />
-              <button
-                type="submit"
-                disabled={scanning}
-                className="absolute right-2 top-2 bottom-2 px-5 rounded-xl bg-[#C8FF00] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#d4ff33] shadow-glow-lime transition-all disabled:opacity-50"
-              >
-                {scanning ? (
-                  <>
-                    <div className="h-3 w-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-3.5 w-3.5" />
-                    <span>Analyze Meal</span>
-                  </>
-                )}
-              </button>
+      {/* Input */}
+      <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
+        <form onSubmit={handleScan} className="space-y-3">
+          <label htmlFor="meal-input" className="text-sm font-semibold text-white flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-[#C8FF00]" /> What did you eat?
+          </label>
+          <textarea
+            id="meal-input"
+            rows={2}
+            value={queryInput}
+            onChange={(e) => setQueryInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) handleScan(e);
+            }}
+            placeholder="e.g. chicken adobo with 1 cup rice and a boiled egg"
+            className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-4 py-3 text-sm text-white placeholder-[#848E9C] focus:outline-none resize-none"
+          />
+          <button
+            type="submit"
+            disabled={scanning}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#d4ff33] shadow-glow-lime transition-all disabled:opacity-50"
+          >
+            {scanning ? (
+              <>
+                <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span>Analyzing…</span>
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                <span>Analyze meal</span>
+              </>
+            )}
+          </button>
+
+          <div className="space-y-2 pt-1">
+            <span className="text-xs font-medium text-[#848E9C]">Or try one of these:</span>
+            <div className="flex flex-wrap gap-2">
+              {samplePrompts.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setQueryInput(p)}
+                  className="text-xs px-3 py-2 rounded-xl bg-[#07080a] hover:bg-[#181c24] border border-[#1e232d] text-[#B7BDC6] hover:text-[#C8FF00] transition-colors text-left"
+                >
+                  {p}
+                </button>
+              ))}
             </div>
           </div>
-
-          {/* Quick Prompts */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-medium text-[#848E9C]">Sample Meals:</span>
-            {samplePrompts.map((p, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setQueryInput(p)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#07080a] hover:bg-[#181c24] border border-[#1e232d] text-[#848E9C] hover:text-[#C8FF00] transition-colors"
-              >
-                {p.split(' with ')[0]}
-              </button>
-            ))}
-          </div>
         </form>
-      </motion.div>
-
-      {/* Radar Animation While Scanning */}
-      {scanning && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="p-12 rounded-3xl bg-[#12151b] border border-[#1e232d] flex flex-col items-center justify-center space-y-4 shadow-cyber-card"
-        >
-          <div className="relative h-24 w-24 rounded-full border border-[#C8FF00]/30 flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 rounded-full border border-[#C8FF00]/20 animate-ping" />
-            <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_300deg,rgba(200,255,0,0.4)_360deg)] animate-radar" />
-            <Compass className="h-8 w-8 text-[#C8FF00]" />
-          </div>
-          <div className="text-center space-y-1">
-            <p className="text-sm font-bold text-white font-poppins">Analyzing your meal...</p>
-            <p className="text-xs text-[#848E9C]">
-              Matching foods against verified Philippine (FNRI) and USDA nutrition records
-            </p>
-          </div>
-        </motion.div>
-      )}
+      </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-xs flex items-center gap-2.5">
+        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
           <ShieldAlert className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {confirmedSuccess && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-xs flex items-center gap-2.5 shadow-glow-green"
-        >
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span className="font-semibold">
-            Meal saved successfully! Added to your food log and your daily calorie targets have been updated.
-          </span>
-        </motion.div>
-      )}
-
-      {/* Scan Results Display */}
       {scanResult && !scanning && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* Main Macro Estimation Card */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#1e232d] shadow-2xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1e232d]">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          {/* Items */}
+          <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-cyber-card">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-[#C8FF00] font-bold">
-                  Estimated Nutrition
-                </span>
-                <h2 className="text-xl font-black text-white mt-0.5">{scanResult.query_input}</h2>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="px-3 py-1.5 rounded-xl bg-[#07080a] border border-[#1e232d] text-right font-mono">
-                  <span className="text-[10px] text-[#848E9C] block">Accuracy</span>
-                  <span className="text-xs font-bold text-[#C8FF00]">{similarityScore}% Match</span>
-                </div>
-                <div className="px-3 py-1.5 rounded-xl bg-[#07080a] border border-[#1e232d] text-right font-mono">
-                  <span className="text-[10px] text-[#848E9C] block">Speed</span>
-                  <span className="text-xs font-bold text-[#00E5FF]">{scanResult.latency_ms.toFixed(0)} ms</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Macro Breakdown Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Calories</span>
-                <p className="text-2xl font-black font-mono text-[#C8FF00] mt-1">
-                  {Math.round(scanResult.predicted_macros.calories)}
-                  <span className="text-xs text-[#848E9C] ml-1">kcal</span>
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Protein</span>
-                <p className="text-2xl font-black font-mono text-[#00E5FF] mt-1">
-                  {scanResult.predicted_macros.protein_g.toFixed(1)}
-                  <span className="text-xs text-[#848E9C] ml-1">g</span>
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Carbohydrates</span>
-                <p className="text-2xl font-black font-mono text-white mt-1">
-                  {scanResult.predicted_macros.carbs_g.toFixed(1)}
-                  <span className="text-xs text-[#848E9C] ml-1">g</span>
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                <span className="text-[10px] font-medium text-[#848E9C] uppercase">Fat</span>
-                <p className="text-2xl font-black font-mono text-[#FFB800] mt-1">
-                  {scanResult.predicted_macros.fat_g.toFixed(1)}
-                  <span className="text-xs text-[#848E9C] ml-1">g</span>
+                <h2 className="text-base font-bold text-white">Here’s what we found</h2>
+                <p className="text-sm text-[#848E9C]">
+                  Check each food and adjust the amount if needed.
                 </p>
               </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <p className="text-xs text-[#848E9C] flex items-center gap-1.5">
-                <Info className="h-4 w-4 text-[#C8FF00]" />
-                <span>Verified against official DOST-FNRI & USDA food databases</span>
+            {items.length === 0 && (
+              <p className="text-sm text-[#848E9C]">
+                We couldn’t pick out any foods. Try naming them separately, like “rice, adobo, egg”.
               </p>
+            )}
 
-              <button
-                onClick={handleConfirmAndSave}
-                disabled={confirming || confirmedSuccess}
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-xs flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
-              >
-                <UtensilsCrossed className="h-4 w-4" />
-                <span>
-                  {confirming
-                    ? 'Saving Meal...'
-                    : confirmedSuccess
-                    ? 'Saved to Food Log'
-                    : 'Save to Daily Food Log'}
-                </span>
-              </button>
-            </div>
+            {items.map((it, idx) =>
+              it.removed ? null : (
+                <div key={idx} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#848E9C]">You said “{it.query_text}”</p>
+                      {it.food ? (
+                        <p className="text-sm font-bold text-white break-words">{it.food.food_name}</p>
+                      ) : (
+                        <p className="text-sm font-bold text-[#FFB800] flex items-center gap-1.5">
+                          <HelpCircle className="h-4 w-4" /> We couldn’t find this food
+                        </p>
+                      )}
+                      {it.food && (
+                        <p className="text-xs text-[#848E9C]">
+                          {it.food.source_dataset} · {it.food.serving_description}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateItem(idx, { removed: true })}
+                      aria-label={`Remove ${it.query_text}`}
+                      className="p-2 rounded-lg text-[#848E9C] hover:text-[#F6465D] hover:bg-[#F6465D]/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {it.food && (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          aria-label="Decrease amount"
+                          onClick={() => updateItem(idx, { grams: Math.max(0, it.grams - 25) })}
+                          className="h-10 w-10 rounded-xl bg-[#12151b] border border-[#1e232d] text-white flex items-center justify-center"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <label className="sr-only" htmlFor={`grams-${idx}`}>Grams</label>
+                        <input
+                          id={`grams-${idx}`}
+                          type="number"
+                          min={0}
+                          inputMode="decimal"
+                          value={Math.round(it.grams)}
+                          onChange={(e) => updateItem(idx, { grams: Math.max(0, Number(e.target.value) || 0) })}
+                          className="w-20 h-10 bg-[#12151b] border border-[#1e232d] rounded-xl text-center text-sm font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                        />
+                        <span className="text-sm text-[#848E9C]">g</span>
+                        <button
+                          type="button"
+                          aria-label="Increase amount"
+                          onClick={() => updateItem(idx, { grams: it.grams + 25 })}
+                          className="h-10 w-10 rounded-xl bg-[#12151b] border border-[#1e232d] text-white flex items-center justify-center"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-[#C8FF00]">
+                        {Math.round(macrosFor(it.food, it.grams).calories)} kcal
+                      </span>
+                    </div>
+                  )}
+
+                  {it.confidence !== 'high' && it.alternatives.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-[#FFB800]">
+                        {it.food ? 'Not quite right? Did you mean:' : 'Did you mean:'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {it.alternatives.map((alt) => (
+                          <button
+                            key={alt.id}
+                            type="button"
+                            onClick={() => swapFood(idx, alt)}
+                            className="text-xs px-3 py-2 rounded-xl bg-[#12151b] border border-[#1e232d] text-[#EAECEF] hover:border-[#C8FF00] text-left"
+                          >
+                            {alt.food_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
           </div>
 
-          {/* Matched Foods */}
-          <div className="p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#848E9C] flex items-center gap-2">
-              <Database className="h-4 w-4 text-[#00E5FF]" />
-              <span>Matched Foods & Ingredients ({scanResult.retrieved_items.length})</span>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {scanResult.retrieved_items.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-between"
-                >
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-white">{item.food_name}</p>
-                    <p className="text-[10px] text-[#848E9C]">
-                      Source: <span className="text-[#00E5FF] font-semibold">{item.source_dataset}</span> &bull; {item.serving_description}
-                    </p>
-                  </div>
-                  <div className="text-right font-mono text-xs">
-                    <span className="text-[#C8FF00] font-bold block">{item.kcal_per_100g} kcal</span>
-                    <span className="text-[10px] text-[#848E9C]">P: {item.protein_per_100g}g</span>
-                  </div>
+          {/* Totals */}
+          <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#1e232d] space-y-4">
+            <h2 className="text-base font-bold text-white">Meal total</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'Calories', value: Math.round(totals.calories), unit: 'kcal', color: 'text-[#C8FF00]' },
+                { label: 'Protein', value: totals.protein_g.toFixed(1), unit: 'g', color: 'text-[#00E5FF]' },
+                { label: 'Carbs', value: totals.carbs_g.toFixed(1), unit: 'g', color: 'text-white' },
+                { label: 'Fat', value: totals.fat_g.toFixed(1), unit: 'g', color: 'text-[#FFB800]' },
+              ].map((m) => (
+                <div key={m.label} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
+                  <span className="text-xs font-medium text-[#848E9C]">{m.label}</span>
+                  <p className={`text-2xl font-black font-mono mt-1 ${m.color}`}>
+                    {m.value}
+                    <span className="text-xs text-[#848E9C] ml-1">{m.unit}</span>
+                  </p>
                 </div>
               ))}
             </div>
+
+            <p className="text-xs text-[#848E9C] flex items-start gap-1.5">
+              <Info className="h-4 w-4 text-[#C8FF00] shrink-0" />
+              <span>
+                This is a machine-generated estimate based on DOST-FNRI and USDA food data. Please
+                review it before saving.
+                {needsReview && ' Some items need a quick check above.'}
+              </span>
+            </p>
+
+            {confirmedSuccess && (
+              <div className="p-3 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-sm flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Saved! Your daily targets have been updated.</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleConfirmAndSave}
+              disabled={confirming || confirmedSuccess || activeItems.length === 0}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
+            >
+              <UtensilsCrossed className="h-4 w-4" />
+              <span>
+                {confirming ? 'Saving…' : confirmedSuccess ? 'Saved to food log' : 'Looks right — save to food log'}
+              </span>
+            </button>
+
+            <p className="text-xs text-[#5E6673] flex items-center gap-1.5">
+              <Database className="h-3.5 w-3.5" />
+              Match confidence {Math.round(scanResult.top_similarity_score * 100)}% ·{' '}
+              {scanResult.latency_ms.toFixed(0)} ms
+            </p>
           </div>
         </motion.div>
       )}

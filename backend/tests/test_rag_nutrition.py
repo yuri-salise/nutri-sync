@@ -25,6 +25,12 @@ async def test_rag_nutrition_scan_and_audit(
     assert "predicted_macros" in data
     assert data["predicted_macros"]["calories"] > 0
     assert "latency_ms" in data
+    # Per-item breakdown: adobo matched from the seeded item, rice/egg not in the test KB.
+    items = data["items"]
+    assert items[0]["matched_food"]["food_name"] == "Adobong Manok (Chicken Adobo)"
+    assert items[0]["confidence"] == "high"
+    assert items[0]["grams"] > 0
+    assert "egg" in data["unmatched"]
     scan_id = data["scan_id"]
 
     # 2. Athlete confirms and saves meal to nutrition_logs

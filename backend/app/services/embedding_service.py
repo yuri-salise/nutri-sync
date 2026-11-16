@@ -1,3 +1,4 @@
+import hashlib
 import re
 from typing import List
 
@@ -9,10 +10,20 @@ from app.core.logging import logger
 _model = None
 
 
+def _stable_hash(token: str) -> int:
+    """Process-independent hash so embeddings are reproducible across restarts."""
+    return int.from_bytes(hashlib.md5(token.encode("utf-8")).digest()[:8], "big")
+
+
+_model_unavailable = False
+
+
 def get_sentence_transformer_model():
-    global _model
+    global _model, _model_unavailable
     if _model is not None:
         return _model
+    if _model_unavailable:
+        return None
     try:
         from sentence_transformers import SentenceTransformer
 
@@ -23,6 +34,7 @@ def get_sentence_transformer_model():
         logger.warning(
             f"SentenceTransformer not loaded ({e}). Using deterministic 384-d semantic embedding generator."
         )
+        _model_unavailable = True
         return None
 
 
@@ -53,15 +65,15 @@ def generate_embedding(text: str) -> List[float]:
         words = [clean_text]
 
     for i, word in enumerate(words):
-        # Hash character n-grams and whole word
-        h = hash(word)
-        idx = abs(h) % dim
+        # Hash character n-grams and whole word. A stable hash is required here:
+        # Python's built-in hash() is salted per process (PYTHONHASHSEED), which made
+        # seed-time and query-time vectors disagree and broke retrieval.
+        idx = _stable_hash(word) % dim
         vec[idx] += 1.0 / (i + 1.0)
 
         # Character bigrams for subword similarity
         for j in range(len(word) - 1):
-            bg_hash = hash(word[j : j + 2])
-            bg_idx = abs(bg_hash) % dim
+            bg_idx = _stable_hash(word[j : j + 2]) % dim
             vec[bg_idx] += 0.35
 
     # L2 normalize
