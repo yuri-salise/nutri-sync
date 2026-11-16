@@ -128,6 +128,8 @@ class RunActivity(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     surface_type = Column(String(50), default="road", nullable=False)  # "road" or "trail"
+    sport_type = Column(String(20), default="run", nullable=False)  # run | walk | ride | hike
+    title = Column(String(120), nullable=True)
     distance_km = Column(Float, nullable=False)
     duration_sec = Column(Integer, nullable=False)
     elevation_gain_m = Column(Float, default=0.0, nullable=False)

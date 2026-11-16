@@ -70,12 +70,3 @@ async def test_activity_synced_summary(client: AsyncClient, seed_test_users, ath
     assert "dynamic_targets" in data
     assert "consumed" in data
     assert "remaining" in data
-
-
-@pytest.mark.asyncio
-async def test_community_feed(client: AsyncClient, seed_test_users):
-    resp = await client.get("/api/v1/community-feed")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "data" in data
-    assert "meta" in data

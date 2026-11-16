@@ -18,6 +18,7 @@ from app.schemas.workout import (
     WorkoutSessionUpdate,
     WorkoutSetResponse,
 )
+from app.services.social import delete_social_for
 
 router = APIRouter(tags=["Workouts"])
 
@@ -281,6 +282,7 @@ async def delete_workout_session(
             },
         )
 
+    await delete_social_for(db, "workout", session.id)
     await db.delete(session)
     await db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -7,6 +7,9 @@ import {
   WorkoutRoutine,
   RoutineExerciseInput,
   RunActivity,
+  SportType,
+  FeedItem,
+  FeedComment,
   RagScanResult,
   NutritionLog,
   RagScanLog,
@@ -186,7 +189,7 @@ class ApiService {
   }
 
   // Runs
-  async getRuns(params?: { page?: number; limit?: number; surface_type?: string }): Promise<PaginatedResponse<RunActivity>> {
+  async getRuns(params?: { page?: number; limit?: number; surface_type?: string; sport_type?: SportType }): Promise<PaginatedResponse<RunActivity>> {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
@@ -198,6 +201,8 @@ class ApiService {
   }
 
   async createRun(data: {
+    sport_type: SportType;
+    title?: string;
     surface_type: 'road' | 'trail';
     distance_km: number;
     duration_sec: number;
@@ -268,9 +273,37 @@ class ApiService {
   }
 
   // Community Feed
-  async getCommunityFeed(page: number = 1, limit: number = 20, activity_type?: string): Promise<PaginatedResponse<any>> {
-    const query = activity_type ? `?page=${page}&limit=${limit}&activity_type=${activity_type}` : `?page=${page}&limit=${limit}`;
-    return this.request<PaginatedResponse<any>>(`/community-feed${query}`);
+  // Community feed
+  async getCommunityFeed(page = 1, limit = 10, activity_type: 'all' | 'workouts' | 'runs' | 'posts' = 'all'): Promise<PaginatedResponse<FeedItem>> {
+    return this.request<PaginatedResponse<FeedItem>>(`/community-feed?page=${page}&limit=${limit}&activity_type=${activity_type}`);
+  }
+
+  async createPost(body: string): Promise<FeedItem> {
+    return this.request<FeedItem>('/community-feed/posts', { method: 'POST', body: JSON.stringify({ body }) });
+  }
+
+  async deletePost(id: number): Promise<void> {
+    return this.request<void>(`/community-feed/posts/${id}`, { method: 'DELETE' });
+  }
+
+  async giveKudos(type: string, id: number): Promise<{ kudos_count: number; kudos_by_me: boolean }> {
+    return this.request(`/community-feed/${type}/${id}/kudos`, { method: 'PUT' });
+  }
+
+  async removeKudos(type: string, id: number): Promise<void> {
+    return this.request<void>(`/community-feed/${type}/${id}/kudos`, { method: 'DELETE' });
+  }
+
+  async getComments(type: string, id: number): Promise<PaginatedResponse<FeedComment>> {
+    return this.request<PaginatedResponse<FeedComment>>(`/community-feed/${type}/${id}/comments?limit=100`);
+  }
+
+  async addComment(type: string, id: number, body: string): Promise<FeedComment> {
+    return this.request<FeedComment>(`/community-feed/${type}/${id}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+  }
+
+  async deleteComment(commentId: number): Promise<void> {
+    return this.request<void>(`/community-feed/comments/${commentId}`, { method: 'DELETE' });
   }
 }
 

@@ -25,10 +25,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const athleteNavItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Workouts', path: '/workouts', icon: Dumbbell },
-    { name: 'GPS Run Tracker', path: '/runs', icon: MapPin },
+    { name: 'Record Activity', path: '/record', icon: MapPin },
     { name: 'Smart Meal Scanner', path: '/scanner', icon: Compass },
     { name: 'Daily Food Log', path: '/nutrition', icon: UtensilsCrossed },
-    { name: 'Community Feed', path: '/community', icon: Users },
+    { name: 'Community', path: '/community', icon: Users },
   ];
 
   const adminNavItems = [

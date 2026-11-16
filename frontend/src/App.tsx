@@ -60,7 +60,8 @@ export const App: React.FC = () => {
             <Route index element={<DashboardPage />} />
             <Route path="workouts" element={<WorkoutLoggerPage />} />
             <Route path="exercises" element={<Navigate to="/workouts" replace />} />
-            <Route path="runs" element={<RunTrackerPage />} />
+            <Route path="record" element={<RunTrackerPage />} />
+            <Route path="runs" element={<Navigate to="/record" replace />} />
             <Route path="scanner" element={<RagNutritionScannerPage />} />
             <Route path="nutrition" element={<NutritionLogPage />} />
             <Route path="community" element={<CommunityFeedPage />} />
