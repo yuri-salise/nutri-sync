@@ -4,6 +4,8 @@ import {
   Exercise,
   WorkoutSession,
   WorkoutSet,
+  WorkoutRoutine,
+  RoutineExerciseInput,
   RunActivity,
   RagScanResult,
   NutritionLog,
@@ -91,8 +93,9 @@ class ApiService {
   async getExercises(params?: {
     muscle_group?: string;
     category?: string;
-    status?: string;
+    mine?: boolean;
     q?: string;
+    sort?: string;
     page?: number;
     limit?: number;
   }): Promise<PaginatedResponse<Exercise>> {
@@ -155,6 +158,31 @@ class ApiService {
 
   async verifyWorkoutSetPR(setId: number): Promise<WorkoutSet> {
     return this.request<WorkoutSet>(`/workout-sets/${setId}/verify`, { method: 'PATCH' });
+  }
+
+  // Workout routines
+  async getRoutines(params?: { q?: string; page?: number; limit?: number }): Promise<PaginatedResponse<WorkoutRoutine>> {
+    const searchParams = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => {
+      if (v !== undefined && v !== '') searchParams.append(k, String(v));
+    });
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return this.request<PaginatedResponse<WorkoutRoutine>>(`/workout-routines${query}`);
+  }
+
+  async createRoutine(data: { name: string; notes?: string; exercises: RoutineExerciseInput[] }): Promise<WorkoutRoutine> {
+    return this.request<WorkoutRoutine>('/workout-routines', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateRoutine(
+    id: number,
+    data: { name?: string; notes?: string; exercises?: RoutineExerciseInput[] }
+  ): Promise<WorkoutRoutine> {
+    return this.request<WorkoutRoutine>(`/workout-routines/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  async deleteRoutine(id: number): Promise<void> {
+    return this.request<void>(`/workout-routines/${id}`, { method: 'DELETE' });
   }
 
   // Runs

@@ -7,7 +7,6 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { WorkoutLoggerPage } from './pages/WorkoutLoggerPage';
-import { ExerciseCatalogPage } from './pages/ExerciseCatalogPage';
 import { RunTrackerPage } from './pages/RunTrackerPage';
 import { RagNutritionScannerPage } from './pages/RagNutritionScannerPage';
 import { NutritionLogPage } from './pages/NutritionLogPage';
@@ -60,7 +59,7 @@ export const App: React.FC = () => {
           >
             <Route index element={<DashboardPage />} />
             <Route path="workouts" element={<WorkoutLoggerPage />} />
-            <Route path="exercises" element={<ExerciseCatalogPage />} />
+            <Route path="exercises" element={<Navigate to="/workouts" replace />} />
             <Route path="runs" element={<RunTrackerPage />} />
             <Route path="scanner" element={<RagNutritionScannerPage />} />
             <Route path="nutrition" element={<NutritionLogPage />} />

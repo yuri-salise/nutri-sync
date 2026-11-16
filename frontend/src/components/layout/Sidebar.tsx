@@ -7,7 +7,6 @@ import {
   Compass,
   MapPin,
   UtensilsCrossed,
-  BookOpen,
   Users,
   ShieldCheck,
   ChevronRight,
@@ -25,11 +24,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const athleteNavItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Workouts & PRs', path: '/workouts', icon: Dumbbell },
+    { name: 'Workouts', path: '/workouts', icon: Dumbbell },
     { name: 'GPS Run Tracker', path: '/runs', icon: MapPin },
     { name: 'Smart Meal Scanner', path: '/scanner', icon: Compass },
     { name: 'Daily Food Log', path: '/nutrition', icon: UtensilsCrossed },
-    { name: 'Exercise Library', path: '/exercises', icon: BookOpen },
     { name: 'Community Feed', path: '/community', icon: Users },
   ];
 

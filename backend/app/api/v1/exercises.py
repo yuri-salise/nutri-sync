@@ -8,38 +8,63 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import TokenPayload, require_roles
 from app.db.models import Exercise
-from app.db.session import get_db
+from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.exercise import ExerciseCreate, ExerciseResponse, ExerciseUpdate
 
 router = APIRouter(prefix="/exercises", tags=["Exercises"])
 
+# Exercise visibility:
+#   "approved" - built-in library, visible to everyone
+#   "private"  - a user's custom exercise, visible only to its creator (no approval step)
+SORTABLE = {"name", "muscle_group", "category", "created_at", "met_value"}
+
+
+def _error(code: int, err: str, message: str, details: Optional[list] = None) -> HTTPException:
+    return HTTPException(
+        status_code=code,
+        detail={"error": {"code": err, "message": message, "details": details or []}},
+    )
+
+
+def _visible_to(user_id: int):
+    return or_(Exercise.status == "approved", Exercise.created_by_id == user_id)
+
+
+async def _get_visible(db: AsyncSession, id: int, token: TokenPayload) -> Exercise:
+    exercise = await db.get(Exercise, id)
+    user_id = int(token.sub)
+    if not exercise or (exercise.status != "approved" and exercise.created_by_id != user_id):
+        raise _error(404, "RESOURCE_NOT_FOUND", f"Exercise with ID {id} does not exist.")
+    return exercise
+
 
 @router.get(
     "",
     response_model=PaginatedResponse[ExerciseResponse],
-    summary="List exercises with pagination, filtering, and sorting (Requirement B6)",
+    summary="List the built-in exercises plus my custom ones (Role: athlete, admin)",
 )
 async def list_exercises(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     muscle_group: Optional[str] = Query(None, description="Filter by muscle group"),
     category: Optional[str] = Query(None, description="Filter by exercise category"),
-    status_filter: Optional[str] = Query(
-        None, alias="status", description="Filter by status (pending|approved)"
-    ),
-    q: Optional[str] = Query(None, description="Search query string"),
-    sort: Optional[str] = Query("-created_at", description="Sort field (prefix with - for desc)"),
+    mine: bool = Query(False, description="Only my custom exercises"),
+    q: Optional[str] = Query(None, description="Search by name, muscle group or category"),
+    sort: Optional[str] = Query("name", description="Sort field (prefix with - for desc)"),
+    token: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Exercise)
+    user_id = int(token.sub)
+    await set_rls_context(db, user_id=user_id, role=token.role)
 
+    query = select(Exercise).where(_visible_to(user_id))
+    if mine:
+        query = query.where(Exercise.created_by_id == user_id, Exercise.status == "private")
     if muscle_group:
         query = query.where(Exercise.muscle_group == muscle_group)
     if category:
         query = query.where(Exercise.category == category)
-    if status_filter:
-        query = query.where(Exercise.status == status_filter)
     if q:
         query = query.where(
             or_(
@@ -49,33 +74,23 @@ async def list_exercises(
             )
         )
 
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total_res = await db.execute(count_query)
-    total = total_res.scalar_one()
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar_one()
 
-    # Sorting
-    if sort:
-        is_desc = sort.startswith("-")
-        col_name = sort[1:] if is_desc else sort
-        col_attr = getattr(Exercise, col_name, None)
-        if col_attr is not None:
-            query = query.order_by(desc(col_attr) if is_desc else asc(col_attr))
-        else:
-            query = query.order_by(desc(Exercise.created_at))
-    else:
-        query = query.order_by(desc(Exercise.created_at))
-
-    offset = (page - 1) * limit
-    query = query.offset(offset).limit(limit)
-    res = await db.execute(query)
-    items = list(res.scalars().all())
-
-    total_pages = math.ceil(total / limit) if total > 0 else 1
+    sort = sort or "name"
+    field = sort.lstrip("-")
+    col = getattr(Exercise, field if field in SORTABLE else "name")
+    query = query.order_by(desc(col) if sort.startswith("-") else asc(col))
+    query = query.offset((page - 1) * limit).limit(limit)
+    items = list((await db.execute(query)).scalars().all())
 
     return PaginatedResponse(
         data=items,
-        meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages),
+        meta=PaginationMeta(
+            page=page,
+            limit=limit,
+            total=total,
+            total_pages=math.ceil(total / limit) if total > 0 else 1,
+        ),
     )
 
 
@@ -83,23 +98,38 @@ async def list_exercises(
     "",
     response_model=ExerciseResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create or submit a custom exercise",
+    summary="Add a custom exercise; it's usable right away (Role: athlete, admin)",
+    responses={409: {"description": "An exercise with this name already exists"}},
 )
 async def create_exercise(
     payload: ExerciseCreate,
     response: Response,
-    token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
+    token: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = int(token_payload.sub)
-    exercise_status = "approved" if token_payload.role == "admin" else "pending"
+    user_id = int(token.sub)
+    await set_rls_context(db, user_id=user_id, role=token.role)
+    name = payload.name.strip()
 
+    dup = await db.execute(
+        select(Exercise).where(_visible_to(user_id), func.lower(Exercise.name) == name.lower())
+    )
+    existing = dup.scalars().first()
+    if existing:
+        raise _error(
+            409,
+            "DUPLICATE_RESOURCE",
+            f'"{existing.name}" is already in your exercise list.',
+            [{"field": "name", "message": f"Use the existing exercise (ID {existing.id})."}],
+        )
+
+    # Admins add to the shared library; everyone else gets a private exercise.
     exercise = Exercise(
-        name=payload.name,
+        name=name,
         category=payload.category,
         muscle_group=payload.muscle_group,
         met_value=payload.met_value,
-        status=exercise_status,
+        status="approved" if token.role == "admin" else "private",
         created_by_id=user_id,
     )
     db.add(exercise)
@@ -110,72 +140,46 @@ async def create_exercise(
     return exercise
 
 
-@router.get("/{id}", response_model=ExerciseResponse, summary="Get single exercise by ID")
-async def get_exercise(id: int, db: AsyncSession = Depends(get_db)):
-    exercise = await db.get(Exercise, id)
-    if not exercise:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": {
-                    "code": "RESOURCE_NOT_FOUND",
-                    "message": f"Exercise with ID {id} does not exist.",
-                    "details": [],
-                }
-            },
-        )
-    return exercise
+@router.get(
+    "/{id}",
+    response_model=ExerciseResponse,
+    summary="Get one exercise (Role: athlete, admin)",
+    responses={404: {"description": "Not found or not visible to you"}},
+)
+async def get_exercise(
+    id: int,
+    token: TokenPayload = Depends(require_roles(["athlete", "admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _get_visible(db, id, token)
 
 
 @router.patch(
     "/{id}",
     response_model=ExerciseResponse,
-    summary="Update an exercise (Admins can approve/reject; Creators can update fields)",
+    summary="Edit my custom exercise; admins can also add it to the shared library",
+    responses={403: {"description": "Not your exercise, or status change by non-admin"}},
 )
 async def update_exercise(
     id: int,
     payload: ExerciseUpdate,
-    token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
+    token: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = int(token.sub)
     exercise = await db.get(Exercise, id)
-    if not exercise:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": {
-                    "code": "RESOURCE_NOT_FOUND",
-                    "message": f"Exercise with ID {id} does not exist.",
-                    "details": [],
-                }
-            },
-        )
+    if not exercise or (
+        token.role != "admin"
+        and exercise.status != "approved"
+        and exercise.created_by_id != user_id
+    ):
+        raise _error(404, "RESOURCE_NOT_FOUND", f"Exercise with ID {id} does not exist.")
 
-    user_id = int(token_payload.sub)
-    if token_payload.role != "admin" and exercise.created_by_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": {
-                    "code": "FORBIDDEN",
-                    "message": "You can only update exercises that you created.",
-                    "details": [],
-                }
-            },
-        )
+    if token.role != "admin" and exercise.created_by_id != user_id:
+        raise _error(403, "FORBIDDEN", "You can only edit exercises you created.")
 
-    # Only admin can change status to approved/rejected
-    if payload.status is not None and token_payload.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": {
-                    "code": "FORBIDDEN",
-                    "message": "Only coaches or administrators can approve/reject exercise submissions.",
-                    "details": [],
-                }
-            },
-        )
+    if payload.status is not None and token.role != "admin":
+        raise _error(403, "FORBIDDEN", "Only coaches can move exercises into the shared library.")
 
     for field, val in payload.model_dump(exclude_unset=True).items():
         setattr(exercise, field, val)
@@ -185,37 +189,28 @@ async def update_exercise(
     return exercise
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an exercise")
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete my custom exercise (admins: any exercise)",
+    responses={403: {"description": "Not your exercise"}, 404: {"description": "Not found"}},
+)
 async def delete_exercise(
     id: int,
-    token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
+    token: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = int(token.sub)
     exercise = await db.get(Exercise, id)
-    if not exercise:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": {
-                    "code": "RESOURCE_NOT_FOUND",
-                    "message": f"Exercise with ID {id} does not exist.",
-                    "details": [],
-                }
-            },
-        )
+    if not exercise or (
+        token.role != "admin"
+        and exercise.status != "approved"
+        and exercise.created_by_id != user_id
+    ):
+        raise _error(404, "RESOURCE_NOT_FOUND", f"Exercise with ID {id} does not exist.")
 
-    user_id = int(token_payload.sub)
-    if token_payload.role != "admin" and exercise.created_by_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": {
-                    "code": "FORBIDDEN",
-                    "message": "You can only delete exercises you created.",
-                    "details": [],
-                }
-            },
-        )
+    if token.role != "admin" and exercise.created_by_id != user_id:
+        raise _error(403, "FORBIDDEN", "You can only delete exercises you created.")
 
     await db.delete(exercise)
     await db.commit()

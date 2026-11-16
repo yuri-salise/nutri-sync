@@ -20,7 +20,7 @@ class ExerciseUpdate(BaseModel):
     category: Optional[str] = None
     muscle_group: Optional[str] = None
     met_value: Optional[float] = Field(None, gt=0.5, lt=25.0)
-    status: Optional[str] = Field(None, pattern="^(pending|approved|rejected)$")
+    status: Optional[str] = Field(None, pattern="^(private|approved)$")
 
 
 class ExerciseResponse(ExerciseBase):

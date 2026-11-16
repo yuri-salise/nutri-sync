@@ -101,18 +101,27 @@ async def create_workout_session(
     db.add(session)
     await db.flush()
 
-    # Process sets & detect PRs (Personal Records)
+    # Process sets & detect PRs (Personal Records). best_so_far tracks the heaviest weight
+    # per exercise including earlier sets in this same workout, so only a set that beats
+    # every previous set counts as a PR (not each set that beats last week's best).
+    best_so_far: dict[int, float] = {}
     for s in payload.sets:
-        # Check user's max previous weight for this exercise
-        max_pr_stmt = (
-            select(func.coalesce(func.max(WorkoutSet.weight_kg), 0.0))
-            .join(WorkoutSession, WorkoutSet.session_id == WorkoutSession.id)
-            .where(and_(WorkoutSession.user_id == user_id, WorkoutSet.exercise_id == s.exercise_id))
-        )
-        prev_max_res = await db.execute(max_pr_stmt)
-        prev_max_weight = prev_max_res.scalar_one()
+        if s.exercise_id not in best_so_far:
+            max_pr_stmt = (
+                select(func.coalesce(func.max(WorkoutSet.weight_kg), 0.0))
+                .join(WorkoutSession, WorkoutSet.session_id == WorkoutSession.id)
+                .where(
+                    and_(
+                        WorkoutSession.user_id == user_id,
+                        WorkoutSession.id != session.id,
+                        WorkoutSet.exercise_id == s.exercise_id,
+                    )
+                )
+            )
+            best_so_far[s.exercise_id] = (await db.execute(max_pr_stmt)).scalar_one()
 
-        is_new_pr = s.weight_kg > prev_max_weight and s.weight_kg > 0.0
+        is_new_pr = s.weight_kg > best_so_far[s.exercise_id] and s.weight_kg > 0.0
+        best_so_far[s.exercise_id] = max(best_so_far[s.exercise_id], s.weight_kg)
 
         w_set = WorkoutSet(
             session_id=session.id,

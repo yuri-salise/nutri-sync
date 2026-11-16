@@ -26,7 +26,8 @@ export interface Exercise {
   category: string;
   muscle_group: string;
   met_value: number;
-  status: 'pending' | 'approved' | 'rejected';
+  /** approved = built-in library; private = the user's own custom exercise */
+  status: 'approved' | 'private';
   created_by_id?: number | null;
   created_at: string;
 }
@@ -53,6 +54,35 @@ export interface WorkoutSession {
   session_date: string;
   created_at: string;
   sets: WorkoutSet[];
+}
+
+export interface RoutineExercise {
+  id: number;
+  exercise_id: number;
+  position: number;
+  target_sets: number;
+  target_reps: number;
+  target_weight_kg: number;
+  rest_sec: number;
+  exercise?: Exercise;
+}
+
+export interface WorkoutRoutine {
+  id: number;
+  user_id: number;
+  name: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  exercises: RoutineExercise[];
+}
+
+export interface RoutineExerciseInput {
+  exercise_id: number;
+  target_sets: number;
+  target_reps: number;
+  target_weight_kg: number;
+  rest_sec: number;
 }
 
 export interface RunActivity {

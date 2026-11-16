@@ -12,7 +12,9 @@ sys.path.insert(0, str(BASE_DIR))
 from app.core.logging import logger
 from app.core.security import get_password_hash
 from app.db.base import Base
+from app.db.common_exercises import COMMON_EXERCISES
 from app.db.models import Exercise, NutritionLog, RunActivity, User, WorkoutSession, WorkoutSet
+from app.db.routine_models import WorkoutRoutine, WorkoutRoutineExercise
 from app.db.session import AsyncSessionLocal, engine
 
 
@@ -59,20 +61,7 @@ async def seed_demo_data():
         await session.flush()
 
         # 2. Seed Standard Approved Exercise Catalog
-        exercises_data = [
-            ("Barbell Bench Press", "compound", "chest", 6.0),
-            ("Incline Dumbbell Press", "compound", "chest", 5.5),
-            ("Barbell Back Squat", "compound", "legs", 7.5),
-            ("Romanian Deadlift", "compound", "legs", 6.5),
-            ("Conventional Deadlift", "compound", "back", 8.0),
-            ("Weighted Pull-Ups", "compound", "back", 6.5),
-            ("Overhead Barbell Press", "compound", "shoulders", 5.5),
-            ("Dumbbell Lateral Raises", "isolation", "shoulders", 4.0),
-            ("Incline Dumbbell Bicep Curls", "isolation", "arms", 4.5),
-            ("Tricep Rope Pushdowns", "isolation", "arms", 4.5),
-            ("Hanging Leg Raises", "isolation", "core", 4.0),
-            ("Cable Woodchoppers", "isolation", "core", 4.0),
-        ]
+        exercises_data = COMMON_EXERCISES
         created_exercises = []
         for name, cat, muscle, met in exercises_data:
             ex = Exercise(
@@ -86,13 +75,13 @@ async def seed_demo_data():
             session.add(ex)
             created_exercises.append(ex)
 
-        # Custom pending exercise by athlete
+        # Private custom exercise by athlete (no approval needed)
         pending_ex = Exercise(
             name="Bulgarian Split Squat with Chains",
             category="compound",
             muscle_group="legs",
             met_value=7.0,
-            status="pending",
+            status="private",
             created_by_id=athlete.id,
         )
         session.add(pending_ex)
@@ -111,8 +100,9 @@ async def seed_demo_data():
         session.add(workout)
         await session.flush()
 
-        bench_ex = created_exercises[0]
-        ohp_ex = created_exercises[6]
+        by_name = {ex.name: ex for ex in created_exercises}
+        bench_ex = by_name["Barbell Bench Press"]
+        ohp_ex = by_name["Overhead Barbell Press"]
 
         sets = [
             WorkoutSet(
@@ -208,6 +198,32 @@ async def seed_demo_data():
             logged_at=today - timedelta(hours=8),
         )
         session.add_all([meal1, meal2])
+
+        # 6. Saved routine so the "start from a routine" flow has something to show
+        push_day = WorkoutRoutine(
+            user_id=athlete.id, name="Push Day", notes="Chest, shoulders, triceps"
+        )
+        push_day.exercises = [
+            WorkoutRoutineExercise(
+                exercise_id=by_name[n].id,
+                position=i,
+                target_sets=sets_,
+                target_reps=reps,
+                target_weight_kg=kg,
+                rest_sec=rest,
+            )
+            for i, (n, sets_, reps, kg, rest) in enumerate(
+                [
+                    ("Barbell Bench Press", 4, 8, 80.0, 150),
+                    ("Incline Dumbbell Press", 3, 10, 26.0, 90),
+                    ("Overhead Barbell Press", 3, 8, 45.0, 120),
+                    ("Dumbbell Lateral Raises", 3, 15, 10.0, 60),
+                    ("Tricep Rope Pushdowns", 3, 12, 25.0, 60),
+                ],
+                start=1,
+            )
+        ]
+        session.add(push_day)
 
         await session.commit()
         logger.info(
