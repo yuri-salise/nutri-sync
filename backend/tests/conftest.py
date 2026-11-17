@@ -1,5 +1,11 @@
+import os
 import sys
 from pathlib import Path
+
+# Dummy test-only values so settings load without a real .env (secrets have no defaults).
+os.environ.setdefault("SECRET_KEY", "test_secret_key_minimum_32_characters_for_tests_only")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("DATABASE_URL_SYNC", "sqlite:///:memory:")
 
 # Add backend directory to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-nutrisync_db}
       POSTGRES_USER: ${DB_USER:-nutrisync_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-nutrisync_secure_password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -28,8 +28,8 @@ services:
       APP_VERSION: ${APP_VERSION:-dev}
       DB_HOST: db
       DB_PORT: 5432
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-nutrisync_user}:${DB_PASSWORD:-nutrisync_secure_password}@db:5432/${DB_NAME:-nutrisync_db}
-      DATABASE_URL_SYNC: postgresql://${DB_USER:-nutrisync_user}:${DB_PASSWORD:-nutrisync_secure_password}@db:5432/${DB_NAME:-nutrisync_db}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-nutrisync_user}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-nutrisync_db}
+      DATABASE_URL_SYNC: postgresql://${DB_USER:-nutrisync_user}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-nutrisync_db}
       FRONTEND_ORIGIN: http://localhost:8080
     depends_on:
       db:
@@ -45,8 +45,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html:ro
     networks:
       - internal-net
 

@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
 
     # Security & JWT
-    SECRET_KEY: str = "nutrisync_super_secure_jwt_secret_key_minimum_32_characters"
+    # No defaults for secrets: they must come from the environment / .env (Q5, D3).
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -21,14 +22,10 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
     DB_USER: str = "nutrisync_user"
-    DB_PASSWORD: str = "nutrisync_secure_password"
+    DB_PASSWORD: str = ""
     DB_NAME: str = "nutrisync_db"
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
-    )
-    DATABASE_URL_SYNC: str = (
-        "postgresql://nutrisync_user:nutrisync_secure_password@localhost:5432/nutrisync_db"
-    )
+    DATABASE_URL: str
+    DATABASE_URL_SYNC: str
 
     # CORS
     FRONTEND_ORIGIN: str = "http://localhost:5173"
