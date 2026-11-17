@@ -15,6 +15,7 @@ import {
   Minus,
   Plus,
   X,
+  Camera,
 } from 'lucide-react';
 
 interface EditableItem {
@@ -43,6 +44,17 @@ const servingGrams = (food: FoodItemSummary): number => {
   return m ? parseFloat(m[1]) : 100;
 };
 
+/** Downscale a photo to max 1024 px and return it as a JPEG data URL (keeps uploads small). */
+const shrinkPhoto = async (file: File): Promise<string> => {
+  const img = await createImageBitmap(file);
+  const scale = Math.min(1, 1024 / Math.max(img.width, img.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.8);
+};
+
 export const RagNutritionScannerPage: React.FC = () => {
   const [queryInput, setQueryInput] = useState('');
   const [scanning, setScanning] = useState(false);
@@ -51,6 +63,24 @@ export const RagNutritionScannerPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmedSuccess, setConfirmedSuccess] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null); // JPEG data URL
+  const [fromPhoto, setFromPhoto] = useState(false);
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('That file is not a photo. Please pick a JPG or PNG image.');
+      return;
+    }
+    try {
+      setPhoto(await shrinkPhoto(file));
+      setError(null);
+    } catch {
+      setError('We could not read that photo. Please try another one.');
+    }
+  };
 
   const samplePrompts = [
     'Chicken adobo with 1 cup rice and a boiled egg',
@@ -62,7 +92,7 @@ export const RagNutritionScannerPage: React.FC = () => {
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (queryInput.trim().length < 2) {
+    if (!photo && queryInput.trim().length < 2) {
       setError('Tell us what you ate first, e.g. "1 cup rice and chicken adobo".');
       return;
     }
@@ -72,7 +102,8 @@ export const RagNutritionScannerPage: React.FC = () => {
     setConfirmedSuccess(false);
 
     try {
-      const result = await api.scanMealRAG(queryInput.trim());
+      const result = await api.scanMealRAG(queryInput.trim(), photo?.split(',')[1]);
+      setFromPhoto(!!photo);
       if (!Array.isArray(result.items)) {
         // An older API build returns totals only; don't crash, explain instead.
         setScanResult(null);
@@ -169,8 +200,8 @@ export const RagNutritionScannerPage: React.FC = () => {
           <span>Smart Meal Scanner</span>
         </h1>
         <p className="text-sm text-[#848E9C] mt-1">
-          Tell us what you ate, in English or Tagalog. Add amounts like “1 cup” or “200g” for a
-          better estimate.
+          Snap a photo of your meal, or tell us what you ate in English or Tagalog. Add amounts
+          like “1 cup” or “200g” for a better estimate.
         </p>
       </div>
 
@@ -180,6 +211,25 @@ export const RagNutritionScannerPage: React.FC = () => {
           <label htmlFor="meal-input" className="text-sm font-semibold text-white flex items-center gap-1.5">
             <Sparkles className="h-4 w-4 text-[#C8FF00]" /> What did you eat?
           </label>
+          {photo ? (
+            <div className="relative w-fit">
+              <img src={photo} alt="Your meal photo" className="h-32 rounded-2xl border border-[#1e232d] object-cover" />
+              <button
+                type="button"
+                onClick={() => setPhoto(null)}
+                aria-label="Remove photo"
+                className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-[#07080a]/80 text-white hover:text-[#F6465D]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#07080a] border border-dashed border-[#1e232d] hover:border-[#C8FF00] text-sm text-[#B7BDC6] hover:text-[#C8FF00] flex items-center justify-center gap-2 cursor-pointer focus-within:border-[#C8FF00] transition-colors">
+              <Camera className="h-4 w-4" />
+              <span>Take or upload a photo</span>
+              <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="sr-only" />
+            </label>
+          )}
           <textarea
             id="meal-input"
             rows={2}
@@ -188,7 +238,7 @@ export const RagNutritionScannerPage: React.FC = () => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) handleScan(e);
             }}
-            placeholder="e.g. chicken adobo with 1 cup rice and a boiled egg"
+            placeholder={photo ? 'Optional note, e.g. "the rice is brown rice"' : 'e.g. chicken adobo with 1 cup rice and a boiled egg'}
             className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-4 py-3 text-sm text-white placeholder-[#848E9C] focus:outline-none resize-none"
           />
           <button
@@ -244,6 +294,11 @@ export const RagNutritionScannerPage: React.FC = () => {
                 <p className="text-sm text-[#848E9C]">
                   Check each food and adjust the amount if needed.
                 </p>
+                {fromPhoto && (
+                  <p className="text-xs text-[#848E9C] mt-1">
+                    From your photo we saw: “{scanResult.query_input}”
+                  </p>
+                )}
               </div>
             </div>
 
@@ -368,6 +423,7 @@ export const RagNutritionScannerPage: React.FC = () => {
               <span>
                 This is a machine-generated estimate based on DOST-FNRI and USDA food data. Please
                 review it before saving.
+                {fromPhoto && ' Portions read from a photo are rough guesses.'}
                 {needsReview && ' Some items need a quick check above.'}
               </span>
             </p>
