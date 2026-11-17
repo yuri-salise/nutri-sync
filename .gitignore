@@ -49,6 +49,9 @@ frontend/dist-ssr/
 
 # Database & Docker
 *.sql
+*.db
+*.sqlite
+*.sqlite3
 !backend/app/scripts/data/*.csv
 db-data/
 postgres_data/
