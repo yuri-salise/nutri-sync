@@ -4,10 +4,8 @@ test.describe('main workflows (signed in as the demo athlete)', () => {
   test('scan a meal: foods, grams and totals are shown for confirmation', async ({ page }) => {
     await page.goto('/scanner');
 
-    await page
-      .getByRole('textbox')
-      .first()
-      .fill('chicken adobo with 1 cup rice and a boiled egg');
+    // The photo upload adds a hidden file input, so target the meal field by its id.
+    await page.locator('#meal-input').fill('chicken adobo with 1 cup rice and a boiled egg');
     await page.getByRole('button', { name: /analyze meal/i }).click();
 
     await expect(page.getByText(/Adobong Manok/i).first()).toBeVisible();

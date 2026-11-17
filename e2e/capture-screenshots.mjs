@@ -67,7 +67,7 @@ async function shot(page, name, { full = true } = {}) {
   }
 
   await page.goto(base + '/scanner');
-  await page.getByRole('textbox').first().fill('chicken adobo with 1 cup rice and a boiled egg');
+  await page.locator('#meal-input').fill('chicken adobo with 1 cup rice and a boiled egg');
   await page.getByRole('button', { name: /analyze meal/i }).click();
   await page.getByText(/Adobong Manok/i).first().waitFor();
   await shot(page, '07-meal-scanner-result');
