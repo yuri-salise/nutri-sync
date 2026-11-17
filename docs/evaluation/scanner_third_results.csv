@@ -1,0 +1,34 @@
+meal,expected_foods,predicted_foods,items_correct,ref_kcal,pred_kcal,abs_pct_error
+dinuguan with 1 cup rice,Dinuguan (Pork Blood Stew); Cooked White Rice (Bigas Puti),Dinuguan (Pork Blood Stew); Cooked White Rice (Bigas Puti),2/2,457.4,457.4,0.0
+calderetang baka and rice,Calderetang Baka (Beef Caldereta with Liver Paste); Cooked White Rice (Bigas Puti),Calderetang Baka (Beef Caldereta with Liver Paste); Cooked White Rice (Bigas Puti),2/2,592.4,592.4,0.0
+ampalaya con carne with brown rice,Ampalaya Con Carne (Bittergourd with Beef); Cooked Brown Rice (Bigas Pula/Kayumanggi),Ampalaya Con Carne (Bittergourd with Beef); Cooked Brown Rice (Bigas Pula/Kayumanggi),2/2,348.0,348.0,0.0
+paksiw na bangus with rice,Paksiw na Bangus; Cooked White Rice (Bigas Puti),Paksiw na Bangus; Cooked White Rice (Bigas Puti),2/2,418.4,418.4,0.0
+escabeche and 1 cup sinangag,Escabeche Fish (Sweet & Sour Fish); Sinangag (Garlic Fried Rice),Escabeche Fish (Sweet & Sour Fish); Sinangag (Garlic Fried Rice),2/2,534.0,534.0,0.0
+ukoy and a slice of bibingka,Ukoy (Crispy Shrimp and Bean Sprout Fritters); Bibingka with Salted Egg,Ukoy (Crispy Shrimp and Bean Sprout Fritters); Bibingka with Salted Egg,2/2,455.0,455.0,0.0
+2 longganisa with garlic rice and a fried egg,"Vigan Longganisa (Garlic Sausage); Sinangag (Garlic Fried Rice); Egg, whole, cooked, fried","Vigan Longganisa (Garlic Sausage); Sinangag (Garlic Fried Rice); Egg, whole, cooked, fried",3/3,636.2,636.2,0.0
+sinampalukang manok and rice,Sinampalukang Manok (Chicken in Tamarind Leaves); Cooked White Rice (Bigas Puti),Sinampalukang Manok (Chicken in Tamarind Leaves); Cooked White Rice (Bigas Puti),2/2,542.9,542.9,0.0
+ginisang munggo with rice,Ginisang Munggo with Tinapa and Malunggay; Cooked White Rice (Bigas Puti),Ginisang Munggo with Tinapa and Malunggay; Cooked White Rice (Bigas Puti),2/2,415.4,415.4,0.0
+tulingan with 1 cup rice,Tulingan Sinaing (Braised Tuna with Kamias); Cooked White Rice (Bigas Puti),Tulingan Sinaing (Braised Tuna with Kamias); Cooked White Rice (Bigas Puti),2/2,367.4,367.4,0.0
+grilled hito and rice,Hito Inihaw (Grilled Catfish); Cooked White Rice (Bigas Puti),Hito Inihaw (Grilled Catfish); Cooked White Rice (Bigas Puti),2/2,412.6,412.6,0.0
+4 steamed prawns with rice,Sugpo Steamed (Tiger Prawns); Cooked White Rice (Bigas Puti),Sugpo Steamed (Tiger Prawns); Cooked White Rice (Bigas Puti),2/2,304.4,304.4,0.0
+a bowl of ginataang mais,Ginataang Mais (Corn with Glutinous Rice & Coconut),Ginataang Mais (Corn with Glutinous Rice & Coconut),1/1,297.0,297.0,0.0
+5 lanzones and 5 rambutan,Lanzones Fresh; Rambutan Fresh,Lanzones Fresh; Rambutan Fresh,2/2,101.1,101.1,0.0
+ensaymada and coffee,"Ensaymada with Grated Cheese; Beverages, coffee, brewed, prepared with tap water, decaffeinated","Ensaymada with Grated Cheese; Beverages, coffee, brewed, breakfast blend",1/2,272.0,277.0,1.8
+4 kwek-kwek and 6 squidballs,Kwek-Kwek (Deep-Fried Battered Quail Eggs); Squidball Street Style,Kwek-Kwek (Deep-Fried Battered Quail Eggs); Squidball Street Style,2/2,420.5,420.5,0.0
+1 siopao bola-bola,Siopao Bola-Bola Special,Siopao Bola-Bola Special,1/1,357.0,357.0,0.0
+kutsinta and sapin-sapin,Kutsinta with Grated Coconut; Sapin-Sapin,Kutsinta with Grated Coconut; Sapin-Sapin,2/2,270.0,270.0,0.0
+chickpeas and 1 cup spinach,"Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt; Spinach, raw","Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, with salt; Spinach, raw",1/2,275.9,275.9,0.0
+kidney beans with brown rice,"Beans, kidney, all types, mature seeds, cooked, boiled, without salt; Cooked Brown Rice (Bigas Pula/Kayumanggi)","Beans, kidney, all types, mature seeds, canned; Cooked Brown Rice (Bigas Pula/Kayumanggi)",1/2,392.8,383.0,2.5
+1 cup green peas,"Peas, green, cooked, boiled, drained, without salt","Peas, green, raw",0/1,134.4,117.5,12.6
+cauliflower and cabbage,"Cauliflower, raw; Cabbage, raw","Cauliflower, raw; Cabbage, raw",2/2,49.0,32.6,33.5
+romaine lettuce with mushrooms and red bell pepper,"Lettuce, cos or romaine, raw; Mushrooms, white, raw; Peppers, sweet, red, raw","Lettuce, cos or romaine, raw; Mushrooms, morel, raw; Peppers, sweet, red, raw",2/3,62.1,59.4,4.4
+1 cup strawberries and 1 cup watermelon,"Strawberries, raw; Watermelon, raw","Strawberries, raw; Watermelon, raw",2/2,94.8,94.8,0.0
+a peach and a pear,"Peaches, yellow, raw; Pears, raw, bartlett (Includes foods for USDA's Food Distribution Program)","Peaches, yellow, raw; Pears, raw",1/2,170.6,160.0,6.2
+1 cup reduced fat milk,"Milk, reduced fat, fluid, 2% milkfat, with added nonfat milk solids and vitamin A and vitamin D","Milk, buttermilk, fluid, cultured, reduced fat",0/1,125.0,137.2,9.8
+mozzarella cheese and 2 slices whole wheat bread,"Cheese, mozzarella, whole milk; Bread, whole-wheat, commercially prepared","Cheese, mozzarella, nonfat; Bread, pita, whole-wheat",0/2,245.0,316.5,29.2
+baked cod with 1 cup green peas,"Fish, cod, Atlantic, cooked, dry heat; Peas, green, cooked, boiled, drained, without salt","Fish, cod, Pacific, cooked; Peas, green, raw",0/2,323.4,188.9,41.6
+tilapia fillet with brown rice,"Fish, tilapia, cooked, dry heat; Cooked Brown Rice (Bigas Pula/Kayumanggi)",Tilapia Inihaw (Grilled Tilapia); Cooked Brown Rice (Bigas Pula/Kayumanggi),1/2,279.4,398.4,42.6
+3 oz ground turkey and a slice of ham,"Turkey, Ground, cooked; Ham, sliced, regular (approximately 11% fat)","Turkey, Ground, raw; Ham, minced",0/2,218.5,180.7,17.3
+a frankfurter on 1 slice whole wheat bread,"Frankfurter, beef, low fat; Bread, whole-wheat, commercially prepared","Frankfurter, pork; Bread, pita, whole-wheat",0/2,160.4,283.0,76.4
+a scoop of vanilla ice cream,"Ice creams, vanilla","Ice creams, vanilla",1/1,136.6,136.6,0.0
+a handful of almonds,"Nuts, almonds","Nuts, almonds",1/1,162.1,173.7,7.1

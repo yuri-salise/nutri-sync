@@ -217,6 +217,10 @@ class ApiService {
     });
   }
 
+  async getRun(id: number): Promise<RunActivity> {
+    return this.request<RunActivity>(`/run-activities/${id}`);
+  }
+
   async deleteRun(id: number): Promise<void> {
     return this.request<void>(`/run-activities/${id}`, { method: 'DELETE' });
   }

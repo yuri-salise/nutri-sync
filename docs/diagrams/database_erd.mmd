@@ -1,0 +1,149 @@
+erDiagram
+    users ||--o{ exercises : "created_by_id"
+    users ||--o{ feed_comments : "user_id"
+    users ||--o{ feed_posts : "user_id"
+    users ||--o{ kudos : "user_id"
+    users ||--o{ rag_scan_logs : "user_id"
+    users ||--o{ run_activities : "user_id"
+    users ||--o{ workout_routines : "user_id"
+    users ||--o{ workout_sessions : "user_id"
+    rag_scan_logs ||--o{ nutrition_logs : "rag_scan_id"
+    users ||--o{ nutrition_logs : "user_id"
+    workout_routines ||--o{ workout_routine_exercises : "routine_id"
+    exercises ||--o{ workout_routine_exercises : "exercise_id"
+    users ||--o{ workout_sets : "verified_by_id"
+    workout_sessions ||--o{ workout_sets : "session_id"
+    exercises ||--o{ workout_sets : "exercise_id"
+    nutrition_knowledge_items {
+        INTEGER id PK
+        VARCHAR food_name
+        VARCHAR source_dataset
+        FLOAT kcal_per_100g
+        FLOAT protein_per_100g
+        FLOAT carbs_per_100g
+        FLOAT fat_per_100g
+        VARCHAR serving_description
+        TEXT portions
+        VECTOR embedding
+        DATETIME created_at
+    }
+    users {
+        INTEGER id PK
+        VARCHAR email
+        VARCHAR password_hash
+        VARCHAR full_name
+        VARCHAR role
+        FLOAT weight_kg
+        FLOAT base_kcal_goal
+        FLOAT protein_goal_g
+        FLOAT carbs_goal_g
+        FLOAT fat_goal_g
+        DATETIME created_at
+    }
+    exercises {
+        INTEGER id PK
+        VARCHAR name
+        VARCHAR category
+        VARCHAR muscle_group
+        FLOAT met_value
+        VARCHAR status
+        INTEGER created_by_id FK
+        DATETIME created_at
+    }
+    feed_comments {
+        INTEGER id PK
+        INTEGER user_id FK
+        VARCHAR target_type
+        INTEGER target_id
+        TEXT body
+        DATETIME created_at
+    }
+    feed_posts {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT body
+        DATETIME created_at
+    }
+    kudos {
+        INTEGER id PK
+        INTEGER user_id FK
+        VARCHAR target_type
+        INTEGER target_id
+        DATETIME created_at
+    }
+    rag_scan_logs {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT query_input
+        TEXT retrieved_item_ids
+        FLOAT top_similarity_score
+        TEXT predicted_macros_json
+        VARCHAR model_version
+        FLOAT latency_ms
+        BOOLEAN used_fallback
+        DATETIME created_at
+    }
+    run_activities {
+        INTEGER id PK
+        INTEGER user_id FK
+        VARCHAR surface_type
+        VARCHAR sport_type
+        VARCHAR title
+        FLOAT distance_km
+        INTEGER duration_sec
+        FLOAT elevation_gain_m
+        FLOAT burned_kcal
+        TEXT route_geojson
+        BOOLEAN is_public
+        DATETIME recorded_at
+    }
+    workout_routines {
+        INTEGER id PK
+        INTEGER user_id FK
+        VARCHAR name
+        TEXT notes
+        DATETIME created_at
+        DATETIME updated_at
+    }
+    workout_sessions {
+        INTEGER id PK
+        INTEGER user_id FK
+        VARCHAR split_title
+        INTEGER duration_min
+        FLOAT burned_kcal
+        BOOLEAN is_public
+        DATETIME session_date
+        DATETIME created_at
+    }
+    nutrition_logs {
+        INTEGER id PK
+        INTEGER user_id FK
+        INTEGER rag_scan_id FK
+        VARCHAR meal_name
+        FLOAT total_kcal
+        FLOAT protein_g
+        FLOAT carbs_g
+        FLOAT fat_g
+        DATETIME logged_at
+    }
+    workout_routine_exercises {
+        INTEGER id PK
+        INTEGER routine_id FK
+        INTEGER exercise_id FK
+        INTEGER position
+        INTEGER target_sets
+        INTEGER target_reps
+        FLOAT target_weight_kg
+        INTEGER rest_sec
+    }
+    workout_sets {
+        INTEGER id PK
+        INTEGER session_id FK
+        INTEGER exercise_id FK
+        INTEGER set_no
+        INTEGER reps
+        FLOAT weight_kg
+        BOOLEAN is_pr
+        INTEGER verified_by_id FK
+        DATETIME created_at
+    }

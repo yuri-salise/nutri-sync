@@ -242,8 +242,8 @@ export const NutritionLogPage: React.FC = () => {
 
               <form onSubmit={handleCreateManualMeal} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#848E9C]">Meal / Food Title</label>
-                  <input
+                  <label htmlFor="meal-title" className="text-xs font-semibold text-[#848E9C]">Meal / Food Title</label>
+                  <input id="meal-title"
                     type="text"
                     required
                     value={mealName}
@@ -255,8 +255,8 @@ export const NutritionLogPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Calories (kcal)</label>
-                    <input
+                    <label htmlFor="meal-kcal" className="text-xs font-semibold text-[#848E9C]">Calories (kcal)</label>
+                    <input id="meal-kcal"
                       type="number"
                       required
                       value={kcal}
@@ -266,8 +266,8 @@ export const NutritionLogPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Protein (g)</label>
-                    <input
+                    <label htmlFor="meal-protein" className="text-xs font-semibold text-[#848E9C]">Protein (g)</label>
+                    <input id="meal-protein"
                       type="number"
                       step="0.1"
                       value={protein}
@@ -280,8 +280,8 @@ export const NutritionLogPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Carbs (g)</label>
-                    <input
+                    <label htmlFor="meal-carbs" className="text-xs font-semibold text-[#848E9C]">Carbs (g)</label>
+                    <input id="meal-carbs"
                       type="number"
                       step="0.1"
                       value={carbs}
@@ -291,8 +291,8 @@ export const NutritionLogPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#848E9C]">Fat (g)</label>
-                    <input
+                    <label htmlFor="meal-fat" className="text-xs font-semibold text-[#848E9C]">Fat (g)</label>
+                    <input id="meal-fat"
                       type="number"
                       step="0.1"
                       value={fat}

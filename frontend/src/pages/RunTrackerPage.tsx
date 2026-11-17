@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { RunActivity, SportType } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -774,7 +775,12 @@ export const RunTrackerPage: React.FC = () => {
               const sp = sportInfo(r.sport_type);
               const route = parseRoute(r.route_geojson);
               return (
-                <div key={r.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card flex gap-4">
+                <Link
+                  key={r.id}
+                  to={`/record/${r.id}`}
+                  aria-label={`View ${r.title || sp.label} details`}
+                  className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card flex gap-4 hover:border-[#C8FF00]/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C8FF00]"
+                >
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-center overflow-hidden">
                     {route.length > 1 ? (
                       <RouteThumb points={route} color={sp.color} />
@@ -821,7 +827,7 @@ export const RunTrackerPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
