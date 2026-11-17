@@ -30,13 +30,11 @@ services:
       DB_PORT: 5432
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-nutrisync_user}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-nutrisync_db}
       DATABASE_URL_SYNC: postgresql://${DB_USER:-nutrisync_user}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-nutrisync_db}
-      FRONTEND_ORIGIN: http://localhost:8080
+      # CORS origin = the public URL users open (Q4)
+      FRONTEND_ORIGIN: ${PUBLIC_APP_URL:-http://localhost:8080}
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/.venv
     networks:
       - internal-net
 

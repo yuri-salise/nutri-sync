@@ -26,6 +26,7 @@ def compile_vector_sqlite(type_, compiler, **kw):
     return "TEXT"
 
 
+from app.api.v1.auth import _login_attempts
 from app.core.security import create_access_token, get_password_hash
 from app.db.base import Base
 from app.db.models import Exercise, NutritionKnowledgeItem, User
@@ -67,6 +68,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    _login_attempts.clear()  # rate-limit state must not leak between tests
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:

@@ -51,6 +51,18 @@ async def test_login_success_and_failure(client: AsyncClient, seed_test_users):
 
 
 @pytest.mark.asyncio
+async def test_login_rate_limited(client: AsyncClient, seed_test_users):
+    creds = {"email": "athlete@example.com", "password": "WrongPassword!"}
+    for _ in range(5):
+        assert (await client.post("/api/v1/auth/login", json=creds)).status_code == 401
+
+    resp = await client.post("/api/v1/auth/login", json=creds)
+    assert resp.status_code == 429
+    assert resp.json()["error"]["code"] == "TOO_MANY_REQUESTS"
+    assert int(resp.headers["Retry-After"]) > 0
+
+
+@pytest.mark.asyncio
 async def test_auth_me_profile(client: AsyncClient, seed_test_users, athlete_token):
     headers = {"Authorization": f"Bearer {athlete_token}"}
     resp = await client.get("/api/v1/auth/me", headers=headers)

@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,15 +26,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     DATABASE_URL_SYNC: str
 
-    # CORS
+    # CORS: only the frontend's origin (Q4). Comma-separate if more than one.
     FRONTEND_ORIGIN: str = "http://localhost:5173"
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-    ]
+
+    # Login rate limit (Q4), format "<count>/<second|minute|hour>"
+    LOGIN_RATE_LIMIT: str = "5/minute"
 
     # AI & RAG
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
