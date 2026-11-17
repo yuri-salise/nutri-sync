@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.security import TokenPayload, require_roles
-from app.db.models import RunActivity, WorkoutSession, WorkoutSet
+from app.db.models import RunActivity, User, WorkoutSession, WorkoutSet
 from app.db.session import get_db, set_rls_context
 from app.db.social_models import TARGET_TYPES, FeedComment, FeedPost, Kudos
 from app.schemas.common import PaginatedResponse, PaginationMeta
@@ -39,7 +39,11 @@ def _error(code: int, err: str, message: str, details: Optional[list] = None) ->
 
 
 def _author(user, fallback: str = "Athlete") -> FeedAuthor:
-    return FeedAuthor(id=user.id if user else 0, name=user.full_name if user else fallback)
+    return FeedAuthor(
+        id=user.id if user else 0,
+        name=user.full_name if user else fallback,
+        is_coach=bool(user and user.role == "admin"),
+    )
 
 
 def _workout_exercises(w: WorkoutSession) -> Tuple[List[FeedExercise], int]:
@@ -74,7 +78,7 @@ def _run_title(r: RunActivity) -> str:
 
 
 async def _social_counts(db: AsyncSession, items: List[FeedItem], viewer_id: int) -> None:
-    """Fills kudos/comment counts and 'did I give kudos' for a page of items (3 queries)."""
+    """Fills kudos/comment counts and 'did I give kudos' for a page of items (4 queries)."""
     if not items:
         return
     by_type: Dict[str, List[int]] = defaultdict(list)
@@ -98,6 +102,15 @@ async def _social_counts(db: AsyncSession, items: List[FeedItem], viewer_id: int
     )
     mine = {(t, i) for t, i in mine_rows.all()}
 
+    # Kudos from coaches are shown separately ("A coach approved").
+    coach_rows = await db.execute(
+        select(Kudos.target_type, Kudos.target_id, func.count())
+        .join(User, User.id == Kudos.user_id)
+        .where(targets(Kudos.target_type, Kudos.target_id), User.role == "admin")
+        .group_by(Kudos.target_type, Kudos.target_id)
+    )
+    coach_kudos = {(t, i): c for t, i, c in coach_rows.all()}
+
     comment_rows = await db.execute(
         select(FeedComment.target_type, FeedComment.target_id, func.count())
         .where(targets(FeedComment.target_type, FeedComment.target_id))
@@ -109,6 +122,7 @@ async def _social_counts(db: AsyncSession, items: List[FeedItem], viewer_id: int
         k = (it.type, it.id)
         it.kudos_count = kudos.get(k, 0)
         it.kudos_by_me = k in mine
+        it.coach_kudos_count = coach_kudos.get(k, 0)
         it.comments_count = comments.get(k, 0)
 
 
@@ -318,7 +332,20 @@ async def _kudos_state(db: AsyncSession, target_type: str, target_id: int, viewe
             )
         )
     ).first()
-    return KudosState(kudos_count=count, kudos_by_me=mine is not None)
+    coach_count = (
+        await db.execute(
+            select(func.count(Kudos.id))
+            .join(User, User.id == Kudos.user_id)
+            .where(
+                Kudos.target_type == target_type,
+                Kudos.target_id == target_id,
+                User.role == "admin",
+            )
+        )
+    ).scalar_one()
+    return KudosState(
+        kudos_count=count, kudos_by_me=mine is not None, coach_kudos_count=coach_count
+    )
 
 
 @router.put(

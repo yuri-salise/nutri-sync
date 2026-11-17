@@ -81,16 +81,28 @@ export const CommunityFeedPage: React.FC = () => {
 
   const toggleKudos = async (item: FeedItem) => {
     const giving = !item.kudos_by_me;
+    const step = giving ? 1 : -1;
+    const coachStep = role === 'admin' ? step : 0; // a coach's kudos counts as an approval
     patchItem(item.key, (i) => ({
       ...i,
       kudos_by_me: giving,
-      kudos_count: Math.max(0, i.kudos_count + (giving ? 1 : -1)),
+      kudos_count: Math.max(0, i.kudos_count + step),
+      coach_kudos_count: Math.max(0, (i.coach_kudos_count ?? 0) + coachStep),
     }));
     try {
-      if (giving) await api.giveKudos(item.type, item.id);
-      else await api.removeKudos(item.type, item.id);
+      if (giving) {
+        const state = await api.giveKudos(item.type, item.id);
+        patchItem(item.key, (i) => ({ ...i, ...state }));
+      } else {
+        await api.removeKudos(item.type, item.id);
+      }
     } catch {
-      patchItem(item.key, (i) => ({ ...i, kudos_by_me: item.kudos_by_me, kudos_count: item.kudos_count }));
+      patchItem(item.key, (i) => ({
+        ...i,
+        kudos_by_me: item.kudos_by_me,
+        kudos_count: item.kudos_count,
+        coach_kudos_count: item.coach_kudos_count,
+      }));
       setError('Couldn’t update your kudos. Please try again.');
     }
   };

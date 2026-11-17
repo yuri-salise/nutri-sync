@@ -286,7 +286,7 @@ class ApiService {
     return this.request<void>(`/community-feed/posts/${id}`, { method: 'DELETE' });
   }
 
-  async giveKudos(type: string, id: number): Promise<{ kudos_count: number; kudos_by_me: boolean }> {
+  async giveKudos(type: string, id: number): Promise<{ kudos_count: number; kudos_by_me: boolean; coach_kudos_count: number }> {
     return this.request(`/community-feed/${type}/${id}/kudos`, { method: 'PUT' });
   }
 
