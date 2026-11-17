@@ -440,6 +440,41 @@ class FoodMatcher:
             for f in self.foods:
                 self._name_vecs[f.id] = embed(f.food_name)
 
+        # Speed-up structures. A food that shares no word with the query has a lexical
+        # score of 0, so it can score at most SEMANTIC_WEIGHT (0.2), below every
+        # confidence/alternative cut-off. Ranking therefore only needs the foods that share
+        # a word with the query, and all embedding similarities are computed in one batch.
+        self._name_len = [len(f.food_name) for f in self.foods]
+        self._token_index: Dict[str, List[int]] = {}
+        for i, f in enumerate(self.foods):
+            for tok in set(self._name_toks[f.id]):
+                self._token_index.setdefault(tok, []).append(i)
+        self._vocab = list(self._token_index)
+        self._token_candidates: Dict[str, List[int]] = {}
+        self._matrix: Optional[np.ndarray] = None
+        if embed and self.foods:
+            mat = np.asarray([self._name_vecs[f.id] for f in self.foods], dtype=np.float32)
+            norms = np.linalg.norm(mat, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            self._matrix = mat / norms
+
+    def _candidates_for_token(self, tok: str) -> List[int]:
+        cached = self._token_candidates.get(tok)
+        if cached is None:
+            ids: set = set()
+            for key in self._vocab:
+                if _tok_match(tok, key):
+                    ids.update(self._token_index[key])
+            cached = sorted(ids)
+            self._token_candidates[tok] = cached
+        return cached
+
+    def _candidates(self, q_toks: Sequence[str]) -> List[int]:
+        ids: set = set()
+        for tok in set(q_toks):
+            ids.update(self._candidates_for_token(tok))
+        return sorted(ids)
+
     def search_text(self, food_text: str) -> str:
         key = " ".join(re.findall(r"[a-z0-9]+", food_text.lower()))
         key = re.sub(r"\b(eggs)\b", "egg", key)
@@ -448,13 +483,23 @@ class FoodMatcher:
     def rank(self, food_text: str) -> List[Tuple[FoodLike, float]]:
         text = self.search_text(food_text)
         q_toks = tokenize(text)
-        q_vec = self.embed(text) if self.embed else None
+        candidates = self._candidates(q_toks)
+        # No shared word: every lexical score is 0, so only the semantic part ranks them.
+        indices = candidates or list(range(len(self.foods)))
+
+        sem: Optional[np.ndarray] = None
+        if self.embed is not None and self._matrix is not None:
+            q = np.asarray(self.embed(text), dtype=np.float32)
+            q_norm = float(np.linalg.norm(q))
+            sims = self._matrix[indices] @ q / q_norm if q_norm else np.zeros(len(indices))
+            sem = np.maximum(0.0, sims)
+
         ranked = []
-        for f in self.foods:
-            score = lexical_score(q_toks, self._name_toks[f.id])
-            if q_vec is not None:
-                sem = max(0.0, _cosine(q_vec, self._name_vecs[f.id]))
-                score = self.LEXICAL_WEIGHT * score + self.SEMANTIC_WEIGHT * sem
+        for pos, i in enumerate(indices):
+            f = self.foods[i]
+            score = lexical_score(q_toks, self._name_toks[f.id]) if candidates else 0.0
+            if sem is not None:
+                score = self.LEXICAL_WEIGHT * score + self.SEMANTIC_WEIGHT * float(sem[pos])
             ranked.append((f, score))
         ranked.sort(key=lambda fs: (-fs[1], len(fs[0].food_name)))
         return ranked

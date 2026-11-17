@@ -115,7 +115,9 @@ def load_eval_set(path: Optional[Path] = None) -> List[Dict]:
 
 
 def evaluate(
-    matcher: Optional[FoodMatcher] = None, foods: Optional[List[Food]] = None
+    matcher: Optional[FoodMatcher] = None,
+    foods: Optional[List[Food]] = None,
+    eval_set: Optional[Path] = None,
 ) -> EvalReport:
     foods = foods or load_foods()
     by_name = {f.food_name: f for f in foods}
@@ -128,7 +130,7 @@ def evaluate(
     latencies: List[float] = []
     rows: List[Dict] = []
 
-    for case in load_eval_set():
+    for case in load_eval_set(eval_set):
         expected = case["expected"]
         missing = [n for n in expected if n not in by_name]
         if missing:
@@ -181,9 +183,15 @@ def evaluate(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate the Smart Meal Scanner (T5)")
     parser.add_argument("--csv-out", type=str, help="Write per-meal results to this CSV path")
+    parser.add_argument(
+        "--eval-set",
+        type=str,
+        help="Meal set CSV (default: scanner_eval_set.csv; scanner_holdout_set.csv is the "
+        "held-out set, written before the scanner was run on it)",
+    )
     args = parser.parse_args()
 
-    report = evaluate()
+    report = evaluate(eval_set=Path(args.eval_set) if args.eval_set else None)
 
     print(f"{'Meal':<55} {'Items':>6} {'Ref':>7} {'Pred':>7} {'APE%':>6}")
     print("-" * 85)
