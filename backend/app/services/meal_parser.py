@@ -235,7 +235,7 @@ LOW_CONFIDENCE = 0.40
 HEAD_BONUS = 0.10
 
 # Source boilerplate that carries no food identity, e.g. "(Includes foods for USDA's ...)".
-_BOILERPLATE = re.compile(r"\s*\((?:includes?|may contain)[^)]*\)", re.IGNORECASE)
+_BOILERPLATE = re.compile(r"\s*\((?:includes?|may contain)[^)]*\)", re.IGNORECASE)
 
 
 # --------------------------------------------------------------------------- #

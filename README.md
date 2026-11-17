@@ -422,7 +422,7 @@ The RAG scanner benchmark is in [`docs/evaluation/`](docs/evaluation/):
 - **`scanner_eval_results.csv`:** 28 meals from `backend/app/scripts/data/scanner_eval_set.csv`. The matcher was tuned while looking at this set, so its scores are optimistic.
 - **`scanner_holdout_results.csv`:** 32 meals from `backend/app/scripts/data/scanner_holdout_set.csv`, with expected foods written from the tables before the scanner was run on them. Failures on it were inspected afterwards, so it is no longer fully untouched.
 - **How scores are measured:** "family" precision/recall counts a hit when the scanner finds the right food in any variant (for example raw vs. cooked broccoli); "exact entry" requires the specific table row. Calorie error is computed against reference values taken from the same tables, so it measures parsing, matching and portion estimates, not errors in the tables themselves. Neither set was checked against weighed meals.
-- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 88.9% / 87.3%, exact entry 77.8% / 76.4%, calorie error 10.7%; held-out set family 85.9% / 85.9%, exact entry 60.9% / 60.9%, calorie error 25.7%. Matching takes about 60 ms per meal (matching only, no database or HTTP).
+- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 90.7% / 89.1%, exact entry 79.6% / 78.2%, calorie error 12.1%; held-out set family 85.9% / 85.9%, exact entry 62.5% / 62.5%, calorie error 25.9%. Matching takes about 60 ms per meal (matching only, no database or HTTP).
 - There is no comparison against a non-RAG baseline.
 
 Not yet done:
