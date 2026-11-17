@@ -1,3 +1,6 @@
+import time
+from collections import defaultdict, deque
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +25,35 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+_count, _unit = settings.LOGIN_RATE_LIMIT.split("/")
+LOGIN_MAX_ATTEMPTS = int(_count)
+LOGIN_WINDOW_SECONDS = {"second": 1, "minute": 60, "hour": 3600}[_unit.strip()]
+
+# shortcut: in-process memory, one API container only; move to Redis if the API scales out.
+# Keyed by email, not IP: behind Caddy + the tunnel every request shares one proxy IP.
+_login_attempts: dict[str, deque[float]] = defaultdict(deque)
+
+
+def _check_login_rate(email: str) -> None:
+    now = time.monotonic()
+    attempts = _login_attempts[email.lower()]
+    while attempts and now - attempts[0] > LOGIN_WINDOW_SECONDS:
+        attempts.popleft()
+    if len(attempts) >= LOGIN_MAX_ATTEMPTS:
+        retry_after = int(LOGIN_WINDOW_SECONDS - (now - attempts[0])) + 1
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            headers={"Retry-After": str(retry_after)},
+            detail={
+                "error": {
+                    "code": "TOO_MANY_REQUESTS",
+                    "message": f"Too many login attempts. Try again in {retry_after} seconds.",
+                    "details": [],
+                }
+            },
+        )
+    attempts.append(now)
 
 
 @router.post(
@@ -76,6 +108,7 @@ async def register(
     description="Authenticates credentials and returns JWT Bearer access and refresh tokens.",
 )
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
+    _check_login_rate(payload.email)
     stmt = select(User).where(User.email == payload.email)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()

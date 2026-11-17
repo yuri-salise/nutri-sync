@@ -5,7 +5,6 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.health import router as health_router
@@ -28,36 +27,17 @@ from app.db.sqlite_dev_sync import sync_sqlite_dev_schema
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing NutriSync-RAG application engine...")
-    try:
-        async with engine.begin() as conn:
-            # Enable pgvector extension and Row-Level Security if PostgreSQL
-            try:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-            except Exception as ext_err:
-                logger.warning(f"pgvector extension check note: {ext_err}")
-            await conn.run_sync(Base.metadata.create_all)
-            # create_all never adds columns to existing tables; bring a SQLite dev DB up to date
-            await conn.run_sync(sync_sqlite_dev_schema)
-
-            # Defensive RLS check on PostgreSQL
-            if conn.dialect.name == "postgresql":
-                rls_tables = [
-                    "workout_sessions",
-                    "workout_sets",
-                    "run_activities",
-                    "nutrition_logs",
-                    "rag_scan_logs",
-                    "exercises",
-                ]
-                for tbl in rls_tables:
-                    try:
-                        await conn.execute(text(f"ALTER TABLE {tbl} ENABLE ROW LEVEL SECURITY;"))
-                    except Exception:
-                        pass
-                logger.info("PostgreSQL Row-Level Security (RLS) policies verified.")
-        logger.info("Database schema synchronized.")
-    except Exception as e:
-        logger.warning(f"Database sync on startup warning: {e}")
+    # PostgreSQL schema (pgvector, tables, RLS) comes only from Alembic migrations (D2).
+    # The SQLite bare-metal dev DB has no migrations, so it is still created here.
+    if engine.dialect.name == "sqlite":
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+                # create_all never adds columns to existing tables; bring a SQLite dev DB up to date
+                await conn.run_sync(sync_sqlite_dev_schema)
+            logger.info("SQLite dev schema synchronized.")
+        except Exception as e:
+            logger.warning(f"Database sync on startup warning: {e}")
     yield
     logger.info("NutriSync-RAG backend shutdown complete.")
 
@@ -75,7 +55,7 @@ app = FastAPI(
 # CORS Middleware (Requirement 6.4, Q4)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=[o.strip() for o in settings.FRONTEND_ORIGIN.split(",")],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -119,7 +99,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     if isinstance(exc.detail, dict) and "error" in exc.detail:
-        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+        return JSONResponse(status_code=exc.status_code, content=exc.detail, headers=exc.headers)
 
     return JSONResponse(
         status_code=exc.status_code,
