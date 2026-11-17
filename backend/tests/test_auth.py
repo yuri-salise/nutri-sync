@@ -63,3 +63,18 @@ async def test_auth_me_profile(client: AsyncClient, seed_test_users, athlete_tok
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["weight_kg"] == 71.5
+
+
+@pytest.mark.asyncio
+async def test_register_cannot_self_assign_admin(client: AsyncClient):
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "sneaky@nutrisync.com",
+            "password": "Password123!",
+            "full_name": "Sneaky User",
+            "role": "admin",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["role"] == "athlete"

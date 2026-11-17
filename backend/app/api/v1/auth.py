@@ -53,7 +53,7 @@ async def register(
         email=payload.email,
         password_hash=get_password_hash(payload.password),
         full_name=payload.full_name,
-        role=payload.role,
+        role="athlete",  # public sign-up is always athlete; admins are created by seeding
         weight_kg=payload.weight_kg,
         base_kcal_goal=payload.base_kcal_goal,
         protein_goal_g=payload.protein_goal_g,

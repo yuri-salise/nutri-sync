@@ -10,7 +10,6 @@ class RegisterRequest(BaseModel):
         ..., min_length=8, description="Password must be at least 8 characters long."
     )
     full_name: str = Field(..., min_length=2, max_length=255)
-    role: str = Field(default="athlete", pattern="^(athlete|admin)$")
     weight_kg: float = Field(default=70.0, gt=20.0, lt=400.0)
     base_kcal_goal: float = Field(default=2200.0, gt=500.0, lt=10000.0)
     protein_goal_g: float = Field(default=150.0, gt=10.0, lt=600.0)
