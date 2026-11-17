@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FeedItem } from '../types';
 import { Avatar } from '../components/common/Avatar';
 import { FeedCard } from '../components/feed/FeedCard';
+import { useDialogs } from '../components/common/DialogProvider';
 
 type Filter = 'all' | 'workouts' | 'runs' | 'posts';
 const FILTERS: { id: Filter; label: string }[] = [
@@ -18,6 +19,7 @@ const MAX_POST = 1000;
 
 export const CommunityFeedPage: React.FC = () => {
   const { user, role } = useAuth();
+  const { confirm } = useDialogs();
   const [filter, setFilter] = useState<Filter>('all');
   const [items, setItems] = useState<FeedItem[]>([]);
   const [page, setPage] = useState(1);
@@ -111,7 +113,13 @@ export const CommunityFeedPage: React.FC = () => {
     patchItem(item.key, (i) => ({ ...i, comments_count: Math.max(0, i.comments_count + delta) }));
 
   const deletePost = async (item: FeedItem) => {
-    if (!window.confirm('Delete this post? Its comments and kudos will be removed too.')) return;
+    const ok = await confirm({
+      title: 'Delete this post?',
+      message: 'Its comments and kudos will be removed too. This can’t be undone.',
+      confirmLabel: 'Delete post',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.deletePost(item.id);
       setItems((prev) => prev.filter((i) => i.key !== item.key));

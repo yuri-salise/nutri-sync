@@ -22,6 +22,7 @@ import { Exercise, WorkoutRoutine, WorkoutSession } from '../types';
 import { RestTimer } from '../components/workout/RestTimer';
 import { ExercisePicker } from '../components/workout/ExercisePicker';
 import { Overlay } from '../components/common/Overlay';
+import { useDialogs } from '../components/common/DialogProvider';
 import {
   ActiveExercise,
   ActiveWorkout,
@@ -51,6 +52,7 @@ const formatClock = (sec: number) => {
 const formatRest = (sec: number) => (sec % 60 === 0 ? `${sec / 60}:00` : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`);
 
 export const WorkoutLoggerPage: React.FC = () => {
+  const { confirm, prompt } = useDialogs();
   const [view, setView] = useState<View>('train');
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
@@ -194,8 +196,15 @@ export const WorkoutLoggerPage: React.FC = () => {
   );
   const dismissRest = useCallback(() => setWorkout((w) => (w ? { ...w, restEndsAt: null } : w)), [setWorkout]);
 
-  const discardWorkout = () => {
-    if (window.confirm('Discard this workout? Nothing will be saved.')) {
+  const discardWorkout = async () => {
+    const ok = await confirm({
+      title: 'Discard this workout?',
+      message: 'Everything you logged so far will be lost.',
+      confirmLabel: 'Discard',
+      cancelLabel: 'Keep training',
+      tone: 'danger',
+    });
+    if (ok) {
       setWorkout(null);
       setFinishOpen(false);
     }
@@ -267,18 +276,26 @@ export const WorkoutLoggerPage: React.FC = () => {
     }
   };
 
-  const promptSaveRoutine = (defaultName: string, source: ActiveExercise[]) => {
-    const name = window.prompt('Name this routine', defaultName)?.trim();
-    if (!name) return;
-    if (name.length < 2) {
-      setError('Routine names need at least 2 letters.');
-      return;
-    }
-    saveAsRoutine(name, source, null);
+  const promptSaveRoutine = async (defaultName: string, source: ActiveExercise[]) => {
+    const name = await prompt({
+      title: 'Save as routine',
+      message: 'Next time, start this whole workout with one tap.',
+      label: 'Routine name',
+      initialValue: defaultName,
+      confirmLabel: 'Save routine',
+      validate: (v) => (v.length < 2 ? 'Routine names need at least 2 letters.' : null),
+    });
+    if (name) await saveAsRoutine(name, source, null);
   };
 
   const deleteRoutine = async (r: WorkoutRoutine) => {
-    if (!window.confirm(`Delete the routine “${r.name}”? Your past workouts stay.`)) return;
+    const ok = await confirm({
+      title: `Delete “${r.name}”?`,
+      message: 'Your past workouts stay. Only this saved routine is removed.',
+      confirmLabel: 'Delete routine',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.deleteRoutine(r.id);
       setRoutines((prev) => prev.filter((x) => x.id !== r.id));
@@ -288,7 +305,13 @@ export const WorkoutLoggerPage: React.FC = () => {
   };
 
   const renameRoutine = async (r: WorkoutRoutine) => {
-    const name = window.prompt('Rename routine', r.name)?.trim();
+    const name = await prompt({
+      title: 'Rename routine',
+      label: 'Routine name',
+      initialValue: r.name,
+      confirmLabel: 'Rename',
+      validate: (v) => (v.length < 2 ? 'Routine names need at least 2 letters.' : null),
+    });
     if (!name || name === r.name) return;
     try {
       await api.updateRoutine(r.id, { name });

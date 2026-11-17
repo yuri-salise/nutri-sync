@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { NutritionLog } from '../types';
+import { useDialogs } from '../components/common/DialogProvider';
 import {
   UtensilsCrossed,
   Plus,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export const NutritionLogPage: React.FC = () => {
+  const { confirm, alert } = useDialogs();
   const [logs, setLogs] = useState<NutritionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -64,19 +66,25 @@ export const NutritionLogPage: React.FC = () => {
       setShowAddForm(false);
       loadLogs();
     } catch (err: any) {
-      alert(err.message || 'Failed to create meal log.');
+      await alert({ title: 'Couldn’t save this meal', message: err.message || 'Failed to create meal log.' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this meal log?')) return;
+    const ok = await confirm({
+      title: 'Delete this meal?',
+      message: 'It will be removed from your food log and today’s totals.',
+      confirmLabel: 'Delete meal',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.deleteNutritionLog(id);
       setLogs((prev) => prev.filter((l) => l.id !== id));
     } catch (err: any) {
-      alert(err.message || 'Failed to delete log.');
+      await alert({ title: 'Couldn’t delete this meal', message: err.message || 'Failed to delete log.' });
     }
   };
 
