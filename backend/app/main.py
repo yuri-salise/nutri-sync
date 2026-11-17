@@ -22,6 +22,7 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.db.base import Base
 from app.db.session import engine
+from app.db.sqlite_dev_sync import sync_sqlite_dev_schema
 
 
 @asynccontextmanager
@@ -35,6 +36,8 @@ async def lifespan(app: FastAPI):
             except Exception as ext_err:
                 logger.warning(f"pgvector extension check note: {ext_err}")
             await conn.run_sync(Base.metadata.create_all)
+            # create_all never adds columns to existing tables; bring a SQLite dev DB up to date
+            await conn.run_sync(sync_sqlite_dev_schema)
 
             # Defensive RLS check on PostgreSQL
             if conn.dialect.name == "postgresql":
