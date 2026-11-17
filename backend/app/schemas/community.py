@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class FeedAuthor(BaseModel):
     id: int
     name: str
+    is_coach: bool = Field(False, description="True when the author is a coach (admin role)")
 
 
 class FeedExercise(BaseModel):
@@ -48,6 +49,7 @@ class FeedItem(BaseModel):
 
     kudos_count: int = 0
     kudos_by_me: bool = False
+    coach_kudos_count: int = Field(0, description="How many of the kudos came from coaches")
     comments_count: int = 0
     mine: bool = False
 
@@ -91,3 +93,4 @@ class CommentResponse(BaseModel):
 class KudosState(BaseModel):
     kudos_count: int
     kudos_by_me: bool
+    coach_kudos_count: int = 0

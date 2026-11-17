@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FeedItem } from '../types';
 import { Avatar } from '../components/common/Avatar';
 import { FeedCard } from '../components/feed/FeedCard';
+import { useDialogs } from '../components/common/DialogProvider';
 
 type Filter = 'all' | 'workouts' | 'runs' | 'posts';
 const FILTERS: { id: Filter; label: string }[] = [
@@ -18,6 +19,7 @@ const MAX_POST = 1000;
 
 export const CommunityFeedPage: React.FC = () => {
   const { user, role } = useAuth();
+  const { confirm } = useDialogs();
   const [filter, setFilter] = useState<Filter>('all');
   const [items, setItems] = useState<FeedItem[]>([]);
   const [page, setPage] = useState(1);
@@ -81,16 +83,28 @@ export const CommunityFeedPage: React.FC = () => {
 
   const toggleKudos = async (item: FeedItem) => {
     const giving = !item.kudos_by_me;
+    const step = giving ? 1 : -1;
+    const coachStep = role === 'admin' ? step : 0; // a coach's kudos counts as an approval
     patchItem(item.key, (i) => ({
       ...i,
       kudos_by_me: giving,
-      kudos_count: Math.max(0, i.kudos_count + (giving ? 1 : -1)),
+      kudos_count: Math.max(0, i.kudos_count + step),
+      coach_kudos_count: Math.max(0, (i.coach_kudos_count ?? 0) + coachStep),
     }));
     try {
-      if (giving) await api.giveKudos(item.type, item.id);
-      else await api.removeKudos(item.type, item.id);
+      if (giving) {
+        const state = await api.giveKudos(item.type, item.id);
+        patchItem(item.key, (i) => ({ ...i, ...state }));
+      } else {
+        await api.removeKudos(item.type, item.id);
+      }
     } catch {
-      patchItem(item.key, (i) => ({ ...i, kudos_by_me: item.kudos_by_me, kudos_count: item.kudos_count }));
+      patchItem(item.key, (i) => ({
+        ...i,
+        kudos_by_me: item.kudos_by_me,
+        kudos_count: item.kudos_count,
+        coach_kudos_count: item.coach_kudos_count,
+      }));
       setError('Couldn’t update your kudos. Please try again.');
     }
   };
@@ -99,7 +113,13 @@ export const CommunityFeedPage: React.FC = () => {
     patchItem(item.key, (i) => ({ ...i, comments_count: Math.max(0, i.comments_count + delta) }));
 
   const deletePost = async (item: FeedItem) => {
-    if (!window.confirm('Delete this post? Its comments and kudos will be removed too.')) return;
+    const ok = await confirm({
+      title: 'Delete this post?',
+      message: 'Its comments and kudos will be removed too. This can’t be undone.',
+      confirmLabel: 'Delete post',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.deletePost(item.id);
       setItems((prev) => prev.filter((i) => i.key !== item.key));

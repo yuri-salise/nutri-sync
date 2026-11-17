@@ -5,6 +5,7 @@ import { Avatar } from '../common/Avatar';
 import { RouteThumb } from '../activity/RouteThumb';
 import { SportIcon } from '../activity/SportIcon';
 import { CommentThread } from './CommentThread';
+import { CoachApproval, CoachBadge } from './CoachBadge';
 import { formatDistance, formatSpeed, parseApiDate, sportInfo, timeAgo } from '../../utils/activity';
 import { formatDuration, formatPace } from '../../utils/gps';
 
@@ -56,6 +57,11 @@ export const FeedCard: React.FC<FeedCardProps> = ({
         <div className="min-w-0 flex-1">
           <p className="text-sm text-white leading-snug">
             <span className="font-bold">{item.mine ? 'You' : item.author.name}</span>{' '}
+            {item.author.is_coach && (
+              <>
+                <CoachBadge />{' '}
+              </>
+            )}
             <span className="text-[#B7BDC6]">{headline}</span>
           </p>
           <p className="text-xs text-[#848E9C] flex items-center gap-1.5">
@@ -150,6 +156,13 @@ export const FeedCard: React.FC<FeedCardProps> = ({
           </>
         )}
       </div>
+
+      {/* Coach approval: kudos from a coach stand out from everyone else's */}
+      {(item.coach_kudos_count ?? 0) > 0 && (
+        <div className="px-4 pb-3">
+          <CoachApproval count={item.coach_kudos_count ?? 0} />
+        </div>
+      )}
 
       {/* Counts */}
       {(item.kudos_count > 0 || item.comments_count > 0) && (

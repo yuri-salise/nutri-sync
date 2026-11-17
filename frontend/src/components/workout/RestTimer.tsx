@@ -36,6 +36,14 @@ export const RestTimer: React.FC<RestTimerProps> = ({ endsAt, totalSec, onAdjust
     firedRef.current = false;
   }, [endsAt]);
 
+  // Lets other fixed UI (the Community button) move out of the timer's way.
+  useEffect(() => {
+    document.body.dataset.restTimer = '1';
+    return () => {
+      delete document.body.dataset.restTimer;
+    };
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { Exercise, RagScanLog, FoodItemSummary } from '../types';
+import { useDialogs } from '../components/common/DialogProvider';
 import {
   ShieldCheck,
   Plus,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const AdminAuditPage: React.FC = () => {
+  const { confirm } = useDialogs();
   const [activeTab, setActiveTab] = useState<'exercises' | 'rag_logs' | 'knowledge' | 'info'>('exercises');
 
   // Built-in exercise library (shared with every user)
@@ -97,7 +99,13 @@ export const AdminAuditPage: React.FC = () => {
   };
 
   const handleRemoveLibraryExercise = async (ex: Exercise) => {
-    if (!window.confirm(`Remove "${ex.name}" from the library? It will disappear from routines that use it.`)) return;
+    const ok = await confirm({
+      title: `Remove “${ex.name}”?`,
+      message: 'It will disappear from the shared library and from routines that use it.',
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.deleteExercise(ex.id);
       setLibraryExercises((prev) => prev.filter((e) => e.id !== ex.id));

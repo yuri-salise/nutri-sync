@@ -100,6 +100,9 @@
 
 /* Leaflet Dark Filter for OpenStreetMap (100% Free, Zero API Keys) */
 .leaflet-container {
+  /* Leaflet panes use z-index up to 1000; contain them so a map never paints over
+     the side menu, dialogs or the bottom nav. */
+  isolation: isolate;
   background: #07080a !important;
   font-family: 'Poppins', sans-serif !important;
 }
@@ -108,4 +111,13 @@
 .dark-tiles,
 img.leaflet-tile.dark-tiles {
   filter: brightness(0.7) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.35) !important;
+}
+
+/* Floating Community button (mobile). Lifts out of the way while the workout rest timer shows. */
+.community-fab {
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  transition: bottom 0.2s ease;
+}
+body[data-rest-timer] .community-fab {
+  bottom: calc(10rem + env(safe-area-inset-bottom));
 }

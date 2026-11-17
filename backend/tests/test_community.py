@@ -144,7 +144,7 @@ async def test_kudos_toggle_is_idempotent_and_per_user(
 
     first = await client.put(url, headers=other_user)
     assert first.status_code == 200
-    assert first.json() == {"kudos_count": 1, "kudos_by_me": True}
+    assert first.json() == {"kudos_count": 1, "kudos_by_me": True, "coach_kudos_count": 0}
     again = await client.put(url, headers=other_user)  # repeating changes nothing
     assert again.json()["kudos_count"] == 1
     assert (await client.put(url, headers=me)).json()["kudos_count"] == 2
@@ -303,3 +303,39 @@ def test_route_helpers():
     assert trim_ends(parse_route(line(10, 25)), 200) == []  # ~225 m total: hidden entirely
     assert len(thin(pts, 20)) == 20 and thin(pts, 20)[0] == pts[0] and thin(pts, 20)[-1] == pts[-1]
     assert feed_route(None, hide_ends=True) == []
+
+
+@pytest.mark.asyncio
+async def test_coach_kudos_and_comments_are_marked(
+    client: AsyncClient, seed_test_users, me, other_user, admin
+):
+    post_id = (await client.post(f"{FEED}/posts", json={"body": "PR day"}, headers=me)).json()["id"]
+    url = f"{FEED}/post/{post_id}/kudos"
+
+    # an athlete's kudos is not a coach approval
+    assert (await client.put(url, headers=other_user)).json()["coach_kudos_count"] == 0
+    # a coach's kudos is counted separately
+    state = (await client.put(url, headers=admin)).json()
+    assert state == {"kudos_count": 2, "kudos_by_me": True, "coach_kudos_count": 1}
+
+    item = (await client.get(FEED, headers=me)).json()["data"][0]
+    assert item["kudos_count"] == 2 and item["coach_kudos_count"] == 1
+    assert item["author"]["is_coach"] is False
+
+    # taking the kudos back removes the approval
+    assert (await client.delete(url, headers=admin)).status_code == 204
+    item = (await client.get(FEED, headers=me)).json()["data"][0]
+    assert item["coach_kudos_count"] == 0 and item["kudos_count"] == 1
+
+    # comments carry the coach flag on their author
+    base = f"{FEED}/post/{post_id}/comments"
+    coach_comment = await client.post(base, json={"body": "Great work"}, headers=admin)
+    assert coach_comment.json()["author"]["is_coach"] is True
+    await client.post(base, json={"body": "Nice"}, headers=other_user)
+    flags = [c["author"]["is_coach"] for c in (await client.get(base, headers=me)).json()["data"]]
+    assert flags == [True, False]
+
+    # a coach's own post is marked too
+    await client.post(f"{FEED}/posts", json={"body": "Team meeting Friday"}, headers=admin)
+    newest = (await client.get(f"{FEED}?activity_type=posts", headers=me)).json()["data"][0]
+    assert newest["author"]["is_coach"] is True

@@ -90,6 +90,7 @@ export type SportType = 'run' | 'walk' | 'ride' | 'hike';
 export interface FeedAuthor {
   id: number;
   name: string;
+  is_coach?: boolean;
 }
 
 export interface FeedExercise {
@@ -122,6 +123,8 @@ export interface FeedItem {
   route_hidden_ends: boolean;
   kudos_count: number;
   kudos_by_me: boolean;
+  /** How many of the kudos came from coaches. */
+  coach_kudos_count?: number;
   comments_count: number;
   mine: boolean;
 }
