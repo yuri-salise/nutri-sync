@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5:1.5b"
     USE_OLLAMA_FALLBACK: bool = True
 
+    # Meal photo analysis (free tiers). Empty key = that provider is skipped.
+    GEMINI_API_KEY: str = ""
+    GEMINI_VISION_MODEL: str = "gemini-3.5-flash-lite"
+    GROQ_API_KEY: str = ""
+    GROQ_VISION_MODEL: str = "qwen/qwen3.8-27b"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
