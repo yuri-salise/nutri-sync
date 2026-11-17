@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
+import { CommunityFab } from './CommunityFab';
 
 export const Layout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,6 +33,7 @@ export const Layout: React.FC = () => {
 
       {/* Mobile-Native Bottom Navigation Bar */}
       <BottomNav />
+      <CommunityFab hidden={mobileMenuOpen} />
     </div>
   );
 };

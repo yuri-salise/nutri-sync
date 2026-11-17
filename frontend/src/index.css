@@ -109,3 +109,12 @@
 img.leaflet-tile.dark-tiles {
   filter: brightness(0.7) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.35) !important;
 }
+
+/* Floating Community button (mobile). Lifts out of the way while the workout rest timer shows. */
+.community-fab {
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  transition: bottom 0.2s ease;
+}
+body[data-rest-timer] .community-fab {
+  bottom: calc(10rem + env(safe-area-inset-bottom));
+}
