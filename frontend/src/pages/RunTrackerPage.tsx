@@ -391,6 +391,69 @@ export const RunTrackerPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Sticky Active Activity Bar when recording or paused */}
+      {phase !== 'idle' && (
+        <div
+          data-testid="sticky-recording-bar"
+          className="sticky top-16 z-30 -mt-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-[#07080a]/95 backdrop-blur-md border-b border-[#1e232d] shadow-lg flex items-center justify-between transition-all"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border"
+              style={{
+                backgroundColor: `${info.color}20`,
+                borderColor: `${info.color}50`,
+                color: info.color,
+              }}
+            >
+              <SportIcon sport={sport} className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-extrabold text-white truncate">
+                  {phase === 'recording' ? `Recording ${info.label}` : `${info.label} (Paused)`}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    phase === 'recording'
+                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                    }`}
+                  />
+                  {phase === 'recording' ? 'Live' : 'Paused'}
+                </span>
+              </div>
+              <p className="text-xs text-[#848E9C] font-mono">
+                {formatDuration(elapsedSec)} · {distanceKm.toFixed(2)} km
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {phase === 'recording' ? (
+              <button
+                onClick={pauseActivity}
+                className="px-3.5 py-1.5 rounded-xl bg-[#FFB800] text-black text-xs font-bold flex items-center gap-1.5 hover:bg-[#ffc633] transition-all"
+              >
+                <Pause className="h-3.5 w-3.5 fill-black" /> Pause
+              </button>
+            ) : (
+              <button
+                onClick={resumeActivity}
+                className="px-3.5 py-1.5 rounded-xl bg-[#C8FF00] text-black text-xs font-bold flex items-center gap-1.5 hover:bg-[#d4ff33] transition-all"
+              >
+                <Play className="h-3.5 w-3.5 fill-black" /> Resume
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -402,12 +465,12 @@ export const RunTrackerPage: React.FC = () => {
             {phase === 'idle'
               ? 'Pick your activity, wait for the GPS to lock on, then tap Start.'
               : phase === 'recording'
-              ? 'Recording. Keep this screen open for the best accuracy.'
-              : 'Paused. Resume when you’re ready, or finish to save.'}
+              ? `Recording your ${info.label.toLowerCase()} live. Keep this screen open for the best accuracy.`
+              : `${info.label} paused. Resume when you’re ready, or finish to save.`}
           </p>
         </div>
 
-        {phase === 'idle' && (
+        {phase === 'idle' ? (
           <div role="group" aria-label="Activity type" className="grid grid-cols-4 gap-2 sm:w-96">
             {SPORTS.map((sp) => (
               <button
@@ -424,6 +487,47 @@ export const RunTrackerPage: React.FC = () => {
                 {sp.label}
               </button>
             ))}
+          </div>
+        ) : (
+          <div
+            data-testid="header-active-activity"
+            className="flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-[#12151b] border border-[#1e232d] sm:min-w-[240px] shadow-cyber-card"
+          >
+            <div
+              className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border"
+              style={{
+                backgroundColor: `${info.color}20`,
+                borderColor: `${info.color}50`,
+                color: info.color,
+              }}
+            >
+              <SportIcon sport={sport} className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#848E9C]">
+                  Active Activity
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    phase === 'recording'
+                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                    }`}
+                  />
+                  {phase === 'recording' ? 'Live' : 'Paused'}
+                </span>
+              </div>
+              <p className="text-lg font-black text-white truncate flex items-center gap-1.5">
+                <span>{info.label}</span>
+                <span className="text-xs font-normal text-[#848E9C] capitalize">({surfaceType})</span>
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -467,21 +571,30 @@ export const RunTrackerPage: React.FC = () => {
         <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-cyber-card relative h-[55vh] min-h-[320px] lg:h-[460px]">
           <div ref={mapContainerRef} className="w-full h-full" />
 
-          <div className="absolute top-3 left-3 right-14 z-[500] flex">
-            <div className="px-3 py-2 rounded-xl bg-black/80 backdrop-blur-md border border-[#1e232d] text-sm text-white flex items-center gap-2">
+          <div className="absolute top-3 left-3 right-14 z-[500] flex flex-wrap gap-2 items-center">
+            <div className="px-3 py-2 rounded-xl bg-black/85 backdrop-blur-md border border-[#1e232d] text-sm text-white flex items-center gap-2 shadow-lg">
               <span className={`h-2.5 w-2.5 rounded-full ${statusColor} ${phase === 'recording' ? 'animate-pulse' : ''}`} />
-              <span>
+              <span className="font-semibold">
                 {demoMode
                   ? phase === 'recording'
-                    ? 'Demo mode: simulated route'
+                    ? `Simulated ${info.label}`
                     : 'Demo mode on'
                   : phase === 'recording'
-                  ? 'Recording'
+                  ? `Recording ${info.label}`
                   : phase === 'paused'
-                  ? 'Paused'
+                  ? `${info.label} (Paused)`
                   : statusText[gpsStatus]}
               </span>
             </div>
+            {phase !== 'idle' && (
+              <div
+                className="px-2.5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-[#1e232d] text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                style={{ color: info.color }}
+              >
+                <SportIcon sport={sport} className="h-4 w-4" />
+                <span>{info.label}</span>
+              </div>
+            )}
           </div>
 
           {currentFix && !demoMode && (
@@ -498,6 +611,50 @@ export const RunTrackerPage: React.FC = () => {
         {/* Stats + controls */}
         <div className="space-y-4">
           <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
+            {/* Active Activity banner inside stats & controls card */}
+            {phase !== 'idle' && (
+              <div
+                data-testid="stats-active-activity"
+                className="p-3.5 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0"
+                    style={{
+                      backgroundColor: `${info.color}15`,
+                      borderColor: `${info.color}40`,
+                      color: info.color,
+                    }}
+                  >
+                    <SportIcon sport={sport} className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#848E9C] block">
+                      Currently Recording
+                    </span>
+                    <span className="text-base font-extrabold text-white flex items-center gap-1.5">
+                      {info.label}
+                      <span className="text-xs font-normal text-[#848E9C]">({surfaceType})</span>
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    phase === 'recording'
+                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
+                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                    }`}
+                  />
+                  {phase === 'recording' ? 'Live' : 'Paused'}
+                </span>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Distance', value: distanceKm.toFixed(2), unit: 'km', color: 'text-white' },
@@ -525,7 +682,7 @@ export const RunTrackerPage: React.FC = () => {
                 className="w-full py-4 rounded-2xl bg-[#C8FF00] text-black font-bold text-base flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-40 disabled:shadow-none"
               >
                 <Play className="h-5 w-5 fill-black" />
-                {canStart ? 'Start' : 'Waiting for GPS…'}
+                {canStart ? `Start ${info.label}` : 'Waiting for GPS…'}
               </button>
             )}
 
@@ -534,7 +691,7 @@ export const RunTrackerPage: React.FC = () => {
                 onClick={pauseActivity}
                 className="w-full py-4 rounded-2xl bg-[#FFB800] text-black font-bold text-base flex items-center justify-center gap-2"
               >
-                <Pause className="h-5 w-5 fill-black" /> Pause
+                <Pause className="h-5 w-5 fill-black" /> Pause {info.label}
               </button>
             )}
 
@@ -545,7 +702,7 @@ export const RunTrackerPage: React.FC = () => {
                   disabled={saving}
                   className="py-4 rounded-2xl bg-[#C8FF00] text-black font-bold text-base flex items-center justify-center gap-2"
                 >
-                  <Play className="h-5 w-5 fill-black" /> Resume
+                  <Play className="h-5 w-5 fill-black" /> Resume {info.label}
                 </button>
                 <button
                   onClick={requestFinish}
@@ -559,7 +716,7 @@ export const RunTrackerPage: React.FC = () => {
                   disabled={saving}
                   className="col-span-2 py-2.5 rounded-xl text-sm text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center gap-1.5"
                 >
-                  <Trash2 className="h-4 w-4" /> Discard this run
+                  <Trash2 className="h-4 w-4" /> Discard this {info.label.toLowerCase()}
                 </button>
               </div>
             )}
@@ -588,10 +745,10 @@ export const RunTrackerPage: React.FC = () => {
           <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-1.5">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#C8FF00]">
               <Sparkles className="h-4 w-4" />
-              <span>Calorie bonus: ~{estCalories} kcal</span>
+              <span>{info.label} calorie bonus: ~{estCalories} kcal</span>
             </div>
             <p className="text-sm text-[#848E9C] leading-relaxed">
-              When you save this activity, these calories are added to today’s food target so you can
+              When you save this {info.label.toLowerCase()}, these calories are added to today’s food target so you can
               refuel properly.
             </p>
           </div>
