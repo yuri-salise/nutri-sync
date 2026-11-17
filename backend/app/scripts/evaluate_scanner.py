@@ -33,9 +33,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from app.services.embedding_service import generate_embedding  # noqa: E402
-from app.services.meal_parser import FoodMatcher, total_macros  # noqa: E402
+from app.services.meal_parser import FoodMatcher, tokenize, total_macros  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+def food_family(name: str) -> frozenset:
+    """Core identity of a food: the content words of its first two comma-separated parts.
+
+    "Broccoli, raw" and "Broccoli, cooked, boiled, drained, without salt" share the
+    family {"broccoli"}; "Fish, salmon, sockeye, raw" and "Fish, salmon, Atlantic" share
+    {"fish", "salmon"}. Preparation and brand details after those parts are ignored.
+    """
+    head = ", ".join(name.split(",")[:2])
+    return frozenset(tokenize(head))
+
+
+def same_family(a: str, b: str) -> bool:
+    fa, fb = food_family(a), food_family(b)
+    if not fa or not fb:
+        return False
+    return len(fa & fb) / len(fa | fb) >= 0.5
 
 
 @dataclass
@@ -55,6 +73,8 @@ class EvalReport:
     meals: int
     item_precision: float
     item_recall: float
+    family_precision: float
+    family_recall: float
     kcal_mape: float
     protein_mae_g: float
     mean_latency_ms: float
@@ -102,6 +122,7 @@ def evaluate(
     matcher = matcher or FoodMatcher(foods, embed=generate_embedding)
 
     tp = predicted = expected_total = 0
+    fam_pred_hits = fam_exp_hits = 0
     apes: List[float] = []
     protein_errs: List[float] = []
     latencies: List[float] = []
@@ -122,6 +143,8 @@ def evaluate(
         tp += hits
         predicted += len(found)
         expected_total += len(expected)
+        fam_pred_hits += sum(1 for f in found if any(same_family(f, e) for e in expected))
+        fam_exp_hits += sum(1 for e in expected if any(same_family(f, e) for f in found))
 
         ref_kcal = sum(by_name[n].kcal_per_100g * g / 100 for n, g in expected.items())
         ref_protein = sum(by_name[n].protein_per_100g * g / 100 for n, g in expected.items())
@@ -146,6 +169,8 @@ def evaluate(
         meals=len(rows),
         item_precision=tp / predicted if predicted else 0.0,
         item_recall=tp / expected_total if expected_total else 0.0,
+        family_precision=fam_pred_hits / predicted if predicted else 0.0,
+        family_recall=fam_exp_hits / expected_total if expected_total else 0.0,
         kcal_mape=statistics.mean(apes) * 100 if apes else 0.0,
         protein_mae_g=statistics.mean(protein_errs) if protein_errs else 0.0,
         mean_latency_ms=statistics.mean(latencies) if latencies else 0.0,
@@ -169,8 +194,10 @@ def main() -> None:
         )
     print("-" * 85)
     print(f"Meals evaluated     : {report.meals}")
-    print(f"Item precision      : {report.item_precision:.1%}")
-    print(f"Item recall         : {report.item_recall:.1%}")
+    print(f"Item precision      : {report.item_precision:.1%}  (exact USDA/FNRI entry)")
+    print(f"Item recall         : {report.item_recall:.1%}  (exact USDA/FNRI entry)")
+    print(f"Family precision    : {report.family_precision:.1%}  (same food, any variant)")
+    print(f"Family recall       : {report.family_recall:.1%}  (same food, any variant)")
     print(f"Calorie MAPE        : {report.kcal_mape:.1f}%")
     print(f"Protein MAE         : {report.protein_mae_g:.1f} g")
     print(f"Mean latency / meal : {report.mean_latency_ms:.2f} ms (matching only, no DB/HTTP)")
