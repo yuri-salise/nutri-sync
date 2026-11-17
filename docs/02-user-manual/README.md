@@ -78,6 +78,8 @@ Energy is estimated from distance, time and body weight. Heart rate is not used.
 
 ![Meal scanner result](images/07-meal-scanner-result.png)
 
+**Photo (when the host has enabled it).** Press **Take or upload a photo**, add an optional note, and press **Analyze meal**. A vision model names the foods and guesses the amounts; the page then shows the same editable list. Photo amounts are rough guesses, so check the grams. If the host has not set it up, you will see "Photo analysis is not configured on this server" and can type your meal instead.
+
 Tips: write amounts like `1 cup`, `200g`, `3 oz` or `2 slices`. If you give no amount, one standard serving is assumed. Foods that are not in the Philippine or USDA tables will not be found.
 
 ![Meal scanner on a phone](images/11-scanner-phone.png)

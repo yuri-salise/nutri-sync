@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,7 @@ from app.schemas.nutrition import (
     RagScanResponse,
 )
 from app.services.rag_service import execute_rag_scan
+from app.services.vision_service import VisionUnavailable, describe_meal_photo
 
 router = APIRouter(tags=["RAG Nutrition Engine"])
 
@@ -34,11 +35,23 @@ async def scan_meal_nutrition(
     db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
+    query_input = payload.query_input.strip()
+    if payload.image_base64:
+        try:
+            query_input = await describe_meal_photo(payload.image_base64, hint=query_input)
+        except VisionUnavailable as exc:
+            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+        if not query_input:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                "We couldn't spot any food in that photo. Try another photo or type your meal.",
+            )
+
     await set_rls_context(db, user_id=user_id, role=token_payload.role)
     result = await execute_rag_scan(
         db=db,
         user_id=user_id,
-        query_input=payload.query_input,
+        query_input=query_input[:1000],
         image_base64=payload.image_base64,
     )
 

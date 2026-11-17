@@ -74,7 +74,7 @@ The real neural model did not improve calorie accuracy, was about twice as slow 
 2. All three sets have now influenced the matcher. Only a fresh set written and frozen before testing is a clean estimate.
 3. Most expected foods are Filipino dishes the FNRI table covers (101 entries) plus common USDA foods. Dishes absent from both tables are reported as "not found" and add no calories.
 4. When the user gives no amount, the scanner assumes one default serving, which can differ a lot from what was eaten. The screen lets the user edit grams before saving.
-5. Photo analysis is not part of `main` and was not evaluated.
+5. Photo analysis (added after these evaluations) was **not evaluated**: no key is configured on the server, and the estimates a vision model gives for grams are rough.
 
 ## 6.3 Usability and quality evaluation (SUS and ISO/IEC 25010)
 

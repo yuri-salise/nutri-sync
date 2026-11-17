@@ -109,7 +109,7 @@ flowchart TD
 - **Confidence:** scores of at least 0.60 are "high", 0.40 to 0.59 "low"; below 0.40 the item is reported as not found, contributes no calories and is listed so the user can add it manually.
 - **Traceability (T4):** each scan writes a row to `rag_scan_logs` (user, input, retrieved food IDs, top score, predicted macros, matcher version, latency, fallback flag, timestamp). Coaches can browse these rows.
 - **Human confirmation (T6):** the response carries `is_machine_generated` and `requires_human_confirmation`; the UI lets the user edit grams and remove items before saving.
-- **Not on `main`:** photo analysis (Gemini or Groq vision) is developed on a separate branch and is not part of this chapter's design.
+- **Photo input:** `image_base64` in the same request. `vision_service.py` asks Gemini and then Groq (free tiers, keys only on the server) to name each food and estimate grams; that text goes through the same matcher, so all macros still come from the tables. With no key configured the API returns `503` with a clear message, and the screen asks the user to type the meal. No key is configured on the deployed server at the time of writing.
 
 ## 4.6 UI design
 

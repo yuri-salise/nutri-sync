@@ -65,7 +65,7 @@ Status date: 2026-11-18. Live address: the public HTTPS URL in the main README.
 | :--- | :--- | :--- | :--- |
 | T1 | Enabling technology essential to the main workflow | Met | Retrieval-augmented meal scanner (retrieval over FNRI and USDA food tables) and GPS tracking. |
 | T2 | Accessed only through the REST API | Met | `POST /api/v1/rag-nutrition-scans`; the browser holds no model or keys. |
-| T3 | Runs at no cost; clear behaviour when unavailable | Met | Runs on the server CPU with no paid service and no API key. If the neural embedding model is missing, the matcher uses a deterministic hash embedding and sets `used_fallback`. Photo analysis is not part of `main`. |
+| T3 | Runs at no cost; clear behaviour when unavailable | Met | Runs on the server CPU with no paid service and no API key. If the neural embedding model is missing, the matcher uses a deterministic hash embedding and sets `used_fallback`. Photo analysis (Gemini first, Groq second, keys kept only on the server) returns `503 Photo analysis is not configured on this server` when no key is set; no key has been added to the deployed server, so it is currently off. |
 | T4 | Each use recorded | Met | `rag_scan_logs`: user, input, retrieved IDs, top score, predicted macros, model version, latency, fallback flag, timestamp. Coach audit page and `GET /rag-nutrition-scans`. |
 | T5 | Evaluated with a stated metric and test set | Met, with limits | Three sets of 28, 32 and 33 meals; see [chapter 6](06-testing-and-evaluation.md). Reference values come from the same tables, and no meals were weighed. |
 | T6 | Responsible use | Met | Results are labelled machine-generated; `requires_human_confirmation`; the user confirms before saving. Data sources and licenses are credited in the README. |

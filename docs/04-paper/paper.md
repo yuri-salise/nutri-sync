@@ -67,7 +67,7 @@ On the first held-out run the family recall was 76.6% with a calorie error of 33
 
 ## VII. Conclusion and Future Work
 
-A table-grounded meal matcher with household-portion selection reached 87.5% to 89.1% family-level food recall and 7.8% to 13.8% calorie error on three meal sets, at about 20 ms per scan, and was deployed with automated tests and a restore-tested database. Future work: measure accuracy on weighed meals; document the FNRI sources and expand Filipino coverage; add photo-based meal recognition (a vision model on a separate branch) and evaluate it; make row-level security effective with a non-superuser application role; run the SUS and ISO/IEC 25010 evaluations.
+A table-grounded meal matcher with household-portion selection reached 87.5% to 89.1% family-level food recall and 7.8% to 13.8% calorie error on three meal sets, at about 20 ms per scan, and was deployed with automated tests and a restore-tested database. Future work: measure accuracy on weighed meals; document the FNRI sources and expand Filipino coverage; evaluate the photo-based meal input that is already implemented with free vision models (it needs a server key and has not been measured); make row-level security effective with a non-superuser application role; run the SUS and ISO/IEC 25010 evaluations.
 
 ## Acknowledgment
 

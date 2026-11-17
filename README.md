@@ -72,7 +72,7 @@ Standard fitness applications suffer from two fundamental disconnects:
   - Daily allowance scaling derived from logged training expenditure.
   - Weekly volume totals.
 - **🥑 Grounded RAG Food Macro Scanner**
-  - Natural language meal decomposition (text input; photo input is not implemented yet).
+  - Natural language meal decomposition from text, or from a photo when a free Gemini or Groq key is set on the server. A vision model only names the foods and guesses grams; the macros still come from the FNRI/USDA tables. Without a key the API answers "Photo analysis is not configured on this server". No key is configured on the deployed server yet, and photo analysis has not been evaluated.
   - Semantic vector retrieval against DOST-FNRI and USDA composition tables.
   - Cosine similarity scores with a per-item serving breakdown.
   - Heuristic parser fallback when similarity is low.

@@ -1,17 +1,28 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class RagScanRequest(BaseModel):
     query_input: str = Field(
-        ...,
-        min_length=2,
+        "",
         max_length=1000,
-        description="Natural language meal description or food item.",
+        description="Natural language meal description or food item. Optional with a photo.",
     )
-    image_base64: Optional[str] = Field(None, description="Optional meal photo base64 string.")
+    # ~4 MB of base64 is ~3 MB of JPEG; the frontend downsizes to 1024 px first.
+    image_base64: Optional[str] = Field(
+        None, max_length=4_000_000, description="Optional meal photo, base64 JPEG."
+    )
+
+    @model_validator(mode="after")
+    def _text_or_photo(self) -> "RagScanRequest":
+        if self.image_base64:
+            if self.image_base64.startswith("data:"):
+                self.image_base64 = self.image_base64.split(",", 1)[-1]
+        elif len(self.query_input.strip()) < 2:
+            raise ValueError("Describe the meal or attach a photo.")
+        return self
 
 
 class FoodItemSummary(BaseModel):
