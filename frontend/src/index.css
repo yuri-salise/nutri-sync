@@ -100,6 +100,9 @@
 
 /* Leaflet Dark Filter for OpenStreetMap (100% Free, Zero API Keys) */
 .leaflet-container {
+  /* Leaflet panes use z-index up to 1000; contain them so a map never paints over
+     the side menu, dialogs or the bottom nav. */
+  isolation: isolate;
   background: #07080a !important;
   font-family: 'Poppins', sans-serif !important;
 }

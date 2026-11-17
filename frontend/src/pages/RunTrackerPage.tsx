@@ -115,9 +115,11 @@ export const RunTrackerPage: React.FC = () => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapContainerRef.current, {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: true,
     }).setView(COUNTRY_VIEW, 6);
+    // Top right: the status pill sits top left and would cover the buttons there.
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -568,7 +570,7 @@ export const RunTrackerPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map */}
-        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-cyber-card relative h-[55vh] min-h-[320px] lg:h-[460px]">
+        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-cyber-card relative isolate h-[55vh] min-h-[320px] lg:h-[460px]">
           <div ref={mapContainerRef} className="w-full h-full" />
 
           <div className="absolute top-3 left-3 right-14 z-[500] flex flex-wrap gap-2 items-center">
