@@ -261,8 +261,9 @@ _LEADING_QTY = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_QTY = re.compile(r"\s*(?P<num>\d+(?:\.\d+)?)\s*(?P<unit>g|grams|kg|ml)\s*$", re.I)
-_SPLIT = re.compile(r"\s*(,|;|\+|&|\bwith\b|\band\b|\bw/|\bplus\b|\bat\b|\bsaka\b)\s*", re.I)
+_SPLIT = re.compile(r"\s*(,|;|\+|&|\bwith\b|\band\b|\bw/|\bplus\b|\bat\b|\bon\b|\bsaka\b)\s*", re.I)
 
+MAX_PIECE_GRAMS = 300.0
 HIGH_CONFIDENCE = 0.60
 LOW_CONFIDENCE = 0.40
 
@@ -270,6 +271,33 @@ LOW_CONFIDENCE = 0.40
 # whose first part is fully covered by the query is a better candidate. There is no
 # matching penalty: category heads such as "Fish, salmon, ..." would be punished unfairly.
 HEAD_BONUS = 0.10
+
+# Forms and parts a user rarely means when they just name the food: "tomato" is not tomato
+# powder, "orange" is not orange peel. Applied only when the query does not say the word.
+OFF_FORM_WORDS = {
+    "powder",
+    "peel",
+    "juice",
+    "oil",
+    "flour",
+    "extract",
+    "syrup",
+    "concentrate",
+    "dehydrated",
+    "strudel",
+    "muffin",
+    "cookie",
+    "pie",
+    "candy",
+    "topping",
+    "babyfood",
+    "infant",
+    "liquid",
+}
+# Staples that are eaten cooked: "pasta" or "black beans" should not match the dry entry.
+STAPLE_WORDS = {"pasta", "bean", "lentil", "noodle", "macaroni", "spaghetti", "rice", "quinoa"}
+UNCOOKED_WORDS = {"dry", "dried", "raw", "uncooked", "unprepared"}
+FORM_PENALTY = 0.85
 
 # Source boilerplate that carries no food identity, e.g. "(Includes foods for USDA's ...)".
 _BOILERPLATE = re.compile(r"\s*\((?:includes?|may contain)[^)]*\)", re.IGNORECASE)
@@ -409,7 +437,12 @@ def pick_serving(qty: Optional[float], unit: Optional[str], servings: Sequence[S
         default = next((s for s in servings if s.grams >= 30), default)
     if qty is None:
         # No amount ("a baked potato", "banana"): a medium piece beats half a cup.
-        medium = [s for s in servings if s.unit is None and "medium" in s.label.lower()]
+        # Only single pieces: a "medium head of cabbage" (900 g) is not a default portion.
+        medium = [
+            s
+            for s in servings
+            if s.unit is None and "medium" in s.label.lower() and s.grams <= MAX_PIECE_GRAMS
+        ]
         return medium[0] if medium else default
     if unit in ("g", "kg", "ml", "serving"):
         return default
@@ -479,6 +512,8 @@ def grams_for(qty: Optional[float], unit: Optional[str], serving: Serving) -> fl
     if qty is None:
         return serving.grams  # no quantity given: one standard serving
     per_unit = serving.grams / (serving.qty or 1.0)
+    if unit == "scoop" and serving.unit in (None, "serving"):
+        return qty * per_unit  # "a scoop of ice cream" is one serving, not a 30 g powder scoop
     if unit is None or unit == serving.unit or (unit == "piece" and serving.unit is None):
         return qty * per_unit
     if unit == "serving":
@@ -529,7 +564,11 @@ class FoodMatcher:
         self,
         foods: Sequence[FoodLike],
         embed: Optional[Callable[[str], List[float]]] = None,
+        semantic_weight: Optional[float] = None,
     ):
+        if semantic_weight is not None:
+            self.SEMANTIC_WEIGHT = semantic_weight
+            self.LEXICAL_WEIGHT = 1.0 - semantic_weight
         self.foods = list(foods)
         self.embed = embed
         self._name_toks = {f.id: tokenize(_BOILERPLATE.sub("", f.food_name)) for f in self.foods}
@@ -539,6 +578,12 @@ class FoodMatcher:
                 for tok in tokenize(re.split(r"[,(]", _BOILERPLATE.sub("", f.food_name))[0])
                 if tok not in DESCRIPTORS
             ]
+            for f in self.foods
+        }
+        self._off_forms = {f.id: OFF_FORM_WORDS & set(self._name_toks[f.id]) for f in self.foods}
+        self._uncooked_staple = {
+            f.id: bool(STAPLE_WORDS & set(self._name_toks[f.id]))
+            and bool(UNCOOKED_WORDS & set(self._name_toks[f.id]))
             for f in self.foods
         }
         self._servings = {
@@ -567,6 +612,13 @@ class FoodMatcher:
             norms = np.linalg.norm(mat, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
             self._matrix = mat / norms
+
+    def _form_adjust(self, food_id: int, q_set: set, score: float) -> float:
+        if self._off_forms[food_id] - q_set:
+            score *= FORM_PENALTY
+        if self._uncooked_staple[food_id] and not (UNCOOKED_WORDS & q_set):
+            score *= FORM_PENALTY
+        return score
 
     def _head_adjust(self, food_id: int, q_toks: Sequence[str], lex: float) -> float:
         head = self._head_toks[food_id]
@@ -602,6 +654,7 @@ class FoodMatcher:
         text = self.search_text(food_text)
         q_toks = tokenize(text)
         candidates = self._candidates(q_toks)
+        q_set = set(q_toks)
         # No shared word: every lexical score is 0, so only the semantic part ranks them.
         indices = candidates or list(range(len(self.foods)))
 
@@ -618,6 +671,7 @@ class FoodMatcher:
             score = lexical_score(q_toks, self._name_toks[f.id]) if candidates else 0.0
             if score > 0:
                 score = self._head_adjust(f.id, q_toks, score)
+                score = self._form_adjust(f.id, q_set, score)
             if sem is not None:
                 score = self.LEXICAL_WEIGHT * score + self.SEMANTIC_WEIGHT * float(sem[pos])
             ranked.append((f, score))

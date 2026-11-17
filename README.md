@@ -72,7 +72,7 @@ Standard fitness applications suffer from two fundamental disconnects:
   - Daily allowance scaling derived from logged training expenditure.
   - Weekly volume totals.
 - **🥑 Grounded RAG Food Macro Scanner**
-  - Natural language meal decomposition (text input; photo input is not implemented yet).
+  - Natural language meal decomposition from text, or from a photo when a free Gemini or Groq key is set on the server. A vision model only names the foods and guesses grams; the macros still come from the FNRI/USDA tables. Without a key the API answers "Photo analysis is not configured on this server". No key is configured on the deployed server yet, and photo analysis has not been evaluated.
   - Semantic vector retrieval against DOST-FNRI and USDA composition tables.
   - Cosine similarity scores with a per-item serving breakdown.
   - Heuristic parser fallback when similarity is low.
@@ -96,7 +96,7 @@ Standard fitness applications suffer from two fundamental disconnects:
   - Review, approve, or reject user-submitted custom exercises.
   - Set muscle group, category, and MET value.
 - **🏆 PR Verification**
-  - Mark athlete PR claims as verified.
+  - Available through the API (`PATCH /api/v1/workout-sets/{id}/verify`); there is no screen for it yet.
 - **🔍 RAG Traceability Log**
   - Per-inference record: query, retrieved item IDs, top similarity score, predicted macros, latency, and whether the fallback was used (Requirement T4).
 - **📚 Nutrition Knowledge Base**
@@ -134,16 +134,16 @@ NutriSync-RAG is a containerized, multi-service system behind a reverse proxy:
 
 ```mermaid
 flowchart TD
-    A["User Input (text meal description)"] --> B["Meal Parsing & Entity Decomposition"]
-    B --> C["Dense Vector Embedding (all-MiniLM-L6-v2, 384-dim)"]
-    C --> D["Vector Similarity Search (pgvector cosine distance)"]
-    D --> E{"Similarity >= threshold?"}
-    E -- "Yes (grounded match)" --> F["Use matched DOST-FNRI / USDA record"]
-    E -- "No (low similarity)" --> G["Heuristic parser fallback"]
-    F --> H["Compute macronutrients (calories, protein, carbs, fat)"]
+    A["User input (text meal description)"] --> B["Split into items; read amounts and units"]
+    B --> C["Find candidate foods that share a word (FNRI + USDA tables)"]
+    C --> D["Score: 0.8 x word match + 0.2 x embedding similarity"]
+    D --> E{"Best score"}
+    E -- ">= 0.60 or 0.40-0.59" --> F["Use the matched food and the portion that fits the unit"]
+    E -- "< 0.40" --> G["Report as not found (no calories added)"]
+    F --> H["Compute macros: per-100 g values x grams"]
     G --> H
-    H --> I["Write audit record to rag_scan_logs (latency, similarity, model, fallback flag)"]
-    I --> J["Return macro breakdown to athlete"]
+    H --> I["Write audit record to rag_scan_logs (latency, score, model version, fallback flag)"]
+    I --> J["Return estimate flagged machine-generated; the user confirms before saving"]
 ```
 
 ---
@@ -155,7 +155,7 @@ flowchart TD
 | **Frontend Client** | **React 18.3**, **TypeScript 5.6**, **Vite 5.4**, **Tailwind CSS 3.4**, **Framer Motion 11.11**, **Leaflet.js 1.9**, **Lucide React**, **Vitest** |
 | **Backend API** | **Python 3.10+**, **FastAPI 0.115**, **Pydantic v2.9**, **SQLAlchemy 2.0 (Async)**, **Alembic 1.13**, **HTTPX**, **Pytest** |
 | **Database & Vector Engine** | **PostgreSQL 17** with **pgvector** (cosine distance on 384-dim embeddings), SQLite for bare-metal dev |
-| **Machine Learning / NLP** | **`sentence-transformers/all-MiniLM-L6-v2`** (384-dim semantic vectors) |
+| **Retrieval / NLP** | Python word matching plus a built-in 384-dim hash embedding; `sentence-transformers/all-MiniLM-L6-v2` is optional and was measured to give no accuracy gain (see D1 chapter 6) |
 | **DevOps & Ingress** | **Docker Engine**, **Docker Compose**, **Caddy 2** (reverse proxy), **Tailscale Funnel** (public HTTPS) |
 | **Quality & Linting** | **Ruff**, **ESLint 9**, **pytest-cov** (60% minimum enforced in CI) |
 
@@ -194,13 +194,14 @@ nutri-sync/
 ├── deploy/
 │   └── Caddyfile                     # Reverse proxy routing & security headers
 ├── docs/                             # Academic & engineering deliverables
-│   ├── 01-system-documentation/      # D1 (in progress)
-│   ├── 02-user-manual/               # D2 (in progress)
-│   ├── 03-api/                       # D3: openapi.yaml
-│   ├── 04-paper/                     # D4 (in progress)
-│   ├── diagrams/                     # Planned diagram sources
-│   └── evaluation/                   # Scanner benchmark results
-├── scripts/                          # Database backup & restore scripts
+│   ├── 01-system-documentation/      # D1 technical chapters (draft)
+│   ├── 02-user-manual/               # D2 draft with screenshots
+│   ├── 03-api/                       # D3: openapi.yaml (generated)
+│   ├── 04-paper/                     # D4 draft (paper.md)
+│   ├── diagrams/                     # Mermaid diagram sources
+│   └── evaluation/                   # Scanner results and weighed-meal procedure
+├── e2e/                              # Playwright end-to-end tests
+├── deploy/                           # Caddyfile, backup.sh, restore.sh
 ├── compose.yaml                      # Docker Compose services
 ├── .env.example                      # Environment variable template
 └── README.md
@@ -314,7 +315,7 @@ Demo accounts created by `seed_demo_data.py`. They hold sample data only.
 | Role | Name | Email | Password | Scope & Privileges |
 | :--- | :--- | :--- | :--- | :--- |
 | **Athlete** | Yuri Salise | `athlete@nutrisync.com` | `Password123!` | Dashboard, workouts, run tracker, RAG food scanner, community feed. |
-| **Coach / Admin** | Coach Rinante Buntod | `admin@nutrisync.com` | `Password123!` | Exercise moderation, PR verification, RAG audit log, knowledge base list. |
+| **Coach / Admin** | Coach Rinante Buntod | `admin@nutrisync.com` | `Password123!` | Exercise library, scan history (audit log), food database, feed moderation. |
 
 ---
 
@@ -385,7 +386,18 @@ cd frontend && npm run test:run
 cd frontend && npm run lint && npm run build
 ```
 
-End-to-end tests (Playwright) are not implemented yet.
+```bash
+# 5. End-to-end tests (Playwright) against a running stack with demo accounts
+cd e2e && npm ci && npx playwright install chromium
+E2E_BASE_URL=http://localhost:8080 npx playwright test
+
+# 6. Scanner evaluation (tuned, held-out and third meal sets)
+cd backend && python -m app.scripts.evaluate_scanner
+python -m app.scripts.evaluate_scanner --eval-set app/scripts/data/scanner_holdout_set.csv
+python -m app.scripts.evaluate_scanner --eval-set app/scripts/data/scanner_third_set.csv
+```
+
+**Backup and restore** (requirement D4): `deploy/backup.sh` and `deploy/restore.sh`; the procedure and a recorded restore test are in `docs/01-system-documentation/07-deployment-and-operations.md`.
 
 ---
 
@@ -419,11 +431,21 @@ flowchart LR
 
 The RAG scanner benchmark is in [`docs/evaluation/`](docs/evaluation/):
 
-- **`scanner_eval_results.csv`:** 28 meals from `backend/app/scripts/data/scanner_eval_set.csv`. The matcher was tuned while looking at this set, so its scores are optimistic.
-- **`scanner_holdout_results.csv`:** 32 meals from `backend/app/scripts/data/scanner_holdout_set.csv`, with expected foods written from the tables before the scanner was run on them. Failures on it were inspected afterwards, so it is no longer fully untouched.
-- **How scores are measured:** "family" precision/recall counts a hit when the scanner finds the right food in any variant (for example raw vs. cooked broccoli); "exact entry" requires the specific table row. Calorie error is computed against reference values taken from the same tables, so it measures parsing, matching and portion estimates, not errors in the tables themselves. Neither set was checked against weighed meals.
-- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 90.7% / 89.1%, exact entry 79.6% / 78.2%, calorie error 9.1%; held-out set family 87.5% / 87.5%, exact entry 65.6% / 65.6%, calorie error 22.3%. Most remaining held-out error comes from picking a wrong food (for example "tomato" matching tomato powder), not from portions. Matching takes about 60 ms per meal (matching only, no database or HTTP).
-- There is no comparison against a non-RAG baseline.
+- **`scanner_eval_results.csv`:** 28 meals (`scanner_eval_set.csv`). The matcher was developed while looking at this set, so its scores are optimistic.
+- **`scanner_holdout_results.csv`:** 32 meals (`scanner_holdout_set.csv`) with expected foods written from the tables before the scanner was run on them. Its failures were inspected afterwards, so it is no longer untouched.
+- **`scanner_third_results.csv`:** 33 meals (`scanner_third_set.csv`), written before the latest matcher fixes; some of its errors were inspected to find bugs.
+- **How scores are measured:** "family" precision/recall counts a hit when the scanner finds the right food in any variant (for example raw vs. cooked broccoli); "exact entry" requires the specific table row. Calorie error is computed against reference values taken from the same tables, so it measures parsing, matching and portion estimates, not errors in the tables themselves. **No meal was weighed on a kitchen scale**; see `docs/evaluation/README.md` for the procedure.
+- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`):
+
+  | Set | Family precision / recall | Exact entry | Calorie error |
+  | :--- | :---: | :---: | :---: |
+  | Tuned (28) | 89.1% / 89.1% | 76.4% / 76.4% | 7.8% |
+  | Held-out (32) | 87.5% / 87.5% | 65.6% / 65.6% | 13.8% |
+  | Third (33) | 88.7% / 88.7% | 74.2% / 74.2% | 8.6% |
+
+  Matching takes about 50 to 60 ms per meal in the evaluation (about 20 ms per scan on the live site once warm). Most remaining error comes from picking a wrong food or from the amount assumed when none is typed.
+- **No-embedding baseline:** scoring on words alone (`--semantic-weight 0`) gives family recall 85.5% / 89.1% / 88.7% and calorie error 10.8% / 14.9% / 8.8% on the three sets; the real `all-MiniLM-L6-v2` model gave 87.3% / 87.5% / 91.9% with worse calorie error (16.8% / 16.6% / 10.2%), so it is not used.
+- There is no comparison against a baseline that does not use the food tables.
 
 Not yet done:
 - **Weighed-meal accuracy check:** no meals have been weighed on a kitchen scale yet; follow `docs/evaluation/README.md` to add them.
@@ -444,10 +466,10 @@ Not yet done:
 
 ## 📄 License & Acknowledgments
 
-**License: pending.** The repository has no `LICENSE` file yet. Add one before publishing.
+This project is released under the [MIT License](LICENSE). Third-party data and libraries keep their own licenses, listed below.
 
 ### Acknowledgments & Data Sources
-- **DOST-FNRI:** Philippine food composition data from the Department of Science and Technology – Food and Nutrition Research Institute.
+- **DOST-FNRI:** Philippine food composition values (101 entries) from the Department of Science and Technology – Food and Nutrition Research Institute. The repository does not yet record which published table each value came from; verify before citing them as official FNRI data.
 - **USDA FoodData Central:** Public domain nutrient values.
-- **Sentence-Transformers:** `all-MiniLM-L6-v2` embedding weights (Apache-2.0).
+- **Sentence-Transformers:** `all-MiniLM-L6-v2` embedding weights (Apache-2.0), used only when the optional `sentence-transformers` package is installed.
 - **OpenStreetMap & Leaflet.js:** Map tiles and mapping library (ODbL / BSD-2-Clause).

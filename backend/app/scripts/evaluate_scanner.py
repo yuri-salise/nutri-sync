@@ -121,10 +121,13 @@ def evaluate(
     matcher: Optional[FoodMatcher] = None,
     foods: Optional[List[Food]] = None,
     eval_set: Optional[Path] = None,
+    semantic_weight: Optional[float] = None,
 ) -> EvalReport:
     foods = foods or load_foods()
     by_name = {f.food_name: f for f in foods}
-    matcher = matcher or FoodMatcher(foods, embed=generate_embedding)
+    matcher = matcher or FoodMatcher(
+        foods, embed=generate_embedding, semantic_weight=semantic_weight
+    )
 
     tp = predicted = expected_total = 0
     fam_pred_hits = fam_exp_hits = 0
@@ -192,9 +195,17 @@ def main() -> None:
         help="Meal set CSV (default: scanner_eval_set.csv; scanner_holdout_set.csv is the "
         "held-out set, written before the scanner was run on it)",
     )
+    parser.add_argument(
+        "--semantic-weight",
+        type=float,
+        help="Share of the score from embedding similarity (default 0.2; 0 = words only)",
+    )
     args = parser.parse_args()
 
-    report = evaluate(eval_set=Path(args.eval_set) if args.eval_set else None)
+    report = evaluate(
+        eval_set=Path(args.eval_set) if args.eval_set else None,
+        semantic_weight=args.semantic_weight,
+    )
 
     print(f"{'Meal':<55} {'Items':>6} {'Ref':>7} {'Pred':>7} {'APE%':>6}")
     print("-" * 85)
