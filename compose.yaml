@@ -59,16 +59,8 @@ services:
     networks:
       - internal-net
 
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN:-}
-    depends_on:
-      - proxy
-    networks:
-      - internal-net
-    profiles:
-      - production
+# Public HTTPS is provided by Tailscale Funnel on the host, which forwards to
+# localhost:8080 (the proxy port). See README "CI/CD & Deployment".
 
 volumes:
   db-data:

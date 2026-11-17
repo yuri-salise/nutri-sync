@@ -111,7 +111,7 @@ NutriSync-RAG is a containerized, multi-service system behind a reverse proxy:
 ```
                       [ User Browser (Mobile / Desktop) ]
                                       |
-                                      | HTTPS (public URL via tunnel)
+                                      | HTTPS (Tailscale Funnel)
                                       v
                         [ Caddy 2 Reverse Proxy ]
                        /                         \
@@ -156,7 +156,7 @@ flowchart TD
 | **Backend API** | **Python 3.10+**, **FastAPI 0.115**, **Pydantic v2.9**, **SQLAlchemy 2.0 (Async)**, **Alembic 1.13**, **HTTPX**, **Pytest** |
 | **Database & Vector Engine** | **PostgreSQL 17** with **pgvector** (cosine distance on 384-dim embeddings), SQLite for bare-metal dev |
 | **Machine Learning / NLP** | **`sentence-transformers/all-MiniLM-L6-v2`** (384-dim semantic vectors) |
-| **DevOps & Ingress** | **Docker Engine**, **Docker Compose**, **Caddy 2** (reverse proxy), **Cloudflare Tunnel** |
+| **DevOps & Ingress** | **Docker Engine**, **Docker Compose**, **Caddy 2** (reverse proxy), **Tailscale Funnel** (public HTTPS) |
 | **Quality & Linting** | **Ruff**, **ESLint 9**, **pytest-cov** (60% minimum enforced in CI) |
 
 ---
@@ -338,7 +338,6 @@ A full template is in [`.env.example`](.env.example). Main variables:
 | `DATABASE_URL` | `postgresql+asyncpg://...` | Asynchronous database connection string |
 | `DATABASE_URL_SYNC` | `postgresql://...` | Synchronous connection string (used by Alembic migrations) |
 | `EMBEDDING_MODEL_NAME` | `all-MiniLM-L6-v2` | SentenceTransformers model for 384-dim vectors |
-| `TUNNEL_TOKEN` | *(Optional)* | Cloudflare Tunnel token for public HTTPS ingress |
 
 ---
 
@@ -406,7 +405,12 @@ flowchart LR
     E --> H[Health check for the new commit ID]
 ```
 
-- **Public address:** a named Cloudflare Tunnel with a stable hostname on a domain you own. Quick tunnels get a random URL that changes on restart, so they are only for testing.
+- **Public address:** Tailscale Funnel on the deployment machine, which gives a stable `https://<machine>.<tailnet>.ts.net` URL. Setup, once per machine:
+  1. Install Tailscale and sign in. In the admin console, enable **HTTPS certificates** and **Funnel** for the tailnet.
+  2. Forward the public HTTPS port to the local proxy: `tailscale funnel --bg 8080` (check `tailscale funnel --help` for your version's syntax).
+  3. Set `PUBLIC_APP_URL` in the server's `.env` to the URL that `tailscale funnel status` prints.
+  
+  Funnel runs as a background service, so it survives reboots. The URL is stable as long as the machine keeps its Tailscale name.
 - **Deployment prerequisite:** the deploy job needs a self-hosted runner with the `[self-hosted, linux, deploy]` labels online.
 
 ---
