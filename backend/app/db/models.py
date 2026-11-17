@@ -11,9 +11,16 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+
+
+# Compile Vector as TEXT when using SQLite
+@compiles(Vector, "sqlite")
+def compile_vector_sqlite(type_, compiler, **kw):
+    return "TEXT"
 
 
 def utcnow():
