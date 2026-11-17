@@ -3,8 +3,10 @@ from app.services.embedding_service import generate_embedding
 from app.services.meal_parser import (
     FoodMatcher,
     grams_for,
+    grams_for_servings,
     parse_segment,
     parse_serving,
+    parse_servings,
     split_meal,
 )
 
@@ -43,6 +45,29 @@ def test_grams_use_food_serving_description():
     rice = parse_serving("1 cup packed (158g)")
     assert grams_for(2, "cup", rice) == 316.0
     assert grams_for(120, "g", rice) == 120.0
+
+
+def test_portion_matches_unit_or_medium_count():
+    banana = parse_servings(
+        "1 cup, mashed (225g)",
+        "1 cup, mashed (225g) | 1 small (101g) | 1 medium (118g) | 1 large (136g)",
+    )
+    assert grams_for_servings(1, None, banana) == 118.0  # "a banana"
+    assert grams_for_servings(None, None, banana) == 118.0  # "banana"
+    assert grams_for_servings(2, "cup", banana) == 450.0
+    assert grams_for_servings(100, "g", banana) == 100.0
+
+
+def test_serving_unit_can_follow_a_size_word():
+    assert parse_serving("1 large bowl with toppings (350g)").unit == "bowl"
+    assert parse_serving('1 medium (7" to 7-7/8" long) (118g)').unit is None
+
+
+def test_tiny_count_default_is_skipped_but_measured_units_are_kept():
+    butter = parse_servings("1 pat (5g)", "1 pat (5g) | 1 tbsp (14g) | 1 cup (227g)")
+    assert grams_for_servings(None, None, butter) == 5.0
+    grape = parse_servings("1 grape (6g)", "1 grape (6g) | 1 cup (151g)")
+    assert grams_for_servings(None, None, grape) == 151.0
 
 
 def test_matcher_scales_portions_and_flags_unknown_food():

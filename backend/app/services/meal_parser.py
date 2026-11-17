@@ -79,6 +79,17 @@ DESCRIPTORS = {
     "hot",
     "cold",
     "street",
+    # Generic USDA qualifiers that say nothing about which food it is.
+    "all",
+    "commercial",
+    "varieties",
+    "variety",
+    "types",
+    "type",
+    "average",
+    "unspecified",
+    "mixed",
+    "species",
 }
 
 # Filipino -> English token synonyms, applied to both query and food names.
@@ -198,6 +209,30 @@ UNIT_ALIASES = {
     "mugs": "mug",
     "handful": "handful",
     "handfuls": "handful",
+    "oz": "oz",
+    "ounce": "oz",
+    "ounces": "oz",
+    "lb": "lb",
+    "lbs": "lb",
+    "pound": "lb",
+    "pounds": "lb",
+}
+
+# Units that only appear in food serving descriptions ("1 fl oz", "1 quart"), never in
+# what a user types. Knowing them stops those servings being mistaken for "1 medium"-style
+# count servings.
+SERVING_ONLY_UNITS = {
+    "fl": "floz",
+    "fluid": "floz",
+    "quart": "quart",
+    "pint": "pint",
+    "gallon": "gallon",
+    "pat": "pat",
+    "dash": "dash",
+    "pinch": "pinch",
+    "drop": "drop",
+    "cubic": "cubic",
+    "nlea": "serving",
 }
 
 # Fallback gram weights when the user's unit differs from the food's serving unit.
@@ -215,6 +250,8 @@ GENERIC_UNIT_GRAMS = {
     "stick": 45.0,
     "link": 40.0,
     "handful": 30.0,
+    "oz": 28.35,
+    "lb": 453.6,
 }
 
 _UNIT_PATTERN = "|".join(sorted(UNIT_ALIASES, key=len, reverse=True))
@@ -259,6 +296,7 @@ class Serving:
     qty: float
     unit: Optional[str]
     grams: float
+    label: str = ""
 
 
 @dataclass
@@ -328,14 +366,61 @@ def tokenize(text: str) -> List[str]:
 def parse_serving(description: str) -> Serving:
     """'3 pieces (90g)' -> Serving(qty=3, unit='piece', grams=90)."""
     desc = (description or "").lower()
-    grams_m = re.search(r"\((\d+(?:\.\d+)?)\s*(?:g|ml)\)", desc)
-    grams = float(grams_m.group(1)) if grams_m else 100.0
+    grams_all = re.findall(r"\((\d+(?:\.\d+)?)\s*(?:g|ml)\)", desc)
+    grams = float(grams_all[-1]) if grams_all else 100.0
+    label = (description or "").strip()
     qty_m = re.match(r"^(\d+/\d+|\d+(?:\.\d+)?)\s+([a-z]+)", desc)
     if not qty_m:
-        return Serving(qty=1.0, unit=None, grams=grams)
+        return Serving(qty=1.0, unit=None, grams=grams, label=label)
     qty = _to_number(qty_m.group(1)) or 1.0
-    unit = UNIT_ALIASES.get(qty_m.group(2))
-    return Serving(qty=qty, unit=unit, grams=grams)
+    word = qty_m.group(2)
+    unit = UNIT_ALIASES.get(word) or SERVING_ONLY_UNITS.get(word)
+    if unit is None:
+        # "1 large bowl with toppings": the size comes first, the unit noun after it.
+        for later in re.findall(r"[a-z]+", desc.split("(")[0])[1:]:
+            unit = UNIT_ALIASES.get(later) or SERVING_ONLY_UNITS.get(later)
+            if unit:
+                break
+    return Serving(qty=qty, unit=unit, grams=grams, label=label)
+
+
+def parse_servings(default_description: str, portions: Optional[str] = None) -> List[Serving]:
+    """The default serving first, then every extra portion ("a | b | c"), without repeats."""
+    servings = [parse_serving(default_description)]
+    seen = {servings[0].label.lower()}
+    for part in (portions or "").split("|"):
+        part = part.strip()
+        if part and part.lower() not in seen:
+            seen.add(part.lower())
+            servings.append(parse_serving(part))
+    return servings
+
+
+def pick_serving(qty: Optional[float], unit: Optional[str], servings: Sequence[Serving]) -> Serving:
+    """Choose the portion that fits what the user typed.
+
+    "1 cup rice" -> the cup portion; "an apple" -> the medium fruit portion;
+    no amount -> the default portion (skipping a tiny first portion such as "1 grape").
+    """
+    default = servings[0]
+    if default.grams < 10 and default.unit is None:
+        # A tiny count portion ("1 grape", 6 g) is not a meal-sized default. Measured
+        # units such as "1 pat" or "1 tsp" are kept: butter really is a few grams.
+        default = next((s for s in servings if s.grams >= 30), default)
+    if qty is None:
+        # No amount ("a baked potato", "banana"): a medium piece beats half a cup.
+        medium = [s for s in servings if s.unit is None and "medium" in s.label.lower()]
+        return medium[0] if medium else default
+    if unit in ("g", "kg", "ml", "serving"):
+        return default
+    if unit is None:
+        counts = [s for s in servings if s.unit is None]
+        medium = [s for s in counts if "medium" in s.label.lower()]
+        return (medium or counts or [default])[0]
+    same = [s for s in servings if s.unit == unit]
+    if unit == "piece":
+        same = same or [s for s in servings if s.unit is None]
+    return (same or [default])[0]
 
 
 def parse_segment(text: str) -> ParsedSegment:
@@ -376,6 +461,12 @@ def split_meal(description: str) -> List[Tuple[str, str]]:
             out.append((connector, part.strip()))
         connector = ""
     return out
+
+
+def grams_for_servings(
+    qty: Optional[float], unit: Optional[str], servings: Sequence[Serving]
+) -> float:
+    return grams_for(qty, unit, pick_serving(qty, unit, servings))
 
 
 def grams_for(qty: Optional[float], unit: Optional[str], serving: Serving) -> float:
@@ -450,7 +541,10 @@ class FoodMatcher:
             ]
             for f in self.foods
         }
-        self._servings = {f.id: parse_serving(f.serving_description) for f in self.foods}
+        self._servings = {
+            f.id: parse_servings(f.serving_description, getattr(f, "portions", None))
+            for f in self.foods
+        }
         self._name_vecs: Dict[int, List[float]] = {}
         if embed:
             for f in self.foods:
@@ -530,7 +624,7 @@ class FoodMatcher:
         ranked.sort(key=lambda fs: (-fs[1], len(fs[0].food_name)))
         return ranked
 
-    def serving(self, food: FoodLike) -> Serving:
+    def servings(self, food: FoodLike) -> List[Serving]:
         return self._servings[food.id]
 
     @staticmethod
@@ -584,7 +678,11 @@ class FoodMatcher:
                 continue
             food, score = ranked[0]
             conf = self.confidence(score)
-            grams = grams_for(seg.qty, seg.unit, self.serving(food)) if conf != "none" else 0.0
+            grams = (
+                grams_for_servings(seg.qty, seg.unit, self.servings(food))
+                if conf != "none"
+                else 0.0
+            )
             alternatives = [f for f, s in ranked[1:4] if s >= LOW_CONFIDENCE * 0.75]
             if conf == "none":
                 # Nothing credible: offer the top candidates as suggestions only.

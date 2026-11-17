@@ -297,7 +297,7 @@ The frontend runs on [http://localhost:5173](http://localhost:5173). Set `FRONTE
 The application includes two nutrition datasets:
 
 - `backend/app/scripts/data/fnri_food_composition.csv`: **101 Filipino food entries** (e.g., *Adobong Manok*, *Sinigang na Baboy*, *Tinolang Manok*, *Inihaw na Bangus*, *Sinangag*, *Taho*).
-- `backend/app/scripts/data/usda_food_composition.csv`: **7,793 USDA entries** converted from the USDA FoodData Central **SR Legacy** CSV download (public domain). Regenerate it with `python -m app.scripts.convert_usda_sr_legacy --src <folder with the unzipped SR Legacy CSVs>`.
+- `backend/app/scripts/data/usda_food_composition.csv`: **7,793 USDA entries** converted from the USDA FoodData Central **SR Legacy** CSV download (public domain), with every USDA household portion kept in a `portions` column so the scanner can pick the one that matches what you typed ("1 cup", "a medium apple"). Regenerate it with `python -m app.scripts.convert_usda_sr_legacy --src <folder with the unzipped SR Legacy CSVs>`.
 
 The seeder computes an embedding for each row and writes it to the `nutrition_knowledge_items` table. A full run should produce **7,894 rows** (101 + 7,793). Record the actual count from your run in the D1 Testing chapter rather than relying on a sample report.
 
@@ -422,10 +422,11 @@ The RAG scanner benchmark is in [`docs/evaluation/`](docs/evaluation/):
 - **`scanner_eval_results.csv`:** 28 meals from `backend/app/scripts/data/scanner_eval_set.csv`. The matcher was tuned while looking at this set, so its scores are optimistic.
 - **`scanner_holdout_results.csv`:** 32 meals from `backend/app/scripts/data/scanner_holdout_set.csv`, with expected foods written from the tables before the scanner was run on them. Failures on it were inspected afterwards, so it is no longer fully untouched.
 - **How scores are measured:** "family" precision/recall counts a hit when the scanner finds the right food in any variant (for example raw vs. cooked broccoli); "exact entry" requires the specific table row. Calorie error is computed against reference values taken from the same tables, so it measures parsing, matching and portion estimates, not errors in the tables themselves. Neither set was checked against weighed meals.
-- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 90.7% / 89.1%, exact entry 79.6% / 78.2%, calorie error 12.1%; held-out set family 85.9% / 85.9%, exact entry 62.5% / 62.5%, calorie error 25.9%. Matching takes about 60 ms per meal (matching only, no database or HTTP).
+- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 90.7% / 89.1%, exact entry 79.6% / 78.2%, calorie error 9.1%; held-out set family 87.5% / 87.5%, exact entry 65.6% / 65.6%, calorie error 22.3%. Most remaining held-out error comes from picking a wrong food (for example "tomato" matching tomato powder), not from portions. Matching takes about 60 ms per meal (matching only, no database or HTTP).
 - There is no comparison against a non-RAG baseline.
 
 Not yet done:
+- **Weighed-meal accuracy check:** no meals have been weighed on a kitchen scale yet; follow `docs/evaluation/README.md` to add them.
 - **System Usability Scale (SUS)** and **ISO/IEC 25010** user evaluations: no responses are collected yet.
 - **User acceptance testing** with target users.
 

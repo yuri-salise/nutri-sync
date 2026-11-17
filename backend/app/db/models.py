@@ -160,6 +160,9 @@ class NutritionKnowledgeItem(Base):
     carbs_per_100g = Column(Float, nullable=False)
     fat_per_100g = Column(Float, nullable=False)
     serving_description = Column(String(255), default="100g portion", nullable=False)
+    # All known household portions, " | "-separated, e.g. "1 cup (158g) | 1 medium (118g)".
+    # serving_description stays the single default shown in the UI.
+    portions = Column(Text, nullable=True)
     embedding = Column(Vector(384), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 

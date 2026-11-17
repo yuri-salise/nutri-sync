@@ -67,6 +67,7 @@ class Food:
     carbs_per_100g: float
     fat_per_100g: float
     serving_description: str
+    portions: Optional[str] = None
 
 
 @dataclass
@@ -97,6 +98,7 @@ def load_foods() -> List[Food]:
                         carbs_per_100g=float(row["carbs_per_100g"]),
                         fat_per_100g=float(row["fat_per_100g"]),
                         serving_description=row["serving_description"].strip(),
+                        portions=(row.get("portions") or "").strip() or None,
                     )
                 )
     return foods

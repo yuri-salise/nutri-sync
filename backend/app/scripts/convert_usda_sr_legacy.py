@@ -5,7 +5,9 @@ Input : the unzipped SR Legacy CSV folder (food.csv, nutrient.csv, food_nutrient
         food_portion.csv, measure_unit.csv).
 Output: app/scripts/data/usda_food_composition.csv, read by seed_nutrition.py and
         evaluate_scanner.py. Columns: food_name, source_dataset, kcal_per_100g,
-        protein_per_100g, carbs_per_100g, fat_per_100g, serving_description.
+        protein_per_100g, carbs_per_100g, fat_per_100g, serving_description, portions.
+        `serving_description` is the first USDA portion; `portions` lists all of them
+        (up to MAX_PORTIONS, " | "-separated) so the scanner can pick the right one.
 
 Usage (from backend/):
     python -m app.scripts.convert_usda_sr_legacy --src "D:/Data/usda-sr-legacy"
@@ -31,6 +33,7 @@ WANTED = {
     "carbs": ("Carbohydrate, by difference", "G"),
 }
 UNDETERMINED_MEASURE = "9999"
+MAX_PORTIONS = 8
 
 
 def _load_nutrient_ids(src: Path) -> Dict[str, str]:
@@ -51,18 +54,16 @@ def _load_measures(src: Path) -> Dict[str, str]:
         return {row["id"]: row["name"] for row in csv.DictReader(f)}
 
 
-def _load_first_portions(src: Path, fdc_ids: set) -> Dict[str, Dict[str, str]]:
-    """First portion (lowest seq_num) with a gram weight, per food."""
-    best: Dict[str, Dict[str, str]] = {}
+def _load_portions(src: Path, fdc_ids: set) -> Dict[str, list]:
+    """Every portion with a gram weight, per food, ordered by seq_num."""
+    out: Dict[str, list] = defaultdict(list)
     with open(src / "food_portion.csv", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            fid = row["fdc_id"]
-            if fid not in fdc_ids or not row["gram_weight"]:
-                continue
-            seq = int(row["seq_num"] or 999)
-            if fid not in best or seq < int(best[fid]["seq_num"] or 999):
-                best[fid] = row
-    return best
+            if row["fdc_id"] in fdc_ids and row["gram_weight"]:
+                out[row["fdc_id"]].append(row)
+    for rows in out.values():
+        rows.sort(key=lambda r: int(r["seq_num"] or 999))
+    return out
 
 
 def _serving_text(portion: Optional[Dict[str, str]], measures: Dict[str, str]) -> str:
@@ -99,7 +100,7 @@ def convert(src: Path, out: Path) -> None:
                 values[fid][key] = float(row["amount"])
 
     measures = _load_measures(src)
-    portions = _load_first_portions(src, set(foods))
+    portions = _load_portions(src, set(foods))
 
     kept = skipped = 0
     with open(out, "w", newline="", encoding="utf-8") as f:
@@ -113,6 +114,7 @@ def convert(src: Path, out: Path) -> None:
                 "carbs_per_100g",
                 "fat_per_100g",
                 "serving_description",
+                "portions",
             ]
         )
         for fid, name in foods.items():
@@ -120,6 +122,11 @@ def convert(src: Path, out: Path) -> None:
             if not all(k in vals for k in WANTED):
                 skipped += 1
                 continue
+            texts: list = []
+            for row in portions.get(fid, []):
+                text = _serving_text(row, measures)
+                if text not in texts:
+                    texts.append(text)
             writer.writerow(
                 [
                     name,
@@ -128,7 +135,8 @@ def convert(src: Path, out: Path) -> None:
                     round(vals["protein"], 1),
                     round(vals["carbs"], 1),
                     round(vals["fat"], 1),
-                    _serving_text(portions.get(fid), measures),
+                    texts[0] if texts else "100g portion",
+                    " | ".join(texts[:MAX_PORTIONS]) if len(texts) > 1 else "",
                 ]
             )
             kept += 1

@@ -39,6 +39,7 @@ async def parse_csv_file(file_path: Path) -> List[Dict[str, Any]]:
                 carbs = float(row["carbs_per_100g"])
                 fat = float(row["fat_per_100g"])
                 serving = row.get("serving_description", "100g portion").strip()
+                portions = (row.get("portions") or "").strip() or None
 
                 records.append(
                     {
@@ -49,6 +50,7 @@ async def parse_csv_file(file_path: Path) -> List[Dict[str, Any]]:
                         "carbs_per_100g": carbs,
                         "fat_per_100g": fat,
                         "serving_description": serving,
+                        "portions": portions,
                     }
                 )
             except Exception as e:
@@ -98,6 +100,7 @@ async def seed_dataset(records: List[Dict[str, Any]], batch_size: int = 50, trun
                     carbs_per_100g=item["carbs_per_100g"],
                     fat_per_100g=item["fat_per_100g"],
                     serving_description=item["serving_description"],
+                    portions=item["portions"],
                     embedding=vector,
                 )
                 db_objects.append(db_item)
