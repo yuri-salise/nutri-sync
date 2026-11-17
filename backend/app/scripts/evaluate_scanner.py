@@ -33,7 +33,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from app.services.embedding_service import generate_embedding  # noqa: E402
-from app.services.meal_parser import FoodMatcher, tokenize, total_macros  # noqa: E402
+from app.services.meal_parser import DESCRIPTORS, FoodMatcher, tokenize, total_macros  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
@@ -43,10 +43,11 @@ def food_family(name: str) -> frozenset:
 
     "Broccoli, raw" and "Broccoli, cooked, boiled, drained, without salt" share the
     family {"broccoli"}; "Fish, salmon, sockeye, raw" and "Fish, salmon, Atlantic" share
-    {"fish", "salmon"}. Preparation and brand details after those parts are ignored.
+    {"fish", "salmon"}. Preparation words (raw, cooked, boiled, ...) and details after
+    those parts are ignored, so "Broccoli, raw" and "Broccoli, cooked" are the same food.
     """
     head = ", ".join(name.split(",")[:2])
-    return frozenset(tokenize(head))
+    return frozenset(tok for tok in tokenize(head) if tok not in DESCRIPTORS)
 
 
 def same_family(a: str, b: str) -> bool:

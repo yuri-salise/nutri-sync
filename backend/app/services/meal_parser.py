@@ -229,6 +229,14 @@ _SPLIT = re.compile(r"\s*(,|;|\+|&|\bwith\b|\band\b|\bw/|\bplus\b|\bat\b|\bsaka\
 HIGH_CONFIDENCE = 0.60
 LOW_CONFIDENCE = 0.40
 
+# USDA names lead with the food itself ("Apples, raw, ..." vs "Strudel, apple"). A name
+# whose first part is fully covered by the query is a better candidate. There is no
+# matching penalty: category heads such as "Fish, salmon, ..." would be punished unfairly.
+HEAD_BONUS = 0.10
+
+# Source boilerplate that carries no food identity, e.g. "(Includes foods for USDA's ...)".
+_BOILERPLATE = re.compile(r"\s*\((?:includes?|may contain)[^)]*\)", re.IGNORECASE)
+
 
 # --------------------------------------------------------------------------- #
 # Data shapes
@@ -433,7 +441,15 @@ class FoodMatcher:
     ):
         self.foods = list(foods)
         self.embed = embed
-        self._name_toks = {f.id: tokenize(f.food_name) for f in self.foods}
+        self._name_toks = {f.id: tokenize(_BOILERPLATE.sub("", f.food_name)) for f in self.foods}
+        self._head_toks = {
+            f.id: [
+                tok
+                for tok in tokenize(re.split(r"[,(]", _BOILERPLATE.sub("", f.food_name))[0])
+                if tok not in DESCRIPTORS
+            ]
+            for f in self.foods
+        }
         self._servings = {f.id: parse_serving(f.serving_description) for f in self.foods}
         self._name_vecs: Dict[int, List[float]] = {}
         if embed:
@@ -457,6 +473,14 @@ class FoodMatcher:
             norms = np.linalg.norm(mat, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
             self._matrix = mat / norms
+
+    def _head_adjust(self, food_id: int, q_toks: Sequence[str], lex: float) -> float:
+        head = self._head_toks[food_id]
+        if not head:
+            return lex
+        if all(any(_tok_match(h, q) for q in q_toks) for h in head):
+            return min(1.0, lex + HEAD_BONUS)
+        return lex
 
     def _candidates_for_token(self, tok: str) -> List[int]:
         cached = self._token_candidates.get(tok)
@@ -498,6 +522,8 @@ class FoodMatcher:
         for pos, i in enumerate(indices):
             f = self.foods[i]
             score = lexical_score(q_toks, self._name_toks[f.id]) if candidates else 0.0
+            if score > 0:
+                score = self._head_adjust(f.id, q_toks, score)
             if sem is not None:
                 score = self.LEXICAL_WEIGHT * score + self.SEMANTIC_WEIGHT * float(sem[pos])
             ranked.append((f, score))

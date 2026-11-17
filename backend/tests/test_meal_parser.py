@@ -67,3 +67,17 @@ def test_scanner_meets_evaluation_targets():
     assert report.family_recall >= 0.85
     assert report.family_precision >= 0.85
     assert report.kcal_mape <= 15.0
+
+
+def test_scanner_holdout_does_not_regress():
+    # Held-out meals: expected foods were written from the tables before the scanner was
+    # run on them. This is a regression floor, not a quality claim; calorie error on this
+    # set is higher than on the tuned set and is only reported, not gated.
+    from pathlib import Path
+
+    from app.scripts.evaluate_scanner import DATA_DIR
+
+    report = evaluate(eval_set=Path(DATA_DIR) / "scanner_holdout_set.csv")
+    assert report.meals >= 30
+    assert report.family_recall >= 0.80
+    assert report.family_precision >= 0.80

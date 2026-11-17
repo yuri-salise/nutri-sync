@@ -58,7 +58,7 @@ Standard fitness applications suffer from two fundamental disconnects:
 2. **LLM Nutritional Hallucination:** Relying on ungrounded generative AI models for meal logging that hallucinate macro values, especially for regional cuisines (such as Filipino dishes).
 
 **NutriSync-RAG** addresses both problems with a grounded architecture:
-- **Retrieval-Augmented Generation (RAG):** Decomposes natural language meal descriptions into atomic ingredients, generates 384-dimensional vector embeddings (`all-MiniLM-L6-v2`), and runs cosine similarity search via `pgvector` against **DOST-FNRI** (Philippine Food and Nutrition Research Institute) and **USDA FoodData Central** nutritional tables.
+- **Retrieval-Augmented Generation (RAG):** Splits a meal description into items and quantities, retrieves the closest food from the **DOST-FNRI** (Philippine Food and Nutrition Research Institute) and **USDA FoodData Central (SR Legacy)** tables with a hybrid score (word overlap plus 384-dimensional embedding similarity), and scales that food's per-100 g macros by the estimated grams. Embeddings use `all-MiniLM-L6-v2` when `sentence-transformers` is installed; otherwise a built-in deterministic hash embedding is used, which is the case in the default Docker image. Matching runs in Python over the knowledge-base rows; the stored `pgvector` column is not used for search.
 - **Dynamic Activity Synchronization:** Estimates energy expenditure from weightlifting volume (MET-based) and GPS road/trail activities (distance, time, and elevation gain), then scales daily caloric, carbohydrate, and protein targets. These are estimates; heart rate is not used.
 
 ---
@@ -174,7 +174,7 @@ nutri-sync/
 │   │   ├── db/                       # SQLAlchemy models and sessions
 │   │   ├── schemas/                  # Pydantic validation schemas
 │   │   ├── scripts/                  # Data ingestion & seeder utilities
-│   │   │   ├── data/                 # DOST-FNRI (101 items) & USDA (73 items) CSVs
+│   │   │   ├── data/                 # DOST-FNRI (101 items) & USDA SR Legacy (7,793 items) CSVs
 │   │   │   ├── evaluate_scanner.py   # RAG benchmark script
 │   │   │   ├── seed_demo_data.py     # Demo accounts, splits, runs, and PRs
 │   │   │   └── seed_nutrition.py     # Vector indexing seeder
@@ -297,9 +297,9 @@ The frontend runs on [http://localhost:5173](http://localhost:5173). Set `FRONTE
 The application includes two nutrition datasets:
 
 - `backend/app/scripts/data/fnri_food_composition.csv`: **101 Filipino food entries** (e.g., *Adobong Manok*, *Sinigang na Baboy*, *Tinolang Manok*, *Inihaw na Bangus*, *Sinangag*, *Taho*).
-- `backend/app/scripts/data/usda_food_composition.csv`: **73 USDA entries** (e.g., *Chicken Breast*, *Rolled Oats*, *Wild Salmon*, *Eggs*).
+- `backend/app/scripts/data/usda_food_composition.csv`: **7,793 USDA entries** converted from the USDA FoodData Central **SR Legacy** CSV download (public domain). Regenerate it with `python -m app.scripts.convert_usda_sr_legacy --src <folder with the unzipped SR Legacy CSVs>`.
 
-The seeder computes an embedding for each row and writes it to the `nutrition_knowledge_items` table. A full run should produce **174 rows** (101 + 73). Record the actual count from your run in the D1 Testing chapter rather than relying on a sample report.
+The seeder computes an embedding for each row and writes it to the `nutrition_knowledge_items` table. A full run should produce **7,894 rows** (101 + 7,793). Record the actual count from your run in the D1 Testing chapter rather than relying on a sample report.
 
 ```bash
 docker compose exec api python -m app.scripts.seed_nutrition
@@ -419,7 +419,11 @@ flowchart LR
 
 The RAG scanner benchmark is in [`docs/evaluation/`](docs/evaluation/):
 
-- **`scanner_eval_results.csv`:** 28 meals from `backend/app/scripts/data/scanner_eval_set.csv`, with per-meal reference and predicted kcal and absolute percentage error. The committed file contains these columns only: it has no item recall or latency values, and no comparison against a non-RAG baseline. Rerun `evaluate_scanner.py` to regenerate it with those metrics before reporting them.
+- **`scanner_eval_results.csv`:** 28 meals from `backend/app/scripts/data/scanner_eval_set.csv`. The matcher was tuned while looking at this set, so its scores are optimistic.
+- **`scanner_holdout_results.csv`:** 32 meals from `backend/app/scripts/data/scanner_holdout_set.csv`, with expected foods written from the tables before the scanner was run on them. Failures on it were inspected afterwards, so it is no longer fully untouched.
+- **How scores are measured:** "family" precision/recall counts a hit when the scanner finds the right food in any variant (for example raw vs. cooked broccoli); "exact entry" requires the specific table row. Calorie error is computed against reference values taken from the same tables, so it measures parsing, matching and portion estimates, not errors in the tables themselves. Neither set was checked against weighed meals.
+- **Latest scores** (`python -m app.scripts.evaluate_scanner [--eval-set <csv>]`): tuned set family precision/recall 88.9% / 87.3%, exact entry 77.8% / 76.4%, calorie error 10.7%; held-out set family 85.9% / 85.9%, exact entry 60.9% / 60.9%, calorie error 25.7%. Matching takes about 60 ms per meal (matching only, no database or HTTP).
+- There is no comparison against a non-RAG baseline.
 
 Not yet done:
 - **System Usability Scale (SUS)** and **ISO/IEC 25010** user evaluations: no responses are collected yet.
