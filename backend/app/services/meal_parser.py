@@ -218,7 +218,7 @@ GENERIC_UNIT_GRAMS = {
 }
 
 _UNIT_PATTERN = "|".join(sorted(UNIT_ALIASES, key=len, reverse=True))
-_NUM_PATTERN = r"\d+(?:\.\d+)?|\d+/\d+|" + "|".join(NUMBER_WORDS)
+_NUM_PATTERN = r"\d+(?:\.\d+)?|\d+/\d+|(?:" + "|".join(NUMBER_WORDS) + r")\b"
 _LEADING_QTY = re.compile(
     rf"^(?P<num>{_NUM_PATTERN})\s*(?:(?P<unit>{_UNIT_PATTERN})\b)?\s*(?:of\s+)?",
     re.IGNORECASE,

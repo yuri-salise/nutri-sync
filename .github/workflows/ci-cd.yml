@@ -110,7 +110,7 @@ jobs:
           cp /home/deploy/secrets/finalproject.env .env
           docker compose -p finalproject up -d --build --remove-orphans
           docker compose -p finalproject exec -T api alembic upgrade head
-          docker compose -p finalproject exec -T api python -m app.scripts.seed_nutrition
+          docker compose -p finalproject exec -T api python -m app.scripts.seed_nutrition --truncate
 
       - name: Automated Health Check Verification
         run: |
