@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
 import {
   Activity,
   Shield,
@@ -10,7 +9,6 @@ import {
   Menu,
   X,
   Sparkles,
-  Database,
   Cpu,
   Lock,
 } from 'lucide-react';
@@ -22,13 +20,6 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
   const { user, role, logout, quickLoginAthlete, quickLoginAdmin } = useAuth();
-  const [dbHealthy, setDbHealthy] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    api.getHealth()
-      .then((res) => setDbHealthy(res.database === 'connected'))
-      .catch(() => setDbHealthy(false));
-  }, []);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#1e232d] bg-[#000000]/90 backdrop-blur-xl transition-all">
@@ -65,22 +56,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenu
           </Link>
         </div>
 
-        {/* Center: System Status Badges */}
+        {/* Center: status badges */}
         <div className="hidden lg:flex items-center gap-2">
-          {/* Database status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
-            <Database className="h-3.5 w-3.5 text-[#00E5FF]" />
-            <span>Database:</span>
-            <span
-              className={`inline-block h-2 w-2 rounded-full ${
-                dbHealthy ? 'bg-[#00D26A] shadow-glow-green animate-pulse' : 'bg-[#F6465D]'
-              }`}
-            />
-            <span className="text-[#EAECEF] font-semibold">
-              {dbHealthy ? 'Online' : 'Connecting'}
-            </span>
-          </div>
-
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#0d1015] border border-[#1e232d] text-[#848E9C]">
             <Lock className="h-3.5 w-3.5 text-[#C8FF00]" />
             <span className="text-[#EAECEF] font-semibold">Private & Secure</span>
