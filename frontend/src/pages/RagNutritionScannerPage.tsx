@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { FoodItemSummary, PredictedMacros, RagScanResult } from '../types';
@@ -55,6 +55,45 @@ const shrinkPhoto = async (file: File): Promise<string> => {
   return canvas.toDataURL('image/jpeg', 0.8);
 };
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Clear "analysis is done" confirmation, saying what was used (photo, text or both). */
+const ScanDoneBanner: React.FC<{ result: RagScanResult; found: number }> = ({ result, found }) => {
+  const foods = plural(found, 'food');
+  let title = `Meal analyzed: ${foods} found.`;
+  let detail = 'Check them below before saving.';
+  let warn = false;
+  if (result.photo_status === 'used') {
+    title = `Photo analyzed: ${foods} found.`;
+    if (result.note) {
+      const n = result.note_amounts_applied ?? 0;
+      detail = n
+        ? `Your note was applied; ${plural(n, 'amount')} came from what you typed.`
+        : 'Your note was applied. Check the foods below before saving.';
+    }
+  } else if (result.photo_status === 'no_food') {
+    title = `Meal analyzed from your text: ${foods} found.`;
+    detail = 'We couldn’t spot any food in the photo, so only what you typed was used.';
+    warn = true;
+  } else if (result.photo_status === 'unavailable') {
+    title = `Meal analyzed from your text: ${foods} found.`;
+    detail = 'Photo analysis is unavailable right now, so only what you typed was used.';
+    warn = true;
+  }
+  const tone = warn
+    ? 'bg-[#FFB800]/10 border-[#FFB800]/30 text-[#FFB800]'
+    : 'bg-[#00D26A]/10 border-[#00D26A]/30 text-[#00D26A]';
+  return (
+    <div role="status" className={`p-4 rounded-2xl border text-sm flex items-start gap-2.5 ${tone}`}>
+      {warn ? <Info className="h-4 w-4 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />}
+      <div>
+        <p className="font-semibold">{title}</p>
+        <p className="text-xs opacity-90">{detail}</p>
+      </div>
+    </div>
+  );
+};
+
 export const RagNutritionScannerPage: React.FC = () => {
   const [queryInput, setQueryInput] = useState('');
   const [scanning, setScanning] = useState(false);
@@ -64,7 +103,16 @@ export const RagNutritionScannerPage: React.FC = () => {
   const [confirming, setConfirming] = useState(false);
   const [confirmedSuccess, setConfirmedSuccess] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null); // JPEG data URL
-  const [fromPhoto, setFromPhoto] = useState(false);
+  const resultsRef = useRef<HTMLHeadingElement>(null);
+  const fromPhoto = scanResult?.photo_status === 'used';
+
+  // When an analysis finishes, bring the results into view (they sit below the fold on
+  // phones) and move focus there so screen readers announce them.
+  useEffect(() => {
+    if (!scanResult) return;
+    resultsRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    resultsRef.current?.focus({ preventScroll: true });
+  }, [scanResult]);
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,7 +151,6 @@ export const RagNutritionScannerPage: React.FC = () => {
 
     try {
       const result = await api.scanMealRAG(queryInput.trim(), photo?.split(',')[1]);
-      setFromPhoto(!!photo);
       if (!Array.isArray(result.items)) {
         // An older API build returns totals only; don't crash, explain instead.
         setScanResult(null);
@@ -238,7 +285,11 @@ export const RagNutritionScannerPage: React.FC = () => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) handleScan(e);
             }}
-            placeholder={photo ? 'Optional note, e.g. "the rice is brown rice"' : 'e.g. chicken adobo with 1 cup rice and a boiled egg'}
+            placeholder={
+              photo
+                ? 'Optional note; it wins over the photo, e.g. "1 cup brown rice, no egg"'
+                : 'e.g. chicken adobo with 1 cup rice and a boiled egg'
+            }
             className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-4 py-3 text-sm text-white placeholder-[#848E9C] focus:outline-none resize-none"
           />
           <button
@@ -249,7 +300,7 @@ export const RagNutritionScannerPage: React.FC = () => {
             {scanning ? (
               <>
                 <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                <span>Analyzing…</span>
+                <span>{photo ? 'Reading your photo…' : 'Analyzing…'}</span>
               </>
             ) : (
               <>
@@ -286,17 +337,26 @@ export const RagNutritionScannerPage: React.FC = () => {
 
       {scanResult && !scanning && (
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <ScanDoneBanner result={scanResult} found={items.filter((it) => it.food).length} />
+
           {/* Items */}
           <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-cyber-card">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-white">Here’s what we found</h2>
+                <h2 ref={resultsRef} tabIndex={-1} className="text-base font-bold text-white scroll-mt-4 focus:outline-none">
+                  Here’s what we found
+                </h2>
                 <p className="text-sm text-[#848E9C]">
                   Check each food and adjust the amount if needed.
                 </p>
                 {fromPhoto && (
                   <p className="text-xs text-[#848E9C] mt-1">
-                    From your photo we saw: “{scanResult.query_input}”
+                    Photo read as: “{scanResult.photo_description}”
+                  </p>
+                )}
+                {fromPhoto && scanResult.note && (
+                  <p className="text-xs text-[#848E9C]">
+                    Your note: “{scanResult.note}” — it takes priority over the photo.
                   </p>
                 )}
               </div>
@@ -313,7 +373,9 @@ export const RagNutritionScannerPage: React.FC = () => {
                 <div key={idx} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs text-[#848E9C]">You said “{it.query_text}”</p>
+                      <p className="text-xs text-[#848E9C]">
+                        {fromPhoto ? 'Read as' : 'You said'} “{it.query_text}”
+                      </p>
                       {it.food ? (
                         <p className="text-sm font-bold text-white break-words">{it.food.food_name}</p>
                       ) : (

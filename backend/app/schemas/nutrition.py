@@ -70,6 +70,18 @@ class RagScanResponse(BaseModel):
     unmatched: List[str] = Field(default_factory=list)
     retrieved_items: List[FoodItemSummary]
     model_version: str
+    photo_status: Optional[str] = Field(
+        None, description="null (no photo) | used | no_food | unavailable"
+    )
+    photo_description: Optional[str] = Field(
+        None, description="What the vision model read from the photo (and the note)."
+    )
+    note: Optional[str] = Field(
+        None, description="Text typed with a photo; its amounts override photo guesses."
+    )
+    note_amounts_applied: int = Field(
+        0, description="How many photo portions were replaced by amounts typed in the note."
+    )
 
 
 class NutritionLogCreate(BaseModel):

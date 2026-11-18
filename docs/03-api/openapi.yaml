@@ -2193,18 +2193,18 @@ components:
         query_input:
           type: string
           maxLength: 1000
-          minLength: 2
           title: Query Input
-          description: Natural language meal description or food item.
+          description: Natural language meal description or food item. Optional with
+            a photo.
+          default: ''
         image_base64:
           anyOf:
           - type: string
+            maxLength: 4000000
           - type: 'null'
           title: Image Base64
-          description: Optional meal photo base64 string.
+          description: Optional meal photo, base64 JPEG.
       type: object
-      required:
-      - query_input
       title: RagScanRequest
     RagScanResponse:
       properties:
@@ -2251,6 +2251,30 @@ components:
         model_version:
           type: string
           title: Model Version
+        photo_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photo Status
+          description: null (no photo) | used | no_food | unavailable
+        photo_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photo Description
+          description: What the vision model read from the photo (and the note).
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+          description: Text typed with a photo; its amounts override photo guesses.
+        note_amounts_applied:
+          type: integer
+          title: Note Amounts Applied
+          description: How many photo portions were replaced by amounts typed in the
+            note.
+          default: 0
       type: object
       required:
       - scan_id

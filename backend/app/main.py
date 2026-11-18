@@ -1,3 +1,4 @@
+import asyncio
 import time
 from contextlib import asynccontextmanager
 
@@ -20,8 +21,9 @@ from app.api.v1.workout_sessions import router as workouts_router
 from app.core.config import settings
 from app.core.logging import logger
 from app.db.base import Base
-from app.db.session import engine
+from app.db.session import AsyncSessionLocal, engine
 from app.db.sqlite_dev_sync import sync_sqlite_dev_schema
+from app.services.rag_service import warm_matcher
 
 
 @asynccontextmanager
@@ -38,7 +40,10 @@ async def lifespan(app: FastAPI):
             logger.info("SQLite dev schema synchronized.")
         except Exception as e:
             logger.warning(f"Database sync on startup warning: {e}")
+    # Build the meal matcher in the background so the first scan is fast.
+    warmup = asyncio.create_task(warm_matcher(AsyncSessionLocal))
     yield
+    warmup.cancel()
     logger.info("NutriSync-RAG backend shutdown complete.")
 
 

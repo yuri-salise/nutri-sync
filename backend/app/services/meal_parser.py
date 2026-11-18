@@ -343,6 +343,7 @@ class MatchedItem:
     score: float
     confidence: str  # "high" | "low" | "none"
     alternatives: List[FoodLike] = field(default_factory=list)
+    has_amount: bool = False  # the user gave a quantity or unit ("200g", "1 cup", "2")
 
     def macros(self) -> Dict[str, float]:
         if self.food is None or self.confidence == "none":
@@ -456,8 +457,17 @@ def pick_serving(qty: Optional[float], unit: Optional[str], servings: Sequence[S
     return (same or [default])[0]
 
 
+# "I only had 120g ...", "ate about 2 cups ...": filler before the amount.
+_LEADING_FILLER = re.compile(
+    r"^(?:(?:i|we)\s+)?(?:(?:only|just|also)\s+)*(?:had|ate|drank)\s+"
+    r"(?:(?:only|just|about|around|roughly)\s+)*"
+    r"|^(?:about|around|roughly|approximately)\s+",
+    re.IGNORECASE,
+)
+
+
 def parse_segment(text: str) -> ParsedSegment:
-    cleaned = text.strip().strip(".").strip()
+    cleaned = _LEADING_FILLER.sub("", text.strip().strip(".").strip())
     qty: Optional[float] = None
     unit: Optional[str] = None
 
@@ -471,6 +481,7 @@ def parse_segment(text: str) -> ParsedSegment:
         if unit is None and m2:
             unit = UNIT_ALIASES[m2.group("unit").lower()]
             cleaned = cleaned[m2.end() :]
+        cleaned = re.sub(r"^\s*of\s+", "", cleaned, flags=re.IGNORECASE)  # "120g of rice"
     else:
         t = _TRAILING_QTY.search(cleaned)
         if t:
@@ -749,9 +760,29 @@ class FoodMatcher:
                     score=round(score, 4),
                     confidence=conf,
                     alternatives=alternatives,
+                    has_amount=seg.qty is not None or seg.unit is not None,
                 )
             )
         return items
+
+
+def apply_note_amounts(items: List[MatchedItem], note_items: Sequence[MatchedItem]) -> int:
+    """Amounts the user typed win over amounts guessed from a photo.
+
+    For each photo item whose food is also named in the note with an explicit amount
+    ("2 cups rice"), use the note's grams. Returns how many items were changed.
+    """
+    typed = {
+        n.food.id: n.grams
+        for n in note_items
+        if n.food is not None and n.has_amount and n.confidence != "none"
+    }
+    changed = 0
+    for item in items:
+        if item.food is not None and item.food.id in typed and item.grams != typed[item.food.id]:
+            item.grams = typed[item.food.id]
+            changed += 1
+    return changed
 
 
 def total_macros(items: Sequence[MatchedItem]) -> Dict[str, float]:

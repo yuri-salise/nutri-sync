@@ -1,19 +1,27 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Layout } from './components/layout/Layout';
+import { Layout, PageSpinner } from './components/layout/Layout';
 import { DialogProvider } from './components/common/DialogProvider';
 
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { WorkoutLoggerPage } from './pages/WorkoutLoggerPage';
-import { RunTrackerPage } from './pages/RunTrackerPage';
-import { ActivityDetailPage } from './pages/ActivityDetailPage';
-import { RagNutritionScannerPage } from './pages/RagNutritionScannerPage';
-import { NutritionLogPage } from './pages/NutritionLogPage';
-import { CommunityFeedPage } from './pages/CommunityFeedPage';
-import { AdminAuditPage } from './pages/AdminAuditPage';
+// Each page is its own chunk: the browser downloads a page's code (and heavy libraries
+// such as Leaflet for maps) only when that page is opened.
+const page = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+
+const LoginPage = page(() => import('./pages/LoginPage'), 'LoginPage');
+const RegisterPage = page(() => import('./pages/RegisterPage'), 'RegisterPage');
+const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage');
+const WorkoutLoggerPage = page(() => import('./pages/WorkoutLoggerPage'), 'WorkoutLoggerPage');
+const RunTrackerPage = page(() => import('./pages/RunTrackerPage'), 'RunTrackerPage');
+const ActivityDetailPage = page(() => import('./pages/ActivityDetailPage'), 'ActivityDetailPage');
+const RagNutritionScannerPage = page(
+  () => import('./pages/RagNutritionScannerPage'),
+  'RagNutritionScannerPage'
+);
+const NutritionLogPage = page(() => import('./pages/NutritionLogPage'), 'NutritionLogPage');
+const CommunityFeedPage = page(() => import('./pages/CommunityFeedPage'), 'CommunityFeedPage');
+const AdminAuditPage = page(() => import('./pages/AdminAuditPage'), 'AdminAuditPage');
 
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
@@ -46,6 +54,7 @@ export const App: React.FC = () => {
     <AuthProvider>
       <DialogProvider>
       <BrowserRouter>
+        <Suspense fallback={<PageSpinner />}>
         <Routes>
           {/* Public Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -83,6 +92,7 @@ export const App: React.FC = () => {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
       </DialogProvider>
     </AuthProvider>
