@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { CommunityFab } from './CommunityFab';
+
+/** Shown while a page's code chunk downloads. */
+export const PageSpinner: React.FC = () => (
+  <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-label="Loading page">
+    <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 export const Layout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,7 +33,10 @@ export const Layout: React.FC = () => {
 
         <main className="flex-1 min-w-0 lg:pl-64 transition-all duration-300">
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 pb-24 lg:pb-8 animate-fade-in">
-            <Outlet />
+            {/* Keep the menu on screen while the next page's code loads. */}
+            <Suspense fallback={<PageSpinner />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

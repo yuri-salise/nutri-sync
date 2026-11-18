@@ -193,6 +193,12 @@ export interface RagScanResult {
   unmatched: string[];
   retrieved_items: FoodItemSummary[];
   model_version: string;
+  /** null: no photo sent. */
+  photo_status?: 'used' | 'no_food' | 'unavailable' | null;
+  photo_description?: string | null;
+  /** Text typed with a photo; its amounts override the photo's guesses. */
+  note?: string | null;
+  note_amounts_applied?: number;
 }
 
 export interface NutritionLog {
