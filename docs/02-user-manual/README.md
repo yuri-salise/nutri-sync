@@ -17,7 +17,7 @@ Meal results are **estimates made by a computer** from food tables. Check them b
 
 **Address:** the public HTTPS address given in the project README. It works in current Chrome, Edge, Firefox and Safari, on a phone or a computer. The site is available only while the host computer is running.
 
-**Create an account.** Open **Register**, enter your name, email, a password of at least 8 characters (twice), your weight and daily calorie goal, then press **Complete Profile & Launch**. New accounts are always athletes, even though the form shows an "Account Role" menu.
+**Create an account.** On the sign-in page, tap **Create athlete account**, enter your name, email, a password of at least 8 characters (twice), your weight and daily calorie goal, then press **Complete Profile & Launch**. New accounts are always athletes, even though the form shows an "Account Role" menu.
 
 ![Register](images/02-register.png)
 
@@ -32,7 +32,7 @@ Meal results are **estimates made by a computer** from food tables. Check them b
 | Athlete | `athlete@nutrisync.com` | `Password123!` |
 | Coach | `admin@nutrisync.com` | `Password123!` |
 
-The "Demo: Athlete / Coach" switch at the top of the page signs you in as either one.
+The **Quick Demo Login** buttons on the sign-in page (Athlete Yuri, Coach Rinante) sign you in as either one. After signing in, the "Demo: Athlete / Coach" switch in the top bar changes between them.
 
 **On a phone.** Every page works at 360 px wide, and the main menu is at the bottom of the screen.
 
@@ -85,7 +85,7 @@ Energy is estimated from distance, time and body weight. Heart rate is not used.
 - Amounts you type replace the amounts guessed from the photo (`1 cup rice`, `I only had 120g adobo`).
 - Foods you name are added even if they are not in the photo (`plus a glass of buko juice`).
 - Foods you say you did not eat are left out (`no egg`).
-- If the photo cannot be read, or shows no food, your typed meal is analyzed instead and a yellow message tells you so.
+- If the photo cannot be read, or shows no food, your typed meal is analyzed instead and a warning message tells you so.
 
 Tips: write amounts like `1 cup`, `200g`, `3 oz` or `2 slices`. If you give no amount, one standard serving is assumed. Foods that are not in the Philippine or USDA tables will not be found.
 
@@ -108,9 +108,9 @@ The feed shows public workouts, activities and posts, newest first. Filter by ty
 Sign in with a coach account. A **Coach Dashboard** item appears in the menu. It has these tabs:
 
 1. **Exercise library:** search and manage the built-in exercises everyone can use.
-2. **Meal scan history:** every meal estimate with its input, score, time taken and whether the fallback was used.
+2. **AI Scan History:** every meal estimate with its input, score, time taken and whether the fallback was used.
 3. **Food database:** search the Philippine (FNRI) and USDA foods the scanner uses.
-4. **Info:** a short explanation of how the scanner works.
+4. **Capstone Credits:** the project's academic details and credits.
 
 Coaches can also delete any post in the Community feed for moderation.
 

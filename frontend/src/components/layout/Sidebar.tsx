@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="w-full bg-line rounded-full h-1 overflow-hidden">
               <div className="bg-gradient-to-r from-accent to-success h-1 rounded-full w-full" />
             </div>
-            <div className="flex justify-between text-[10px] text-muted font-medium">
+            <div className="flex justify-between gap-2 text-[10px] text-muted font-medium">
               <span>AI Search Ready</span>
               <span>FNRI & USDA Grounded</span>
             </div>
