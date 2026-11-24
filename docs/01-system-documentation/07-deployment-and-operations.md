@@ -31,7 +31,7 @@ flowchart LR
 
 ## 7.3 Environment variables (names only)
 
-Defined in `.env.example`: `APP_NAME`, `APP_ENV`, `APP_DEBUG`, `APP_VERSION`, `API_V1_PREFIX`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`, `DATABASE_URL_SYNC`, `FRONTEND_ORIGIN`, `PUBLIC_APP_URL`, `EMBEDDING_MODEL_NAME`, `LOGIN_RATE_LIMIT`.
+Defined in `.env.example`: `APP_NAME`, `APP_VERSION`, `API_V1_PREFIX`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`, `DATABASE_URL_SYNC`, `FRONTEND_ORIGIN`, `PUBLIC_APP_URL`, `EMBEDDING_MODEL_NAME`, `LOGIN_RATE_LIMIT`, `GEMINI_API_KEY`, `GEMINI_VISION_MODEL`, `GROQ_API_KEY`, `GROQ_VISION_MODEL`. On Vercel, also `DB_SERVERLESS` (see `deploy/VERCEL_SUPABASE.md`).
 
 On the server these live in one file outside the repository (`/home/deploy/secrets/finalproject.env`, owner-only permissions). The deploy copies it to `.env` in the workspace. It is never committed.
 

@@ -45,10 +45,7 @@ Data API is not used and is locked down by `deploy/supabase/harden.sql`.
    | `DATABASE_URL_SYNC` | same URL with `postgresql://` |
    | `DB_SERVERLESS` | `true` |
    | `SECRET_KEY` | a new random value, e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
-   | `APP_ENV` | `production` |
-   | `APP_DEBUG` | `false` |
    | `FRONTEND_ORIGIN` | your Vercel URL, e.g. `https://nutrisync.vercel.app` |
-   | `USE_OLLAMA_FALLBACK` | `false` |
    | `GEMINI_API_KEY` | meal photo analysis (optional) |
    | `GROQ_API_KEY` | photo fallback (optional) |
 

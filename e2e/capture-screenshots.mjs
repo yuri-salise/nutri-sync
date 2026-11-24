@@ -30,6 +30,10 @@ async function signIn(page, email) {
 
 async function shot(page, name, { full = true } = {}) {
   await page.waitForLoadState('networkidle');
+  // A page scrolled to new content would capture its fixed header and sidebar mid-image.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  // Let entrance animations (0.35 s) finish so cards are not caught half-faded.
+  await page.waitForTimeout(500);
   await page.screenshot({ path: join(outDir, `${name}.png`), fullPage: full });
   console.log('saved', name);
 }
@@ -47,7 +51,12 @@ async function shot(page, name, { full = true } = {}) {
 
 // Athlete screens
 {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  // A location fix, so the Record screen shows GPS ready instead of "location blocked".
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    permissions: ['geolocation'],
+    geolocation: { latitude: 14.5995, longitude: 120.9842, accuracy: 8 },
+  });
   const page = await ctx.newPage();
   await signIn(page, athlete);
   await shot(page, '03-dashboard');
@@ -56,6 +65,16 @@ async function shot(page, name, { full = true } = {}) {
   await shot(page, '04-workouts');
 
   await page.goto(base + '/record');
+  // Map tiles load after networkidle can fire; wait until some are drawn.
+  await page
+    .waitForFunction(
+      () =>
+        document.querySelectorAll('.leaflet-tile-loaded').length > 3 &&
+        !document.querySelector('.leaflet-tile:not(.leaflet-tile-loaded)'),
+      null,
+      { timeout: 20000 }
+    )
+    .catch(() => {});
   await shot(page, '05-activities');
   const first = page.getByRole('link', { name: /^View .* details$/ }).first();
   if (await first.count()) {

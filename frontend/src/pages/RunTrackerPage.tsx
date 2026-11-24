@@ -23,6 +23,8 @@ import {
   Lock,
 } from 'lucide-react';
 import L from 'leaflet';
+// Bundled with this page's chunk; without it tiles stack down the page instead of forming a map.
+import 'leaflet/dist/leaflet.css';
 import {
   GpsFix,
   READY_ACCURACY_M,
@@ -666,7 +668,7 @@ export const RunTrackerPage: React.FC = () => {
               ].map((s) => (
                 <div key={s.label} className="p-4 rounded-2xl bg-well border border-line">
                   <span className="text-xs font-medium text-muted">{s.label}</span>
-                  <p className={`text-2xl font-black tabular-nums mt-1 ${s.color}`}>
+                  <p className={`text-2xl font-black tabular-nums whitespace-nowrap mt-1 ${s.color}`}>
                     {s.value}
                     {s.unit && <span className="text-xs text-muted ml-1">{s.unit}</span>}
                   </p>
