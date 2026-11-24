@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Award,
   Check,
@@ -42,6 +41,16 @@ import {
 type View = 'train' | 'history';
 const REST_OPTIONS = [60, 90, 120, 180];
 
+// Ticks on its own so the whole logger page does not re-render every second.
+const ElapsedClock: React.FC<{ startedAt: number; className?: string }> = ({ startedAt, className }) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className={className}>{formatClock(Math.floor((now - startedAt) / 1000))}</span>;
+};
+
 const formatClock = (sec: number) => {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -62,7 +71,6 @@ export const WorkoutLoggerPage: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
 
   const [workout, setWorkoutState] = useState<ActiveWorkout | null>(() => loadActiveWorkout());
-  const [now, setNow] = useState(Date.now());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
@@ -98,12 +106,6 @@ export const WorkoutLoggerPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  useEffect(() => {
-    if (!workout) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [workout]);
 
   const lastPerf = useMemo(() => buildLastPerformance(sessions), [sessions]);
 
@@ -330,23 +332,23 @@ export const WorkoutLoggerPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Dumbbell className="h-6 w-6 text-[#C8FF00]" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+            <Dumbbell className="h-6 w-6 text-accent" />
             <span>{workout ? 'Workout in progress' : 'Workouts'}</span>
           </h1>
           {!workout && (
-            <p className="text-sm text-[#848E9C] mt-1">What are you training today?</p>
+            <p className="text-sm text-muted mt-1">What are you training today?</p>
           )}
         </div>
         {!workout && (
-          <div role="tablist" className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] text-sm self-start">
+          <div role="tablist" className="flex items-center gap-1 bg-card p-1 rounded-xl border border-line text-sm self-start">
             {(['train', 'history'] as const).map((v) => (
               <button
                 key={v}
                 role="tab"
                 aria-selected={view === v}
                 onClick={() => setView(v)}
-                className={`px-4 py-2 rounded-lg font-semibold ${view === v ? 'bg-[#C8FF00] text-black' : 'text-[#848E9C] hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg font-semibold ${view === v ? 'bg-accent text-on-accent' : 'text-muted hover:text-ink'}`}
               >
                 {v === 'train' ? 'Train' : `History (${sessions.length})`}
               </button>
@@ -356,7 +358,7 @@ export const WorkoutLoggerPage: React.FC = () => {
       </div>
 
       {error && (
-        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
+        <div role="alert" className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-sm flex items-center gap-2.5">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={() => setError(null)} aria-label="Dismiss" className="p-1">
@@ -365,7 +367,7 @@ export const WorkoutLoggerPage: React.FC = () => {
         </div>
       )}
       {notice && (
-        <div className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-sm flex items-center gap-2.5">
+        <div className="p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm flex items-center gap-2.5">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="flex-1">{notice}</span>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="p-1">
@@ -390,49 +392,49 @@ export const WorkoutLoggerPage: React.FC = () => {
       {/* ---------------------------------------------------- active workout */}
       {workout && (
         <div className="space-y-4">
-          <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
-            <label htmlFor="workout-title" className="text-xs text-[#848E9C]">
+          <div className="p-4 rounded-3xl bg-card border border-line space-y-3">
+            <label htmlFor="workout-title" className="text-xs text-muted">
               Workout name
             </label>
             <input
               id="workout-title"
               value={workout.title}
               onChange={(e) => setWorkout((w) => (w ? { ...w, title: e.target.value } : w))}
-              className="w-full bg-transparent text-lg font-bold text-white focus:outline-none border-b border-[#1e232d] focus:border-[#C8FF00] pb-1"
+              className="w-full bg-transparent text-lg font-bold text-ink focus:outline-none border-b border-line focus:border-accent pb-1"
             />
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1.5 text-[#848E9C]">
+              <span className="flex items-center gap-1.5 text-muted">
                 <Clock className="h-4 w-4" />
-                <span className="font-mono text-white">{formatClock(Math.floor((now - workout.startedAt) / 1000))}</span>
+                <ElapsedClock startedAt={workout.startedAt} className="tabular-nums text-ink" />
               </span>
-              <span className="text-[#848E9C]">
-                <span className="text-white font-semibold">{doneSets.length}</span> of {totalSets} sets done
+              <span className="text-muted">
+                <span className="text-ink font-semibold">{doneSets.length}</span> of {totalSets} sets done
               </span>
             </div>
           </div>
 
           {workout.exercises.length === 0 && (
-            <div className="p-6 rounded-3xl border border-dashed border-[#2a313f] text-center space-y-2">
-              <p className="text-white font-semibold">Let’s add your first exercise</p>
-              <p className="text-sm text-[#848E9C]">
+            <div className="p-6 rounded-3xl border border-dashed border-line-strong text-center space-y-2">
+              <p className="text-ink font-semibold">Let’s add your first exercise</p>
+              <p className="text-sm text-muted">
                 Pick from the list or create your own. After each set, tap ✓ and your rest timer starts.
               </p>
             </div>
           )}
 
           {workout.exercises.map((ex) => (
-            <div key={ex.key} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+            <div key={ex.key} className="p-4 rounded-3xl bg-card border border-line space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold text-white break-words">{ex.exercise.name}</h3>
-                  <p className="text-xs text-[#848E9C]">
+                  <h3 className="text-base font-bold text-ink break-words">{ex.exercise.name}</h3>
+                  <p className="text-xs text-muted">
                     {ex.lastTime ? `Last time: ${ex.lastTime}` : 'First time logging this one'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => cycleRest(ex)}
-                    className="h-9 px-2.5 rounded-lg bg-[#07080a] border border-[#1e232d] text-xs text-[#B7BDC6]"
+                    className="h-9 px-2.5 rounded-lg bg-well border border-line text-xs text-soft"
                     aria-label={`Rest time ${formatRest(ex.restSec)}, tap to change`}
                   >
                     Rest {formatRest(ex.restSec)}
@@ -440,14 +442,14 @@ export const WorkoutLoggerPage: React.FC = () => {
                   <button
                     onClick={() => removeExercise(ex.key)}
                     aria-label={`Remove ${ex.exercise.name}`}
-                    className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center"
+                    className="h-9 w-9 rounded-lg text-muted hover:text-danger flex items-center justify-center"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center text-xs text-[#848E9C] px-1">
+              <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center text-xs text-muted px-1">
                 <span>Set</span>
                 <span>kg</span>
                 <span>Reps</span>
@@ -458,9 +460,9 @@ export const WorkoutLoggerPage: React.FC = () => {
               {ex.sets.map((s, i) => (
                 <div
                   key={s.key}
-                  className={`grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center rounded-xl px-1 py-1 ${s.done ? 'bg-[#00D26A]/10' : ''}`}
+                  className={`grid grid-cols-[2rem_1fr_1fr_2.75rem_1.75rem] gap-2 items-center rounded-xl px-1 py-1 ${s.done ? 'bg-success/10' : ''}`}
                 >
-                  <span className="text-sm font-mono text-[#848E9C] text-center">{i + 1}</span>
+                  <span className="text-sm tabular-nums text-muted text-center">{i + 1}</span>
                   <input
                     aria-label={`Set ${i + 1} weight in kg`}
                     type="number"
@@ -470,7 +472,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                     value={s.weight}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => updateSet(ex.key, s.key, { weight: Math.max(0, Number(e.target.value) || 0) })}
-                    className="h-11 w-full min-w-0 rounded-xl bg-[#07080a] border border-[#1e232d] text-center text-base font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                    className="h-11 w-full min-w-0 rounded-xl bg-well border border-line text-center text-base tabular-nums text-ink focus:border-accent focus:outline-none"
                   />
                   <input
                     aria-label={`Set ${i + 1} reps`}
@@ -480,14 +482,14 @@ export const WorkoutLoggerPage: React.FC = () => {
                     value={s.reps}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => updateSet(ex.key, s.key, { reps: Math.max(0, Math.round(Number(e.target.value) || 0)) })}
-                    className="h-11 w-full min-w-0 rounded-xl bg-[#07080a] border border-[#1e232d] text-center text-base font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                    className="h-11 w-full min-w-0 rounded-xl bg-well border border-line text-center text-base tabular-nums text-ink focus:border-accent focus:outline-none"
                   />
                   <button
                     onClick={() => toggleDone(ex, s.key)}
                     aria-pressed={s.done}
                     aria-label={s.done ? `Undo set ${i + 1}` : `Mark set ${i + 1} done`}
                     className={`h-11 w-11 rounded-xl flex items-center justify-center border transition-colors ${
-                      s.done ? 'bg-[#00D26A] border-[#00D26A] text-black' : 'bg-[#07080a] border-[#2a313f] text-[#848E9C] hover:border-[#C8FF00]'
+                      s.done ? 'bg-success border-success text-on-accent' : 'bg-well border-line-strong text-muted hover:border-accent'
                     }`}
                   >
                     <Check className="h-5 w-5" />
@@ -495,7 +497,7 @@ export const WorkoutLoggerPage: React.FC = () => {
                   <button
                     onClick={() => removeSet(ex, s.key)}
                     aria-label={`Remove set ${i + 1}`}
-                    className="h-11 w-7 flex items-center justify-center text-[#5E6673] hover:text-[#F6465D]"
+                    className="h-11 w-7 flex items-center justify-center text-faint hover:text-danger"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -504,7 +506,7 @@ export const WorkoutLoggerPage: React.FC = () => {
 
               <button
                 onClick={() => addSet(ex)}
-                className="w-full h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-[#B7BDC6] flex items-center justify-center gap-1.5 hover:text-white"
+                className="w-full h-10 rounded-xl bg-well border border-line text-sm font-semibold text-soft flex items-center justify-center gap-1.5 hover:text-ink"
               >
                 <Plus className="h-4 w-4" /> Add set
               </button>
@@ -513,7 +515,7 @@ export const WorkoutLoggerPage: React.FC = () => {
 
           <button
             onClick={() => setPickerOpen(true)}
-            className="w-full h-12 rounded-2xl border border-[#C8FF00]/40 text-[#C8FF00] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#C8FF00]/10"
+            className="w-full h-12 rounded-2xl border border-accent/40 text-accent font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent/10"
           >
             <Plus className="h-5 w-5" /> Add exercise
           </button>
@@ -521,13 +523,13 @@ export const WorkoutLoggerPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={discardWorkout}
-              className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-[#F6465D] font-semibold text-sm"
+              className="h-12 rounded-2xl bg-card border border-line text-danger font-semibold text-sm"
             >
               Discard
             </button>
             <button
               onClick={openFinish}
-              className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm shadow-glow-lime"
+              className="h-12 rounded-2xl bg-accent text-on-accent font-bold text-sm shadow-neu-sm"
             >
               Finish workout
             </button>
@@ -539,9 +541,9 @@ export const WorkoutLoggerPage: React.FC = () => {
       {!workout && view === 'train' && (
         <div className="space-y-5">
           {isNewUser && (
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#1e232d] space-y-3">
-              <p className="text-base font-bold text-white">New here? It’s 3 steps:</p>
-              <ol className="space-y-2 text-sm text-[#B7BDC6] list-decimal pl-5">
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-card to-well border border-line space-y-3">
+              <p className="text-base font-bold text-ink">New here? It’s 3 steps:</p>
+              <ol className="space-y-2 text-sm text-soft list-decimal pl-5">
                 <li>Start a workout and add the exercises you’re doing.</li>
                 <li>After each set, tap ✓. Your rest timer starts on its own.</li>
                 <li>Finish, then save it as a routine so next time is one tap.</li>
@@ -552,67 +554,67 @@ export const WorkoutLoggerPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={startEmpty}
-              className="p-5 rounded-3xl bg-[#C8FF00] text-black text-left flex items-center justify-between gap-3 shadow-glow-lime"
+              className="p-5 rounded-3xl bg-accent text-on-accent text-left flex items-center justify-between gap-3 shadow-neu-sm"
             >
               <span>
                 <span className="block text-base font-black">Start empty workout</span>
                 <span className="block text-sm opacity-80">Add exercises as you go</span>
               </span>
-              <Play className="h-6 w-6 fill-black shrink-0" />
+              <Play className="h-6 w-6 fill-on-accent shrink-0" />
             </button>
             {lastSession && (
               <button
                 onClick={() => begin(workoutFromSession(lastSession, lastPerf))}
-                className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] text-left flex items-center justify-between gap-3 hover:border-[#2a313f]"
+                className="p-5 rounded-3xl bg-card border border-line text-left flex items-center justify-between gap-3 hover:border-line-strong"
               >
                 <span className="min-w-0">
-                  <span className="block text-base font-bold text-white">Repeat last workout</span>
-                  <span className="block text-sm text-[#848E9C] truncate">{lastSession.split_title}</span>
+                  <span className="block text-base font-bold text-ink">Repeat last workout</span>
+                  <span className="block text-sm text-muted truncate">{lastSession.split_title}</span>
                 </span>
-                <RotateCcw className="h-5 w-5 text-[#C8FF00] shrink-0" />
+                <RotateCcw className="h-5 w-5 text-accent shrink-0" />
               </button>
             )}
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-base font-bold text-white">My routines</h2>
+            <h2 className="text-base font-bold text-ink">My routines</h2>
             {loading ? (
-              <div className="h-24 rounded-3xl bg-[#12151b] animate-pulse" />
+              <div className="h-24 rounded-3xl bg-card animate-pulse" />
             ) : routines.length === 0 ? (
-              <p className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C]">
-                No routines yet. Finish a workout and tap <span className="text-white font-semibold">Save as routine</span>, or
+              <p className="p-5 rounded-3xl bg-card border border-line text-sm text-muted">
+                No routines yet. Finish a workout and tap <span className="text-ink font-semibold">Save as routine</span>, or
                 save one from your history.
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {routines.map((r) => (
-                  <div key={r.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+                  <div key={r.id} className="p-4 rounded-3xl bg-card border border-line space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="text-base font-bold text-white break-words">{r.name}</h3>
-                        <p className="text-xs text-[#848E9C]">
+                        <h3 className="text-base font-bold text-ink break-words">{r.name}</h3>
+                        <p className="text-xs text-muted">
                           {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'}
                         </p>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => renameRoutine(r)} className="h-9 px-2 rounded-lg text-xs text-[#848E9C] hover:text-white">
+                        <button onClick={() => renameRoutine(r)} className="h-9 px-2 rounded-lg text-xs text-muted hover:text-ink">
                           Rename
                         </button>
                         <button
                           onClick={() => deleteRoutine(r)}
                           aria-label={`Delete ${r.name}`}
-                          className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center"
+                          className="h-9 w-9 rounded-lg text-muted hover:text-danger flex items-center justify-center"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-[#B7BDC6] line-clamp-2">
+                    <p className="text-sm text-soft line-clamp-2">
                       {r.exercises.map((e) => e.exercise?.name).filter(Boolean).join(' · ')}
                     </p>
                     <button
                       onClick={() => begin(workoutFromRoutine(r, lastPerf))}
-                      className="w-full h-11 rounded-xl bg-[#C8FF00]/10 border border-[#C8FF00]/40 text-[#C8FF00] font-bold text-sm flex items-center justify-center gap-1.5"
+                      className="w-full h-11 rounded-xl bg-accent/10 border border-accent/40 text-accent font-bold text-sm flex items-center justify-center gap-1.5"
                     >
                       Start <ChevronRight className="h-4 w-4" />
                     </button>
@@ -628,8 +630,8 @@ export const WorkoutLoggerPage: React.FC = () => {
       {!workout && view === 'history' && (
         <div className="space-y-3">
           {sessions.length === 0 ? (
-            <div className="p-8 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C] space-y-2">
-              <History className="h-6 w-6 mx-auto text-[#5E6673]" />
+            <div className="p-8 text-center rounded-3xl bg-card border border-line text-sm text-muted space-y-2">
+              <History className="h-6 w-6 mx-auto text-faint" />
               <p>Your finished workouts will show up here.</p>
             </div>
           ) : (
@@ -637,17 +639,17 @@ export const WorkoutLoggerPage: React.FC = () => {
               const groups = groupSessionSets(s);
               const prCount = s.sets.filter((x) => x.is_pr).length;
               return (
-                <div key={s.id} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+                <div key={s.id} className="p-4 rounded-3xl bg-card border border-line space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="text-base font-bold text-white break-words">{s.split_title}</h3>
-                      <p className="text-xs text-[#848E9C]">
+                      <h3 className="text-base font-bold text-ink break-words">{s.split_title}</h3>
+                      <p className="text-xs text-muted">
                         {new Date(s.session_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ·{' '}
                         {s.duration_min} min · {Math.round(s.burned_kcal)} kcal
                       </p>
                     </div>
                     {prCount > 0 && (
-                      <span className="shrink-0 px-2.5 py-1 rounded-full bg-[#FFB800]/15 text-[#FFB800] text-xs font-bold flex items-center gap-1">
+                      <span className="shrink-0 px-2.5 py-1 rounded-full bg-warning/15 text-warning text-xs font-bold flex items-center gap-1">
                         <Award className="h-3.5 w-3.5" /> {prCount} PR{prCount > 1 ? 's' : ''}
                       </span>
                     )}
@@ -655,10 +657,10 @@ export const WorkoutLoggerPage: React.FC = () => {
                   <ul className="space-y-1 text-sm">
                     {groups.map((g) => (
                       <li key={g.name} className="flex justify-between gap-3">
-                        <span className="text-[#EAECEF] truncate">
-                          {g.name} {g.pr && <Award className="inline h-3.5 w-3.5 text-[#FFB800]" />}
+                        <span className="text-ink truncate">
+                          {g.name} {g.pr && <Award className="inline h-3.5 w-3.5 text-warning" />}
                         </span>
-                        <span className="text-[#848E9C] font-mono shrink-0">
+                        <span className="text-muted tabular-nums shrink-0">
                           {g.sets} × {g.reps}
                           {g.topWeight > 0 ? ` @ ${formatKg(g.topWeight)} kg` : ''}
                         </span>
@@ -668,13 +670,13 @@ export const WorkoutLoggerPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => begin(workoutFromSession(s, lastPerf))}
-                      className="h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white flex items-center justify-center gap-1.5"
+                      className="h-10 rounded-xl bg-well border border-line text-sm font-semibold text-ink flex items-center justify-center gap-1.5"
                     >
                       <RotateCcw className="h-4 w-4" /> Do again
                     </button>
                     <button
                       onClick={() => promptSaveRoutine(s.split_title, workoutFromSession(s, lastPerf).exercises)}
-                      className="h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white flex items-center justify-center gap-1.5"
+                      className="h-10 rounded-xl bg-well border border-line text-sm font-semibold text-ink flex items-center justify-center gap-1.5"
                     >
                       <Save className="h-4 w-4" /> Save as routine
                     </button>
@@ -707,37 +709,37 @@ export const WorkoutLoggerPage: React.FC = () => {
       {finishOpen && workout && (
         <Overlay>
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="finish-title">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setFinishOpen(false)} aria-hidden="true" />
-          <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0d1015] border border-[#1e232d] p-5 space-y-4">
-            <h2 id="finish-title" className="text-lg font-bold text-white">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setFinishOpen(false)} aria-hidden="true" />
+          <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-well border border-line p-5 space-y-4">
+            <h2 id="finish-title" className="text-lg font-bold text-ink">
               Finish workout?
             </h2>
-            <p className="text-sm text-[#B7BDC6]">
-              You did <span className="text-white font-semibold">{doneSets.length}</span> set{doneSets.length === 1 ? '' : 's'} in{' '}
-              {formatClock(Math.floor((now - workout.startedAt) / 1000))}.
+            <p className="text-sm text-soft">
+              You did <span className="text-ink font-semibold">{doneSets.length}</span> set{doneSets.length === 1 ? '' : 's'} in{' '}
+              {formatClock(Math.floor((Date.now() - workout.startedAt) / 1000))}.
               {totalSets > doneSets.length && (
-                <span className="block mt-1 text-[#FFB800]">
+                <span className="block mt-1 text-warning">
                   {totalSets - doneSets.length} set{totalSets - doneSets.length === 1 ? ' isn’t' : 's aren’t'} ticked and won’t be saved.
                 </span>
               )}
             </p>
-            <label className="flex items-center gap-3 text-sm text-white">
+            <label className="flex items-center gap-3 text-sm text-ink">
               <input
                 type="checkbox"
                 checked={shareToFeed}
                 onChange={(e) => setShareToFeed(e.target.checked)}
-                className="h-4 w-4 accent-[#C8FF00]"
+                className="h-4 w-4 accent-accent"
               />
               Share to the community feed
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setFinishOpen(false)} className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm">
+              <button onClick={() => setFinishOpen(false)} className="h-12 rounded-2xl bg-card border border-line text-ink font-semibold text-sm">
                 Keep going
               </button>
               <button
                 onClick={saveWorkout}
                 disabled={saving}
-                className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm disabled:opacity-50"
+                className="h-12 rounded-2xl bg-accent text-on-accent font-bold text-sm disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Save workout'}
               </button>
@@ -759,14 +761,12 @@ const WorkoutSummary: React.FC<{
   const prs = session.sets.filter((s) => s.is_pr);
   const volume = session.sets.reduce((v, s) => v + s.weight_kg * s.reps, 0);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="p-5 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#C8FF00]/30 space-y-4"
+    <div
+      className="animate-rise p-5 rounded-3xl bg-gradient-to-br from-card to-well border border-accent/30 space-y-4"
     >
       <div>
-        <p className="text-xl font-black text-white">Workout saved. Nice job! 💪</p>
-        <p className="text-sm text-[#848E9C]">{session.split_title}</p>
+        <p className="text-xl font-black text-ink">Workout saved. Nice job! 💪</p>
+        <p className="text-sm text-muted">{session.split_title}</p>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
@@ -774,19 +774,19 @@ const WorkoutSummary: React.FC<{
           { label: 'Sets', value: String(session.sets.length) },
           { label: 'Volume', value: `${Math.round(volume).toLocaleString()} kg` },
         ].map((s) => (
-          <div key={s.label} className="p-3 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-            <p className="text-xs text-[#848E9C]">{s.label}</p>
-            <p className="text-base font-black font-mono text-white">{s.value}</p>
+          <div key={s.label} className="p-3 rounded-2xl bg-well border border-line">
+            <p className="text-xs text-muted">{s.label}</p>
+            <p className="text-base font-black tabular-nums text-ink">{s.value}</p>
           </div>
         ))}
       </div>
       {prs.length > 0 && (
-        <div className="p-3 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 space-y-1">
-          <p className="text-sm font-bold text-[#FFB800] flex items-center gap-1.5">
+        <div className="p-3 rounded-2xl bg-warning/10 border border-warning/30 space-y-1">
+          <p className="text-sm font-bold text-warning flex items-center gap-1.5">
             <Award className="h-4 w-4" /> New personal record{prs.length > 1 ? 's' : ''}!
           </p>
           {prs.map((p) => (
-            <p key={p.id} className="text-sm text-white">
+            <p key={p.id} className="text-sm text-ink">
               {p.exercise?.name}: {formatKg(p.weight_kg)} kg × {p.reps}
             </p>
           ))}
@@ -795,15 +795,15 @@ const WorkoutSummary: React.FC<{
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           onClick={onSaveRoutine}
-          className="h-11 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-1.5"
+          className="h-11 rounded-xl bg-accent text-on-accent font-bold text-sm flex items-center justify-center gap-1.5"
         >
           <Save className="h-4 w-4" />
           {workout.routineId ? 'Update routine with today’s weights' : 'Save as routine'}
         </button>
-        <button onClick={onClose} className="h-11 rounded-xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm">
+        <button onClick={onClose} className="h-11 rounded-xl bg-card border border-line text-ink font-semibold text-sm">
           Done
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 };

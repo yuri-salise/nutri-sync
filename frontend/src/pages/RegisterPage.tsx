@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Mail, Lock, User, Scale, Flame, ArrowRight, AlertCircle } from 'lucide-react';
 
@@ -66,41 +65,39 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#000000] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden font-poppins selection:bg-[#C8FF00] selection:text-black">
+    <div className="min-h-screen bg-page flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden selection:bg-accent selection:text-on-accent">
       {/* Background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(200,255,0,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(29,78,216,0.05)_0%,transparent_70%)] pointer-events-none" />
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-xl space-y-6 relative z-10"
+      <div
+        className="animate-rise w-full max-w-xl space-y-6 relative z-10"
       >
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-[#C8FF00] via-[#00D26A] to-[#00E5FF] p-[2px] shadow-glow-lime">
-            <div className="h-full w-full bg-[#000000] rounded-[14px] flex items-center justify-center">
-              <Activity className="h-6 w-6 text-[#C8FF00]" />
+          <div className="inline-flex h-12 w-12 rounded-2xl bg-gradient-to-br from-accent via-success to-info p-[2px] shadow-neu-sm">
+            <div className="h-full w-full bg-page rounded-[14px] flex items-center justify-center">
+              <Activity className="h-6 w-6 text-accent" />
             </div>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white font-poppins">
+          <h1 className="text-2xl font-black tracking-tight text-ink ">
             Create Your Account
           </h1>
-          <p className="text-xs text-[#848E9C]">
+          <p className="text-xs text-muted">
             Set up your fitness goals and daily nutrition targets
           </p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-xs flex items-center gap-2">
+          <div className="p-3.5 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-2xl space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 rounded-3xl bg-card border border-line shadow-2xl space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 text-[#C8FF00]" /> Full Name
+              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-accent" /> Full Name
               </label>
               <input
                 type="text"
@@ -108,13 +105,13 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Alex Rivera"
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3.5 py-2.5 text-xs text-ink placeholder-muted focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-[#C8FF00]" /> Email
+              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-accent" /> Email
               </label>
               <input
                 type="email"
@@ -122,15 +119,15 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="athlete@example.com"
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3.5 py-2.5 text-xs text-ink placeholder-muted focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> Password (min 8 chars)
+              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-accent" /> Password (min 8 chars)
               </label>
               <input
                 type="password"
@@ -138,13 +135,13 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none font-mono"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3.5 py-2.5 text-xs text-ink placeholder-muted focus:outline-none tabular-nums"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-[#C8FF00]" /> Confirm Password
+              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-accent" /> Confirm Password
               </label>
               <input
                 type="password"
@@ -152,15 +149,15 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-[#848E9C] focus:outline-none font-mono"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3.5 py-2.5 text-xs text-ink placeholder-muted focus:outline-none tabular-nums"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1">
-                <Scale className="h-3.5 w-3.5 text-[#C8FF00]" /> Weight (kg)
+              <label className="text-xs font-semibold text-muted flex items-center gap-1">
+                <Scale className="h-3.5 w-3.5 text-accent" /> Weight (kg)
               </label>
               <input
                 type="number"
@@ -168,29 +165,29 @@ export const RegisterPage: React.FC = () => {
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3 py-2 text-xs text-white font-mono focus:outline-none"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3 py-2 text-xs text-ink tabular-nums focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C] flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-[#C8FF00]" /> Daily Calorie Goal (kcal)
+              <label className="text-xs font-semibold text-muted flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-accent" /> Daily Calorie Goal (kcal)
               </label>
               <input
                 type="number"
                 value={baseKcal}
                 onChange={(e) => setBaseKcal(e.target.value)}
                 required
-                className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-3 py-2 text-xs text-white font-mono focus:outline-none"
+                className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3 py-2 text-xs text-ink tabular-nums focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#848E9C]">Account Role</label>
+              <label className="text-xs font-semibold text-muted">Account Role</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as any)}
-                className="w-full bg-[#07080a] border border-[#1e232d] rounded-2xl px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-well border border-line rounded-2xl px-3 py-2 text-xs text-ink focus:outline-none"
               >
                 <option value="athlete">Athlete</option>
                 <option value="admin">Coach / Admin</option>
@@ -202,21 +199,21 @@ export const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-2xl bg-[#C8FF00] text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-accent text-on-accent font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-neu-sm hover:bg-accent-hover transition-all disabled:opacity-50"
             >
               <span>{loading ? 'Initializing Profile...' : 'Complete Profile & Launch'}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="text-center text-xs text-[#848E9C] pt-2">
+          <div className="text-center text-xs text-muted pt-2">
             Already registered?{' '}
-            <Link to="/login" className="text-[#C8FF00] font-semibold hover:underline">
+            <Link to="/login" className="text-accent font-semibold hover:underline">
               Sign in to terminal
             </Link>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 };

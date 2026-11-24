@@ -77,19 +77,19 @@ export const RestTimer: React.FC<RestTimerProps> = ({ endsAt, totalSec, onAdjust
       aria-live="polite"
       className="fixed left-0 right-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:left-64 z-40 px-4"
     >
-      <div className="max-w-xl mx-auto rounded-2xl bg-[#12151b] border border-[#2a313f] shadow-2xl overflow-hidden">
-        <div className="h-1 bg-[#1e232d]">
-          <div className="h-full bg-[#C8FF00] transition-all duration-300" style={{ width: `${pct}%` }} />
+      <div className="max-w-xl mx-auto rounded-2xl bg-card border border-line-strong shadow-2xl overflow-hidden">
+        <div className="h-1 bg-line">
+          <div className="h-full bg-accent transition-all duration-300" style={{ width: `${pct}%` }} />
         </div>
         <div className="flex items-center gap-3 p-3">
-          <Timer className={`h-5 w-5 shrink-0 ${finished ? 'text-[#00D26A]' : 'text-[#C8FF00]'}`} />
+          <Timer className={`h-5 w-5 shrink-0 ${finished ? 'text-success' : 'text-accent'}`} />
           <div className="flex-1 min-w-0">
             {finished ? (
-              <p className="text-sm font-bold text-[#00D26A]">Rest’s over. Time for your next set!</p>
+              <p className="text-sm font-bold text-success">Rest’s over. Time for your next set!</p>
             ) : (
               <>
-                <p className="text-xs text-[#848E9C]">Rest</p>
-                <p className="text-xl font-black font-mono text-white leading-none">
+                <p className="text-xs text-muted">Rest</p>
+                <p className="text-xl font-black tabular-nums text-ink leading-none">
                   {mm}:{ss}
                 </p>
               </>
@@ -100,14 +100,14 @@ export const RestTimer: React.FC<RestTimerProps> = ({ endsAt, totalSec, onAdjust
               <button
                 type="button"
                 onClick={() => onAdjust(-15)}
-                className="h-10 px-3 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white"
+                className="h-10 px-3 rounded-xl bg-well border border-line text-sm font-semibold text-ink"
               >
                 −15s
               </button>
               <button
                 type="button"
                 onClick={() => onAdjust(15)}
-                className="h-10 px-3 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm font-semibold text-white"
+                className="h-10 px-3 rounded-xl bg-well border border-line text-sm font-semibold text-ink"
               >
                 +15s
               </button>
@@ -117,7 +117,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ endsAt, totalSec, onAdjust
             type="button"
             onClick={onDismiss}
             aria-label={finished ? 'Close' : 'Skip rest'}
-            className="h-10 px-3 rounded-xl text-sm font-semibold text-[#848E9C] hover:text-white flex items-center gap-1"
+            className="h-10 px-3 rounded-xl text-sm font-semibold text-muted hover:text-ink flex items-center gap-1"
           >
             {finished ? <X className="h-4 w-4" /> : 'Skip'}
           </button>

@@ -10,7 +10,7 @@ interface RouteThumbProps {
 /** Lightweight SVG preview of a GPS route (no map tiles, so a long feed stays fast). */
 export const RouteThumb: React.FC<RouteThumbProps> = ({
   points,
-  color = '#C8FF00',
+  color = '#1D4ED8',
   className = 'w-full h-full',
   label = 'Route map preview',
 }) => {
@@ -43,8 +43,8 @@ export const RouteThumb: React.FC<RouteThumbProps> = ({
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className={className} role="img" aria-label={label} preserveAspectRatio="xMidYMid meet">
       <path d={d} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={start[0]} cy={start[1]} r="2.6" fill="#00D26A" />
-      <circle cx={end[0]} cy={end[1]} r="2.6" fill="#F6465D" />
+      <circle cx={start[0]} cy={start[1]} r="2.6" fill="#047857" />
+      <circle cx={end[0]} cy={end[1]} r="2.6" fill="#BE123C" />
     </svg>
   );
 };

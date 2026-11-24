@@ -77,10 +77,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   };
 
   return (
-    <div className="space-y-3 pt-3 border-t border-[#1e232d]">
-      {comments === null && !error && <div className="h-10 rounded-xl bg-[#07080a] animate-pulse" />}
+    <div className="space-y-3 pt-3 border-t border-line">
+      {comments === null && !error && <div className="h-10 rounded-xl bg-well animate-pulse" />}
 
-      {comments?.length === 0 && <p className="text-sm text-[#848E9C]">No comments yet. Start the conversation!</p>}
+      {comments?.length === 0 && <p className="text-sm text-muted">No comments yet. Start the conversation!</p>}
 
       <ul className="space-y-3">
         {comments?.map((c) => (
@@ -88,22 +88,22 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             <Avatar name={c.author.name} id={c.author.id} size={32} />
             <div className="min-w-0 flex-1">
               <div
-                className={`inline-block max-w-full px-3 py-2 rounded-2xl bg-[#07080a] border ${
-                  c.author.is_coach ? 'border-[#00E5FF]/50' : 'border-[#1e232d]'
+                className={`inline-block max-w-full px-3 py-2 rounded-2xl bg-well border ${
+                  c.author.is_coach ? 'border-info/50' : 'border-line'
                 }`}
               >
-                <p className="text-sm font-semibold text-white flex flex-wrap items-center gap-1.5">
+                <p className="text-sm font-semibold text-ink flex flex-wrap items-center gap-1.5">
                   {c.author.name}
                   {c.author.is_coach && <CoachBadge />}
                 </p>
-                <p className="text-sm text-[#EAECEF] whitespace-pre-wrap break-words">{c.body}</p>
+                <p className="text-sm text-ink whitespace-pre-wrap break-words">{c.body}</p>
               </div>
-              <p className="px-1 mt-0.5 text-xs text-[#848E9C] flex items-center gap-3">
+              <p className="px-1 mt-0.5 text-xs text-muted flex items-center gap-3">
                 <span>{timeAgo(c.created_at)}</span>
                 {(c.mine || isAdmin) && (
                   <button
                     onClick={() => remove(c)}
-                    className="hover:text-[#F6465D] flex items-center gap-1"
+                    className="hover:text-danger flex items-center gap-1"
                     aria-label={`Delete comment by ${c.author.name}`}
                   >
                     <Trash2 className="h-3 w-3" /> Delete
@@ -116,7 +116,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
       </ul>
 
       {error && (
-        <p role="alert" className="text-sm text-[#F6465D]">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
@@ -133,13 +133,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           maxLength={500}
           onChange={(e) => setText(e.target.value)}
           placeholder="Write a comment…"
-          className="flex-1 min-w-0 h-11 rounded-full bg-[#07080a] border border-[#1e232d] px-4 text-sm text-white placeholder-[#848E9C] focus:border-[#C8FF00] focus:outline-none"
+          className="flex-1 min-w-0 h-11 rounded-full bg-well border border-line px-4 text-sm text-ink placeholder-muted focus:border-accent focus:outline-none"
         />
         <button
           type="submit"
           disabled={!text.trim() || sending}
           aria-label="Send comment"
-          className="h-11 w-11 rounded-full bg-[#C8FF00] text-black flex items-center justify-center disabled:opacity-40 shrink-0"
+          className="h-11 w-11 rounded-full bg-accent text-on-accent flex items-center justify-center disabled:opacity-40 shrink-0"
         >
           <Send className="h-4 w-4" />
         </button>

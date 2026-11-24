@@ -1,18 +1,24 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { DialogProvider } from './components/common/DialogProvider';
 
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { WorkoutLoggerPage } from './pages/WorkoutLoggerPage';
-import { RunTrackerPage } from './pages/RunTrackerPage';
-import { RagNutritionScannerPage } from './pages/RagNutritionScannerPage';
-import { NutritionLogPage } from './pages/NutritionLogPage';
-import { CommunityFeedPage } from './pages/CommunityFeedPage';
-import { AdminAuditPage } from './pages/AdminAuditPage';
+const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const WorkoutLoggerPage = lazy(() => import('./pages/WorkoutLoggerPage').then((m) => ({ default: m.WorkoutLoggerPage })));
+const RunTrackerPage = lazy(() => import('./pages/RunTrackerPage').then((m) => ({ default: m.RunTrackerPage })));
+const RagNutritionScannerPage = lazy(() => import('./pages/RagNutritionScannerPage').then((m) => ({ default: m.RagNutritionScannerPage })));
+const NutritionLogPage = lazy(() => import('./pages/NutritionLogPage').then((m) => ({ default: m.NutritionLogPage })));
+const CommunityFeedPage = lazy(() => import('./pages/CommunityFeedPage').then((m) => ({ default: m.CommunityFeedPage })));
+const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage').then((m) => ({ default: m.AdminAuditPage })));
+
+const Spinner = () => (
+  <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-label="Loading">
+    <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
@@ -23,9 +29,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0d14] flex items-center justify-center">
-        <div className="h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <Spinner />
     );
   }
 
@@ -45,6 +49,7 @@ export const App: React.FC = () => {
     <AuthProvider>
       <DialogProvider>
       <BrowserRouter>
+        <Suspense fallback={<Spinner />}>
         <Routes>
           {/* Public Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -81,6 +86,7 @@ export const App: React.FC = () => {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
       </DialogProvider>
     </AuthProvider>

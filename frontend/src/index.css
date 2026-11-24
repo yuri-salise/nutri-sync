@@ -1,82 +1,110 @@
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Soft UI (neumorphism) palette, as RGB channels. Light base reads better outdoors on
+   phones. Every text token keeps >= 4.5:1 contrast on --page; white on every colored
+   token keeps >= 4.5:1 too. */
 @layer base {
+  :root {
+    --page: 230 235 242;        /* #E6EBF2 */
+    --card: 230 235 242;        /* same as page: cards lift with shadow, not color */
+    --card-hover: 237 241 246;  /* #EDF1F6 */
+    --well: 220 227 236;        /* #DCE3EC  inset areas */
+    --line: 207 216 227;        /* #CFD8E3 */
+    --line-strong: 184 196 210; /* #B8C4D2 */
+    --shade-dark: 195 205 217;  /* #C3CDD9 */
+    --shade-light: 255 255 255;
+
+    --ink: 15 23 42;            /* #0F172A 14.9:1 */
+    --soft: 51 65 85;           /* #334155  8.6:1 */
+    --muted: 71 85 105;         /* #475569  6.3:1 */
+    --faint: 85 98 117;         /* #556275 */
+
+    --accent: 29 78 216;        /* #1D4ED8 cobalt */
+    --accent-hover: 30 64 175;  /* #1E40AF */
+    --on-accent: 255 255 255;
+    --success: 4 120 87;        /* #047857 */
+    --warning: 146 64 14;       /* #92400E */
+    --danger: 190 18 60;        /* #BE123C */
+    --info: 3 105 161;          /* #0369A1 */
+    --violet: 109 40 217;       /* #6D28D9 */
+    --coral: 185 58 11;         /* #B93A0B */
+
+    color-scheme: light;
+  }
+
   * {
-    border-color: #1e232d;
+    border-color: rgb(var(--line));
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    @apply bg-[#000000] text-[#EAECEF] font-poppins selection:bg-[#C8FF00] selection:text-black;
+    @apply bg-page text-ink font-sans selection:bg-accent selection:text-on-accent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+  }
+
+  /* Fields sit pressed into the surface. 16px text stops iOS from zooming on focus. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    @apply shadow-neu-inset-sm;
+    font-size: max(16px, 1em);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.98);
   }
 }
 
-/* High-Precision Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e232d;
+  background: rgb(var(--line-strong));
   border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #C8FF00;
-}
-
-/* Glassmorphic & Cyber Athletic Utilities */
+/* Raised card. Border keeps the edge visible where soft shadows alone fall below 3:1. */
 .cyber-card {
-  background: #12151b;
-  border: 1px solid #1e232d;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cyber-card:hover {
-  border-color: #2a313f;
+  background: rgb(var(--card));
+  border: 1px solid rgb(var(--shade-light) / 0.6);
+  box-shadow: 8px 8px 16px rgb(var(--shade-dark)), -8px -8px 16px rgb(var(--shade-light));
 }
 
 .cyber-card-active {
-  border-color: rgba(200, 255, 0, 0.4);
-  box-shadow: 0 0 25px -4px rgba(200, 255, 0, 0.25);
+  border-color: rgb(var(--accent) / 0.4);
 }
 
-/* Animations */
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 15px rgba(200, 255, 0, 0.4);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(200, 255, 0, 0.8);
-  }
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
 }
 
-.animate-pulse-glow,
 .animate-pulse-glow {
-  animation: pulseGlow 2.5s infinite ease-in-out;
+  animation: pulseSoft 2.5s infinite ease-in-out;
 }
 
 @keyframes radarSweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .animate-radar {
@@ -98,19 +126,20 @@
   animation-play-state: paused;
 }
 
-/* Leaflet Dark Filter for OpenStreetMap (100% Free, Zero API Keys) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .leaflet-container {
   /* Leaflet panes use z-index up to 1000; contain them so a map never paints over
      the side menu, dialogs or the bottom nav. */
   isolation: isolate;
-  background: #07080a !important;
-  font-family: 'Poppins', sans-serif !important;
-}
-
-.dark-map .leaflet-tile,
-.dark-tiles,
-img.leaflet-tile.dark-tiles {
-  filter: brightness(0.7) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.35) !important;
+  background: rgb(var(--well)) !important;
+  font-family: inherit !important;
 }
 
 /* Floating Community button (mobile). Lifts out of the way while the workout rest timer shows. */

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { FoodItemSummary, PredictedMacros, RagScanResult } from '../types';
 import {
@@ -195,36 +194,36 @@ export const RagNutritionScannerPage: React.FC = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-          <Compass className="h-6 w-6 text-[#C8FF00]" />
+        <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+          <Compass className="h-6 w-6 text-accent" />
           <span>Smart Meal Scanner</span>
         </h1>
-        <p className="text-sm text-[#848E9C] mt-1">
+        <p className="text-sm text-muted mt-1">
           Snap a photo of your meal, or tell us what you ate in English or Tagalog. Add amounts
           like “1 cup” or “200g” for a better estimate.
         </p>
       </div>
 
       {/* Input */}
-      <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
+      <div className="p-4 sm:p-6 rounded-3xl bg-card border border-line space-y-4 shadow-neu">
         <form onSubmit={handleScan} className="space-y-3">
-          <label htmlFor="meal-input" className="text-sm font-semibold text-white flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-[#C8FF00]" /> What did you eat?
+          <label htmlFor="meal-input" className="text-sm font-semibold text-ink flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-accent" /> What did you eat?
           </label>
           {photo ? (
             <div className="relative w-fit">
-              <img src={photo} alt="Your meal photo" className="h-32 rounded-2xl border border-[#1e232d] object-cover" />
+              <img src={photo} alt="Your meal photo" className="h-32 rounded-2xl border border-line object-cover" />
               <button
                 type="button"
                 onClick={() => setPhoto(null)}
                 aria-label="Remove photo"
-                className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-[#07080a]/80 text-white hover:text-[#F6465D]"
+                className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-well/80 text-ink hover:text-danger"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <label className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#07080a] border border-dashed border-[#1e232d] hover:border-[#C8FF00] text-sm text-[#B7BDC6] hover:text-[#C8FF00] flex items-center justify-center gap-2 cursor-pointer focus-within:border-[#C8FF00] transition-colors">
+            <label className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-well border border-dashed border-line hover:border-accent text-sm text-soft hover:text-accent flex items-center justify-center gap-2 cursor-pointer focus-within:border-accent transition-colors">
               <Camera className="h-4 w-4" />
               <span>Take or upload a photo</span>
               <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="sr-only" />
@@ -239,16 +238,16 @@ export const RagNutritionScannerPage: React.FC = () => {
               if (e.key === 'Enter' && !e.shiftKey) handleScan(e);
             }}
             placeholder={photo ? 'Optional note, e.g. "the rice is brown rice"' : 'e.g. chicken adobo with 1 cup rice and a boiled egg'}
-            className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-2xl px-4 py-3 text-sm text-white placeholder-[#848E9C] focus:outline-none resize-none"
+            className="w-full bg-well border border-line focus:border-accent rounded-2xl px-4 py-3 text-sm text-ink placeholder-muted focus:outline-none resize-none"
           />
           <button
             type="submit"
             disabled={scanning}
-            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#d4ff33] shadow-glow-lime transition-all disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-accent text-on-accent font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-hover shadow-neu-sm transition-all disabled:opacity-50"
           >
             {scanning ? (
               <>
-                <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 border-2 border-on-accent border-t-transparent rounded-full animate-spin" />
                 <span>Analyzing…</span>
               </>
             ) : (
@@ -260,14 +259,14 @@ export const RagNutritionScannerPage: React.FC = () => {
           </button>
 
           <div className="space-y-2 pt-1">
-            <span className="text-xs font-medium text-[#848E9C]">Or try one of these:</span>
+            <span className="text-xs font-medium text-muted">Or try one of these:</span>
             <div className="flex flex-wrap gap-2">
               {samplePrompts.map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setQueryInput(p)}
-                  className="text-xs px-3 py-2 rounded-xl bg-[#07080a] hover:bg-[#181c24] border border-[#1e232d] text-[#B7BDC6] hover:text-[#C8FF00] transition-colors text-left"
+                  className="text-xs px-3 py-2 rounded-xl bg-well hover:bg-card-hover border border-line text-soft hover:text-accent transition-colors text-left"
                 >
                   {p}
                 </button>
@@ -278,24 +277,24 @@ export const RagNutritionScannerPage: React.FC = () => {
       </div>
 
       {error && (
-        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
+        <div role="alert" className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-sm flex items-center gap-2.5">
           <ShieldAlert className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {scanResult && !scanning && (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <div className="animate-rise space-y-4">
           {/* Items */}
-          <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3 shadow-cyber-card">
+          <div className="p-4 sm:p-6 rounded-3xl bg-card border border-line space-y-3 shadow-neu">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-white">Here’s what we found</h2>
-                <p className="text-sm text-[#848E9C]">
+                <h2 className="text-base font-bold text-ink">Here’s what we found</h2>
+                <p className="text-sm text-muted">
                   Check each food and adjust the amount if needed.
                 </p>
                 {fromPhoto && (
-                  <p className="text-xs text-[#848E9C] mt-1">
+                  <p className="text-xs text-muted mt-1">
                     From your photo we saw: “{scanResult.query_input}”
                   </p>
                 )}
@@ -303,26 +302,26 @@ export const RagNutritionScannerPage: React.FC = () => {
             </div>
 
             {items.length === 0 && (
-              <p className="text-sm text-[#848E9C]">
+              <p className="text-sm text-muted">
                 We couldn’t pick out any foods. Try naming them separately, like “rice, adobo, egg”.
               </p>
             )}
 
             {items.map((it, idx) =>
               it.removed ? null : (
-                <div key={idx} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-3">
+                <div key={idx} className="p-4 rounded-2xl bg-well border border-line space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs text-[#848E9C]">You said “{it.query_text}”</p>
+                      <p className="text-xs text-muted">You said “{it.query_text}”</p>
                       {it.food ? (
-                        <p className="text-sm font-bold text-white break-words">{it.food.food_name}</p>
+                        <p className="text-sm font-bold text-ink break-words">{it.food.food_name}</p>
                       ) : (
-                        <p className="text-sm font-bold text-[#FFB800] flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-warning flex items-center gap-1.5">
                           <HelpCircle className="h-4 w-4" /> We couldn’t find this food
                         </p>
                       )}
                       {it.food && (
-                        <p className="text-xs text-[#848E9C]">
+                        <p className="text-xs text-muted">
                           {it.food.source_dataset} · {it.food.serving_description}
                         </p>
                       )}
@@ -331,7 +330,7 @@ export const RagNutritionScannerPage: React.FC = () => {
                       type="button"
                       onClick={() => updateItem(idx, { removed: true })}
                       aria-label={`Remove ${it.query_text}`}
-                      className="p-2 rounded-lg text-[#848E9C] hover:text-[#F6465D] hover:bg-[#F6465D]/10"
+                      className="p-2 rounded-lg text-muted hover:text-danger hover:bg-danger/10"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -344,7 +343,7 @@ export const RagNutritionScannerPage: React.FC = () => {
                           type="button"
                           aria-label="Decrease amount"
                           onClick={() => updateItem(idx, { grams: Math.max(0, it.grams - 25) })}
-                          className="h-10 w-10 rounded-xl bg-[#12151b] border border-[#1e232d] text-white flex items-center justify-center"
+                          className="h-10 w-10 rounded-xl bg-card border border-line text-ink flex items-center justify-center"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -356,19 +355,19 @@ export const RagNutritionScannerPage: React.FC = () => {
                           inputMode="decimal"
                           value={Math.round(it.grams)}
                           onChange={(e) => updateItem(idx, { grams: Math.max(0, Number(e.target.value) || 0) })}
-                          className="w-20 h-10 bg-[#12151b] border border-[#1e232d] rounded-xl text-center text-sm font-mono text-white focus:border-[#C8FF00] focus:outline-none"
+                          className="w-20 h-10 bg-card border border-line rounded-xl text-center text-sm tabular-nums text-ink focus:border-accent focus:outline-none"
                         />
-                        <span className="text-sm text-[#848E9C]">g</span>
+                        <span className="text-sm text-muted">g</span>
                         <button
                           type="button"
                           aria-label="Increase amount"
                           onClick={() => updateItem(idx, { grams: it.grams + 25 })}
-                          className="h-10 w-10 rounded-xl bg-[#12151b] border border-[#1e232d] text-white flex items-center justify-center"
+                          className="h-10 w-10 rounded-xl bg-card border border-line text-ink flex items-center justify-center"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
-                      <span className="text-sm font-mono font-bold text-[#C8FF00]">
+                      <span className="text-sm tabular-nums font-bold text-accent">
                         {Math.round(macrosFor(it.food, it.grams).calories)} kcal
                       </span>
                     </div>
@@ -376,7 +375,7 @@ export const RagNutritionScannerPage: React.FC = () => {
 
                   {it.confidence !== 'high' && it.alternatives.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-[#FFB800]">
+                      <p className="text-xs font-semibold text-warning">
                         {it.food ? 'Not quite right? Did you mean:' : 'Did you mean:'}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -385,7 +384,7 @@ export const RagNutritionScannerPage: React.FC = () => {
                             key={alt.id}
                             type="button"
                             onClick={() => swapFood(idx, alt)}
-                            className="text-xs px-3 py-2 rounded-xl bg-[#12151b] border border-[#1e232d] text-[#EAECEF] hover:border-[#C8FF00] text-left"
+                            className="text-xs px-3 py-2 rounded-xl bg-card border border-line text-ink hover:border-accent text-left"
                           >
                             {alt.food_name}
                           </button>
@@ -399,27 +398,27 @@ export const RagNutritionScannerPage: React.FC = () => {
           </div>
 
           {/* Totals */}
-          <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-[#12151b] to-[#07080a] border border-[#1e232d] space-y-4">
-            <h2 className="text-base font-bold text-white">Meal total</h2>
+          <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-card to-well border border-line space-y-4">
+            <h2 className="text-base font-bold text-ink">Meal total</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: 'Calories', value: Math.round(totals.calories), unit: 'kcal', color: 'text-[#C8FF00]' },
-                { label: 'Protein', value: totals.protein_g.toFixed(1), unit: 'g', color: 'text-[#00E5FF]' },
-                { label: 'Carbs', value: totals.carbs_g.toFixed(1), unit: 'g', color: 'text-white' },
-                { label: 'Fat', value: totals.fat_g.toFixed(1), unit: 'g', color: 'text-[#FFB800]' },
+                { label: 'Calories', value: Math.round(totals.calories), unit: 'kcal', color: 'text-accent' },
+                { label: 'Protein', value: totals.protein_g.toFixed(1), unit: 'g', color: 'text-info' },
+                { label: 'Carbs', value: totals.carbs_g.toFixed(1), unit: 'g', color: 'text-ink' },
+                { label: 'Fat', value: totals.fat_g.toFixed(1), unit: 'g', color: 'text-warning' },
               ].map((m) => (
-                <div key={m.label} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                  <span className="text-xs font-medium text-[#848E9C]">{m.label}</span>
-                  <p className={`text-2xl font-black font-mono mt-1 ${m.color}`}>
+                <div key={m.label} className="p-4 rounded-2xl bg-well border border-line">
+                  <span className="text-xs font-medium text-muted">{m.label}</span>
+                  <p className={`text-2xl font-black tabular-nums mt-1 ${m.color}`}>
                     {m.value}
-                    <span className="text-xs text-[#848E9C] ml-1">{m.unit}</span>
+                    <span className="text-xs text-muted ml-1">{m.unit}</span>
                   </p>
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-[#848E9C] flex items-start gap-1.5">
-              <Info className="h-4 w-4 text-[#C8FF00] shrink-0" />
+            <p className="text-xs text-muted flex items-start gap-1.5">
+              <Info className="h-4 w-4 text-accent shrink-0" />
               <span>
                 This is a machine-generated estimate based on DOST-FNRI and USDA food data. Please
                 review it before saving.
@@ -429,7 +428,7 @@ export const RagNutritionScannerPage: React.FC = () => {
             </p>
 
             {confirmedSuccess && (
-              <div className="p-3 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-sm flex items-center gap-2">
+              <div className="p-3 rounded-2xl bg-success/10 border border-success/30 text-success text-sm flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>Saved! Your daily targets have been updated.</span>
               </div>
@@ -438,7 +437,7 @@ export const RagNutritionScannerPage: React.FC = () => {
             <button
               onClick={handleConfirmAndSave}
               disabled={confirming || confirmedSuccess || activeItems.length === 0}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-accent text-on-accent font-bold text-sm flex items-center justify-center gap-2 shadow-neu-sm hover:bg-accent-hover transition-all disabled:opacity-50"
             >
               <UtensilsCrossed className="h-4 w-4" />
               <span>
@@ -446,13 +445,13 @@ export const RagNutritionScannerPage: React.FC = () => {
               </span>
             </button>
 
-            <p className="text-xs text-[#5E6673] flex items-center gap-1.5">
+            <p className="text-xs text-faint flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5" />
               Match confidence {Math.round(scanResult.top_similarity_score * 100)}% ·{' '}
               {scanResult.latency_ms.toFixed(0)} ms
             </p>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

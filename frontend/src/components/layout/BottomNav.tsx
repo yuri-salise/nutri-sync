@@ -18,7 +18,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#000000]/95 backdrop-blur-xl border-t border-[#1e232d] px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-page/95 backdrop-blur-xl border-t border-line px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -29,8 +29,8 @@ export const BottomNav: React.FC = () => {
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-all ${
                   isActive
-                    ? 'text-[#C8FF00]'
-                    : 'text-[#848E9C] hover:text-[#EAECEF]'
+                    ? 'text-accent'
+                    : 'text-muted hover:text-ink'
                 }`
               }
             >
@@ -38,7 +38,7 @@ export const BottomNav: React.FC = () => {
                 <>
                   <div
                     className={`p-1 rounded-lg transition-transform ${
-                      isActive ? 'bg-[#C8FF00]/15 scale-110 shadow-glow-lime' : ''
+                      isActive ? 'bg-accent/15 scale-110 shadow-neu-sm' : ''
                     }`}
                   >
                     <Icon className="h-5 w-5" />

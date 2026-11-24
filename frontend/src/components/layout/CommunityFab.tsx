@@ -18,7 +18,7 @@ export const CommunityFab: React.FC<{ hidden?: boolean }> = ({ hidden = false })
       to="/community"
       aria-label="Open Community"
       title="Community"
-      className="community-fab lg:hidden fixed right-4 z-40 h-14 w-14 rounded-full bg-[#C8FF00] text-black shadow-glow-lime border-2 border-black/40 flex items-center justify-center active:scale-95 transition-transform"
+      className="community-fab lg:hidden fixed right-4 z-40 h-14 w-14 rounded-full bg-accent text-on-accent shadow-neu-sm border-2 border-black/40 flex items-center justify-center active:scale-95 transition-transform"
     >
       <Users className="h-6 w-6" aria-hidden="true" />
     </Link>

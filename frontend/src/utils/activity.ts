@@ -12,10 +12,10 @@ export interface SportInfo {
 }
 
 export const SPORTS: SportInfo[] = [
-  { id: 'run', label: 'Run', verb: 'ran', showSpeed: false, surface: 'road', color: '#C8FF00' },
-  { id: 'walk', label: 'Walk', verb: 'walked', showSpeed: false, surface: 'road', color: '#00E5FF' },
-  { id: 'ride', label: 'Ride', verb: 'rode', showSpeed: true, surface: 'road', color: '#FFB800' },
-  { id: 'hike', label: 'Hike', verb: 'hiked', showSpeed: false, surface: 'trail', color: '#00D26A' },
+  { id: 'run', label: 'Run', verb: 'ran', showSpeed: false, surface: 'road', color: '#1D4ED8' },
+  { id: 'walk', label: 'Walk', verb: 'walked', showSpeed: false, surface: 'road', color: '#0369A1' },
+  { id: 'ride', label: 'Ride', verb: 'rode', showSpeed: true, surface: 'road', color: '#92400E' },
+  { id: 'hike', label: 'Hike', verb: 'hiked', showSpeed: false, surface: 'trail', color: '#047857' },
 ];
 
 export const sportInfo = (id?: string | null): SportInfo => SPORTS.find((s) => s.id === id) ?? SPORTS[0];
