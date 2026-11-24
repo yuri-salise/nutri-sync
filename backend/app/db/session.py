@@ -1,7 +1,9 @@
 from typing import AsyncGenerator
+from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -11,7 +13,13 @@ engine_kwargs = {
     "future": True,
     "pool_pre_ping": True,
 }
-if not is_sqlite:
+if settings.DB_SERVERLESS:
+    engine_kwargs["poolclass"] = NullPool
+    engine_kwargs["connect_args"] = {
+        "statement_cache_size": 0,
+        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4()}__",
+    }
+elif not is_sqlite:
     engine_kwargs.update({"pool_size": 10, "max_overflow": 20})
 
 engine = create_async_engine(

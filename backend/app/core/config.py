@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     DB_NAME: str = "nutrisync_db"
     DATABASE_URL: str
     DATABASE_URL_SYNC: str
+    # Serverless hosts (Vercel) behind a transaction pooler (Supabase port 6543): no app-side
+    # pool, and no prepared-statement cache, which transaction pooling cannot keep.
+    DB_SERVERLESS: bool = False
 
     # CORS: only the frontend's origin (Q4). Comma-separate if more than one.
     FRONTEND_ORIGIN: str = "http://localhost:5173"
