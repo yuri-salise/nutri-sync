@@ -1,8 +1,7 @@
-import time
-from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -14,7 +13,7 @@ from app.core.security import (
     require_roles,
     verify_password,
 )
-from app.db.models import User
+from app.db.models import LoginAttempt, User
 from app.db.session import get_db
 from app.schemas.auth import (
     LoginRequest,
@@ -30,18 +29,24 @@ _count, _unit = settings.LOGIN_RATE_LIMIT.split("/")
 LOGIN_MAX_ATTEMPTS = int(_count)
 LOGIN_WINDOW_SECONDS = {"second": 1, "minute": 60, "hour": 3600}[_unit.strip()]
 
-# shortcut: in-process memory, one API container only; move to Redis if the API scales out.
+# Attempts live in the DB so every API instance (serverless or not) shares one count.
 # Keyed by email, not IP: behind Caddy + the tunnel every request shares one proxy IP.
-_login_attempts: dict[str, deque[float]] = defaultdict(deque)
-
-
-def _check_login_rate(email: str) -> None:
-    now = time.monotonic()
-    attempts = _login_attempts[email.lower()]
-    while attempts and now - attempts[0] > LOGIN_WINDOW_SECONDS:
-        attempts.popleft()
-    if len(attempts) >= LOGIN_MAX_ATTEMPTS:
-        retry_after = int(LOGIN_WINDOW_SECONDS - (now - attempts[0])) + 1
+async def _check_login_rate(db: AsyncSession, email: str) -> None:
+    email = email.lower()
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=LOGIN_WINDOW_SECONDS)
+    await db.execute(delete(LoginAttempt).where(LoginAttempt.attempted_at < cutoff))
+    count, oldest = (
+        await db.execute(
+            select(func.count(), func.min(LoginAttempt.attempted_at)).where(
+                LoginAttempt.email == email, LoginAttempt.attempted_at >= cutoff
+            )
+        )
+    ).one()
+    if count >= LOGIN_MAX_ATTEMPTS:
+        if oldest.tzinfo is None:  # SQLite hands back naive datetimes
+            oldest = oldest.replace(tzinfo=timezone.utc)
+        retry_after = int(LOGIN_WINDOW_SECONDS - (now - oldest).total_seconds()) + 1
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             headers={"Retry-After": str(retry_after)},
@@ -53,7 +58,9 @@ def _check_login_rate(email: str) -> None:
                 }
             },
         )
-    attempts.append(now)
+    db.add(LoginAttempt(email=email, attempted_at=now))
+    # Commit now: a failed login raises, and get_db would roll the attempt back with it.
+    await db.commit()
 
 
 @router.post(
@@ -108,7 +115,7 @@ async def register(
     description="Authenticates credentials and returns JWT Bearer access and refresh tokens.",
 )
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    _check_login_rate(payload.email)
+    await _check_login_rate(db, payload.email)
     stmt = select(User).where(User.email == payload.email)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()

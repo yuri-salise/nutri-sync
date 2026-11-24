@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { RunActivity, SportType } from '../types';
@@ -124,12 +123,12 @@ export const RunTrackerPage: React.FC = () => {
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      className: 'dark-tiles',
+      className: '',
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
 
     polylineRef.current = L.polyline([], {
-      color: '#C8FF00',
+      color: '#1D4ED8',
       weight: 5,
       opacity: 0.95,
       lineJoin: 'round',
@@ -153,14 +152,14 @@ export const RunTrackerPage: React.FC = () => {
     if (!markerRef.current) {
       markerRef.current = L.circleMarker(latlng, {
         radius: 8,
-        fillColor: '#C8FF00',
+        fillColor: '#1D4ED8',
         fillOpacity: 1,
-        color: '#000000',
+        color: '#FFFFFF',
         weight: 3,
       }).addTo(map);
       accuracyRef.current = L.circle(latlng, {
         radius: fix.accuracy,
-        color: '#00E5FF',
+        color: '#0369A1',
         weight: 1,
         fillOpacity: 0.08,
       }).addTo(map);
@@ -390,7 +389,7 @@ export const RunTrackerPage: React.FC = () => {
   };
 
   const statusColor =
-    demoMode ? 'bg-[#B37FEB]' : gpsStatus === 'ready' ? 'bg-[#00D26A]' : gpsStatus === 'weak' || gpsStatus === 'locating' ? 'bg-[#FFB800]' : 'bg-[#F6465D]';
+    demoMode ? 'bg-violet' : gpsStatus === 'ready' ? 'bg-success' : gpsStatus === 'weak' || gpsStatus === 'locating' ? 'bg-warning' : 'bg-danger';
 
   return (
     <div className="space-y-6">
@@ -398,7 +397,7 @@ export const RunTrackerPage: React.FC = () => {
       {phase !== 'idle' && (
         <div
           data-testid="sticky-recording-bar"
-          className="sticky top-16 z-30 -mt-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-[#07080a]/95 backdrop-blur-md border-b border-[#1e232d] shadow-lg flex items-center justify-between transition-all"
+          className="sticky top-16 z-30 -mt-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-well/95 backdrop-blur-md border-b border-line shadow-lg flex items-center justify-between transition-all"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div
@@ -413,25 +412,25 @@ export const RunTrackerPage: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-extrabold text-white truncate">
+                <span className="text-sm font-extrabold text-ink truncate">
                   {phase === 'recording' ? `Recording ${info.label}` : `${info.label} (Paused)`}
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     phase === 'recording'
-                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
-                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                      ? 'bg-success/15 text-success border border-success/30'
+                      : 'bg-warning/15 text-warning border border-warning/30'
                   }`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                      phase === 'recording' ? 'bg-success animate-pulse' : 'bg-warning'
                     }`}
                   />
                   {phase === 'recording' ? 'Live' : 'Paused'}
                 </span>
               </div>
-              <p className="text-xs text-[#848E9C] font-mono">
+              <p className="text-xs text-muted tabular-nums">
                 {formatDuration(elapsedSec)} · {distanceKm.toFixed(2)} km
               </p>
             </div>
@@ -441,16 +440,16 @@ export const RunTrackerPage: React.FC = () => {
             {phase === 'recording' ? (
               <button
                 onClick={pauseActivity}
-                className="px-3.5 py-1.5 rounded-xl bg-[#FFB800] text-black text-xs font-bold flex items-center gap-1.5 hover:bg-[#ffc633] transition-all"
+                className="px-3.5 py-1.5 rounded-xl bg-warning text-on-accent text-xs font-bold flex items-center gap-1.5 hover:bg-warning transition-all"
               >
-                <Pause className="h-3.5 w-3.5 fill-black" /> Pause
+                <Pause className="h-3.5 w-3.5 fill-on-accent" /> Pause
               </button>
             ) : (
               <button
                 onClick={resumeActivity}
-                className="px-3.5 py-1.5 rounded-xl bg-[#C8FF00] text-black text-xs font-bold flex items-center gap-1.5 hover:bg-[#d4ff33] transition-all"
+                className="px-3.5 py-1.5 rounded-xl bg-accent text-on-accent text-xs font-bold flex items-center gap-1.5 hover:bg-accent-hover transition-all"
               >
-                <Play className="h-3.5 w-3.5 fill-black" /> Resume
+                <Play className="h-3.5 w-3.5 fill-on-accent" /> Resume
               </button>
             )}
           </div>
@@ -460,11 +459,11 @@ export const RunTrackerPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Navigation className="h-6 w-6 text-[#C8FF00]" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+            <Navigation className="h-6 w-6 text-accent" />
             <span>Record an Activity</span>
           </h1>
-          <p className="text-sm text-[#848E9C] mt-1">
+          <p className="text-sm text-muted mt-1">
             {phase === 'idle'
               ? 'Pick your activity, wait for the GPS to lock on, then tap Start.'
               : phase === 'recording'
@@ -482,8 +481,8 @@ export const RunTrackerPage: React.FC = () => {
                 aria-pressed={sport === sp.id}
                 className={`h-16 rounded-2xl border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-all ${
                   sport === sp.id
-                    ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
-                    : 'bg-[#12151b] text-[#B7BDC6] border-[#1e232d] hover:text-white'
+                    ? 'bg-accent text-on-accent border-accent'
+                    : 'bg-card text-soft border-line hover:text-ink'
                 }`}
               >
                 <SportIcon sport={sp.id} className="h-5 w-5" />
@@ -494,7 +493,7 @@ export const RunTrackerPage: React.FC = () => {
         ) : (
           <div
             data-testid="header-active-activity"
-            className="flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-[#12151b] border border-[#1e232d] sm:min-w-[240px] shadow-cyber-card"
+            className="flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-card border border-line sm:min-w-[240px] shadow-neu"
           >
             <div
               className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border"
@@ -508,27 +507,27 @@ export const RunTrackerPage: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#848E9C]">
+                <span className="text-[10px] tabular-nums font-bold tracking-wider uppercase text-muted">
                   Active Activity
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     phase === 'recording'
-                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
-                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                      ? 'bg-success/15 text-success border border-success/30'
+                      : 'bg-warning/15 text-warning border border-warning/30'
                   }`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                      phase === 'recording' ? 'bg-success animate-pulse' : 'bg-warning'
                     }`}
                   />
                   {phase === 'recording' ? 'Live' : 'Paused'}
                 </span>
               </div>
-              <p className="text-lg font-black text-white truncate flex items-center gap-1.5">
+              <p className="text-lg font-black text-ink truncate flex items-center gap-1.5">
                 <span>{info.label}</span>
-                <span className="text-xs font-normal text-[#848E9C] capitalize">({surfaceType})</span>
+                <span className="text-xs font-normal text-muted capitalize">({surfaceType})</span>
               </p>
             </div>
           </div>
@@ -536,29 +535,27 @@ export const RunTrackerPage: React.FC = () => {
       </div>
 
       {successMsg && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl bg-[#00D26A]/10 border border-[#00D26A]/30 text-[#00D26A] text-sm flex items-center gap-2.5"
+        <div
+          className="animate-rise p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm flex items-center gap-2.5"
         >
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="font-semibold">{successMsg}</span>
-        </motion.div>
+        </div>
       )}
 
       {errorMsg && (
-        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm">
+        <div role="alert" className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-sm">
           {errorMsg}
         </div>
       )}
 
       {/* GPS problems: explain what to do instead of failing silently */}
       {!demoMode && (gpsStatus === 'denied' || gpsStatus === 'unavailable' || gpsStatus === 'insecure') && (
-        <div className="p-4 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 text-sm text-[#FFB800] space-y-2">
+        <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-sm text-warning space-y-2">
           <p className="font-semibold flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" /> {statusText[gpsStatus]}
           </p>
-          <p className="text-[#EAECEF]">
+          <p className="text-ink">
             {gpsStatus === 'denied'
               ? 'Allow location for this site in your browser settings, then reload the page.'
               : gpsStatus === 'insecure'
@@ -571,11 +568,11 @@ export const RunTrackerPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map */}
-        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-[#1e232d] shadow-cyber-card relative isolate h-[55vh] min-h-[320px] lg:h-[460px]">
+        <div className="lg:col-span-2 rounded-3xl overflow-hidden border border-line shadow-neu relative isolate h-[55vh] min-h-[320px] lg:h-[460px]">
           <div ref={mapContainerRef} className="w-full h-full" />
 
           <div className="absolute top-3 left-3 right-14 z-[500] flex flex-wrap gap-2 items-center">
-            <div className="px-3 py-2 rounded-xl bg-black/85 backdrop-blur-md border border-[#1e232d] text-sm text-white flex items-center gap-2 shadow-lg">
+            <div className="px-3 py-2 rounded-xl bg-card/90 backdrop-blur-md border border-line text-sm text-ink flex items-center gap-2 shadow-lg">
               <span className={`h-2.5 w-2.5 rounded-full ${statusColor} ${phase === 'recording' ? 'animate-pulse' : ''}`} />
               <span className="font-semibold">
                 {demoMode
@@ -591,7 +588,7 @@ export const RunTrackerPage: React.FC = () => {
             </div>
             {phase !== 'idle' && (
               <div
-                className="px-2.5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-[#1e232d] text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                className="px-2.5 py-1.5 rounded-xl bg-card/90 backdrop-blur-md border border-line text-xs font-bold flex items-center gap-1.5 shadow-lg"
                 style={{ color: info.color }}
               >
                 <SportIcon sport={sport} className="h-4 w-4" />
@@ -604,7 +601,7 @@ export const RunTrackerPage: React.FC = () => {
             <button
               onClick={() => mapInstanceRef.current?.setView([currentFix.lat, currentFix.lng], 17)}
               aria-label="Center map on my location"
-              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-black/80 border border-[#1e232d] text-white flex items-center justify-center"
+              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-ink/40 border border-line text-ink flex items-center justify-center"
             >
               <LocateFixed className="h-5 w-5" />
             </button>
@@ -613,12 +610,12 @@ export const RunTrackerPage: React.FC = () => {
 
         {/* Stats + controls */}
         <div className="space-y-4">
-          <div className="p-4 sm:p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-4 shadow-cyber-card">
+          <div className="p-4 sm:p-6 rounded-3xl bg-card border border-line space-y-4 shadow-neu">
             {/* Active Activity banner inside stats & controls card */}
             {phase !== 'idle' && (
               <div
                 data-testid="stats-active-activity"
-                className="p-3.5 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-between"
+                className="p-3.5 rounded-2xl bg-well border border-line flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -632,25 +629,25 @@ export const RunTrackerPage: React.FC = () => {
                     <SportIcon sport={sport} className="h-5 w-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#848E9C] block">
+                    <span className="text-[10px] tabular-nums uppercase tracking-wider text-muted block">
                       Currently Recording
                     </span>
-                    <span className="text-base font-extrabold text-white flex items-center gap-1.5">
+                    <span className="text-base font-extrabold text-ink flex items-center gap-1.5">
                       {info.label}
-                      <span className="text-xs font-normal text-[#848E9C]">({surfaceType})</span>
+                      <span className="text-xs font-normal text-muted">({surfaceType})</span>
                     </span>
                   </div>
                 </div>
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                     phase === 'recording'
-                      ? 'bg-[#00D26A]/15 text-[#00D26A] border border-[#00D26A]/30'
-                      : 'bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/30'
+                      ? 'bg-success/15 text-success border border-success/30'
+                      : 'bg-warning/15 text-warning border border-warning/30'
                   }`}
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${
-                      phase === 'recording' ? 'bg-[#00D26A] animate-pulse' : 'bg-[#FFB800]'
+                      phase === 'recording' ? 'bg-success animate-pulse' : 'bg-warning'
                     }`}
                   />
                   {phase === 'recording' ? 'Live' : 'Paused'}
@@ -660,18 +657,18 @@ export const RunTrackerPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Distance', value: distanceKm.toFixed(2), unit: 'km', color: 'text-white' },
-                { label: 'Time', value: formatDuration(elapsedSec), unit: '', color: 'text-white' },
+                { label: 'Distance', value: distanceKm.toFixed(2), unit: 'km', color: 'text-ink' },
+                { label: 'Time', value: formatDuration(elapsedSec), unit: '', color: 'text-ink' },
                 info.showSpeed
-                  ? { label: 'Avg speed', value: formatSpeed(track.distanceM, elapsedSec), unit: 'km/h', color: 'text-[#00E5FF]' }
-                  : { label: 'Avg pace', value: formatPace(track.distanceM, elapsedSec), unit: '/km', color: 'text-[#00E5FF]' },
-                { label: 'Climb', value: Math.round(track.elevationGainM).toString(), unit: 'm', color: 'text-[#FFB800]' },
+                  ? { label: 'Avg speed', value: formatSpeed(track.distanceM, elapsedSec), unit: 'km/h', color: 'text-info' }
+                  : { label: 'Avg pace', value: formatPace(track.distanceM, elapsedSec), unit: '/km', color: 'text-info' },
+                { label: 'Climb', value: Math.round(track.elevationGainM).toString(), unit: 'm', color: 'text-warning' },
               ].map((s) => (
-                <div key={s.label} className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d]">
-                  <span className="text-xs font-medium text-[#848E9C]">{s.label}</span>
-                  <p className={`text-2xl font-black font-mono mt-1 ${s.color}`}>
+                <div key={s.label} className="p-4 rounded-2xl bg-well border border-line">
+                  <span className="text-xs font-medium text-muted">{s.label}</span>
+                  <p className={`text-2xl font-black tabular-nums mt-1 ${s.color}`}>
                     {s.value}
-                    {s.unit && <span className="text-xs text-[#848E9C] ml-1">{s.unit}</span>}
+                    {s.unit && <span className="text-xs text-muted ml-1">{s.unit}</span>}
                   </p>
                 </div>
               ))}
@@ -682,9 +679,9 @@ export const RunTrackerPage: React.FC = () => {
               <button
                 onClick={startActivity}
                 disabled={!canStart}
-                className="w-full py-4 rounded-2xl bg-[#C8FF00] text-black font-bold text-base flex items-center justify-center gap-2 shadow-glow-lime hover:bg-[#d4ff33] transition-all disabled:opacity-40 disabled:shadow-none"
+                className="w-full py-4 rounded-2xl bg-accent text-on-accent font-bold text-base flex items-center justify-center gap-2 shadow-neu-sm hover:bg-accent-hover transition-all disabled:opacity-40 disabled:shadow-none"
               >
-                <Play className="h-5 w-5 fill-black" />
+                <Play className="h-5 w-5 fill-on-accent" />
                 {canStart ? `Start ${info.label}` : 'Waiting for GPS…'}
               </button>
             )}
@@ -692,9 +689,9 @@ export const RunTrackerPage: React.FC = () => {
             {phase === 'recording' && (
               <button
                 onClick={pauseActivity}
-                className="w-full py-4 rounded-2xl bg-[#FFB800] text-black font-bold text-base flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-warning text-on-accent font-bold text-base flex items-center justify-center gap-2"
               >
-                <Pause className="h-5 w-5 fill-black" /> Pause {info.label}
+                <Pause className="h-5 w-5 fill-on-accent" /> Pause {info.label}
               </button>
             )}
 
@@ -703,21 +700,21 @@ export const RunTrackerPage: React.FC = () => {
                 <button
                   onClick={resumeActivity}
                   disabled={saving}
-                  className="py-4 rounded-2xl bg-[#C8FF00] text-black font-bold text-base flex items-center justify-center gap-2"
+                  className="py-4 rounded-2xl bg-accent text-on-accent font-bold text-base flex items-center justify-center gap-2"
                 >
-                  <Play className="h-5 w-5 fill-black" /> Resume {info.label}
+                  <Play className="h-5 w-5 fill-on-accent" /> Resume {info.label}
                 </button>
                 <button
                   onClick={requestFinish}
                   disabled={saving}
-                  className="py-4 rounded-2xl bg-[#F6465D] text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="py-4 rounded-2xl bg-danger text-ink font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Square className="h-5 w-5 fill-white" /> Finish
+                  <Square className="h-5 w-5 fill-ink" /> Finish
                 </button>
                 <button
                   onClick={resetActivity}
                   disabled={saving}
-                  className="col-span-2 py-2.5 rounded-xl text-sm text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center gap-1.5"
+                  className="col-span-2 py-2.5 rounded-xl text-sm text-muted hover:text-danger flex items-center justify-center gap-1.5"
                 >
                   <Trash2 className="h-4 w-4" /> Discard this {info.label.toLowerCase()}
                 </button>
@@ -725,18 +722,18 @@ export const RunTrackerPage: React.FC = () => {
             )}
 
             {phase === 'idle' && (
-              <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#07080a] border border-[#1e232d] cursor-pointer">
+              <label className="flex items-start gap-3 p-3 rounded-2xl bg-well border border-line cursor-pointer">
                 <input
                   type="checkbox"
                   checked={demoMode}
                   onChange={(e) => setDemoMode(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#B37FEB]"
+                  className="mt-0.5 h-4 w-4 accent-violet"
                 />
                 <span className="text-sm">
-                  <span className="font-semibold text-white flex items-center gap-1.5">
-                    <FlaskConical className="h-4 w-4 text-[#B37FEB]" /> Demo mode
+                  <span className="font-semibold text-ink flex items-center gap-1.5">
+                    <FlaskConical className="h-4 w-4 text-violet" /> Demo mode
                   </span>
-                  <span className="text-[#848E9C]">
+                  <span className="text-muted">
                     Simulates an activity from your current spot. For trying the app indoors; demo
                     activities are saved like real ones.
                   </span>
@@ -745,12 +742,12 @@ export const RunTrackerPage: React.FC = () => {
             )}
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] space-y-1.5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#C8FF00]">
+          <div className="p-4 rounded-2xl bg-well border border-line space-y-1.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-accent">
               <Sparkles className="h-4 w-4" />
               <span>{info.label} calorie bonus: ~{estCalories} kcal</span>
             </div>
-            <p className="text-sm text-[#848E9C] leading-relaxed">
+            <p className="text-sm text-muted leading-relaxed">
               When you save this {info.label.toLowerCase()}, these calories are added to today’s food target so you can
               refuel properly.
             </p>
@@ -760,13 +757,13 @@ export const RunTrackerPage: React.FC = () => {
 
       {/* History */}
       <div className="space-y-4 pt-2">
-        <h2 className="text-base font-bold text-white flex items-center gap-2">
-          <Clock className="h-4 w-4 text-[#C8FF00]" />
+        <h2 className="text-base font-bold text-ink flex items-center gap-2">
+          <Clock className="h-4 w-4 text-accent" />
           <span>Your activities ({runs.length})</span>
         </h2>
 
         {runs.length === 0 ? (
-          <div className="p-8 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-sm text-[#848E9C]">
+          <div className="p-8 text-center rounded-3xl bg-card border border-line text-sm text-muted">
             Nothing recorded yet. Your first activity will show up here.
           </div>
         ) : (
@@ -779,9 +776,9 @@ export const RunTrackerPage: React.FC = () => {
                   key={r.id}
                   to={`/record/${r.id}`}
                   aria-label={`View ${r.title || sp.label} details`}
-                  className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card flex gap-4 hover:border-[#C8FF00]/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C8FF00]"
+                  className="p-4 rounded-3xl bg-card border border-line shadow-neu flex gap-4 hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-center overflow-hidden">
+                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-well border border-line flex items-center justify-center overflow-hidden">
                     {route.length > 1 ? (
                       <RouteThumb points={route} color={sp.color} />
                     ) : (
@@ -792,13 +789,13 @@ export const RunTrackerPage: React.FC = () => {
                   </div>
                   <div className="min-w-0 flex-1 space-y-2">
                     <div>
-                      <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                      <p className="text-sm font-bold text-ink truncate flex items-center gap-1.5">
                         <span style={{ color: sp.color }}>
                           <SportIcon sport={r.sport_type} className="h-4 w-4" />
                         </span>
                         {r.title || sp.label}
                       </p>
-                      <p className="text-xs text-[#848E9C] flex items-center gap-1.5">
+                      <p className="text-xs text-muted flex items-center gap-1.5">
                         {parseApiDate(r.recorded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         <span aria-hidden="true">·</span>
                         {r.is_public ? <Globe className="h-3 w-3" aria-label="Shared" /> : <Lock className="h-3 w-3" aria-label="Private" />}
@@ -807,19 +804,19 @@ export const RunTrackerPage: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
-                        <span className="text-xs text-[#848E9C] block">Distance</span>
-                        <span className="font-bold font-mono text-white">
+                        <span className="text-xs text-muted block">Distance</span>
+                        <span className="font-bold tabular-nums text-ink">
                           {r.distance_km.toFixed(2)}
-                          <span className="text-xs text-[#848E9C]"> km</span>
+                          <span className="text-xs text-muted"> km</span>
                         </span>
                       </div>
                       <div>
-                        <span className="text-xs text-[#848E9C] block">Time</span>
-                        <span className="font-bold font-mono text-white">{formatDuration(r.duration_sec)}</span>
+                        <span className="text-xs text-muted block">Time</span>
+                        <span className="font-bold tabular-nums text-ink">{formatDuration(r.duration_sec)}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-[#848E9C] block">{sp.showSpeed ? 'Speed' : 'Pace'}</span>
-                        <span className="font-bold font-mono text-white">
+                        <span className="text-xs text-muted block">{sp.showSpeed ? 'Speed' : 'Pace'}</span>
+                        <span className="font-bold tabular-nums text-ink">
                           {sp.showSpeed
                             ? formatSpeed(r.distance_km * 1000, r.duration_sec)
                             : formatPace(r.distance_km * 1000, r.duration_sec)}
@@ -838,17 +835,17 @@ export const RunTrackerPage: React.FC = () => {
       {finishOpen && (
         <Overlay>
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="save-activity-title">
-            <div className="absolute inset-0 bg-black/70" onClick={() => !saving && setFinishOpen(false)} aria-hidden="true" />
-            <div className="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#0d1015] border border-[#1e232d] p-5 space-y-4">
-              <h2 id="save-activity-title" className="text-lg font-bold text-white">
+            <div className="absolute inset-0 bg-ink/40" onClick={() => !saving && setFinishOpen(false)} aria-hidden="true" />
+            <div className="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-well border border-line p-5 space-y-4">
+              <h2 id="save-activity-title" className="text-lg font-bold text-ink">
                 Save your {info.label.toLowerCase()}
               </h2>
 
-              <div className="h-40 rounded-2xl bg-[#07080a] border border-[#1e232d] flex items-center justify-center overflow-hidden">
+              <div className="h-40 rounded-2xl bg-well border border-line flex items-center justify-center overflow-hidden">
                 {track.points.length > 1 ? (
                   <RouteThumb points={track.points.map((pt) => [pt.lat, pt.lng] as [number, number])} color={info.color} />
                 ) : (
-                  <span className="text-sm text-[#848E9C]">No route to show</span>
+                  <span className="text-sm text-muted">No route to show</span>
                 )}
               </div>
 
@@ -858,33 +855,33 @@ export const RunTrackerPage: React.FC = () => {
                   { label: 'Time', value: formatDuration(elapsedSec) },
                   { label: 'Calories', value: `${estCalories}` },
                 ].map((m) => (
-                  <div key={m.label} className="p-3 rounded-2xl bg-[#12151b] border border-[#1e232d]">
-                    <p className="text-xs text-[#848E9C]">{m.label}</p>
-                    <p className="text-base font-black font-mono text-white">{m.value}</p>
+                  <div key={m.label} className="p-3 rounded-2xl bg-card border border-line">
+                    <p className="text-xs text-muted">{m.label}</p>
+                    <p className="text-base font-black tabular-nums text-ink">{m.value}</p>
                   </div>
                 ))}
               </div>
 
-              <label className="block text-sm text-[#848E9C] space-y-1">
+              <label className="block text-sm text-muted space-y-1">
                 <span>Name</span>
                 <input
                   value={title}
                   maxLength={120}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full h-12 rounded-xl bg-[#07080a] border border-[#1e232d] px-3 text-base text-white focus:border-[#C8FF00] focus:outline-none"
+                  className="w-full h-12 rounded-xl bg-well border border-line px-3 text-base text-ink focus:border-accent focus:outline-none"
                 />
               </label>
 
-              <label className="flex items-start gap-3 text-sm text-white">
+              <label className="flex items-start gap-3 text-sm text-ink">
                 <input
                   type="checkbox"
                   checked={shareToFeed}
                   onChange={(e) => setShareToFeed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#C8FF00]"
+                  className="mt-0.5 h-4 w-4 accent-accent"
                 />
                 <span>
                   Share to the community feed
-                  <span className="block text-xs text-[#848E9C]">Others won’t see the first and last 200 m of your route.</span>
+                  <span className="block text-xs text-muted">Others won’t see the first and last 200 m of your route.</span>
                 </span>
               </label>
 
@@ -892,14 +889,14 @@ export const RunTrackerPage: React.FC = () => {
                 <button
                   onClick={() => setFinishOpen(false)}
                   disabled={saving}
-                  className="h-12 rounded-2xl bg-[#12151b] border border-[#1e232d] text-white font-semibold text-sm"
+                  className="h-12 rounded-2xl bg-card border border-line text-ink font-semibold text-sm"
                 >
                   Keep going
                 </button>
                 <button
                   onClick={saveActivity}
                   disabled={saving}
-                  className="h-12 rounded-2xl bg-[#C8FF00] text-black font-bold text-sm disabled:opacity-50"
+                  className="h-12 rounded-2xl bg-accent text-on-accent font-bold text-sm disabled:opacity-50"
                 >
                   {saving ? 'Saving…' : 'Save activity'}
                 </button>

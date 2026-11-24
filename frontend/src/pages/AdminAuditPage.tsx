@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { Exercise, RagScanLog, FoodItemSummary } from '../types';
 import { useDialogs } from '../components/common/DialogProvider';
@@ -123,23 +122,23 @@ export const AdminAuditPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <ShieldCheck className="h-6 w-6 text-[#00E5FF]" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+            <ShieldCheck className="h-6 w-6 text-info" />
             <span>Coach & Administrator Dashboard</span>
           </h1>
-          <p className="text-sm text-[#848E9C]">
+          <p className="text-sm text-muted">
             Manage the built-in exercise library, inspect AI meal scan history, and browse the verified food database.
           </p>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center gap-1 bg-[#12151b] p-1 rounded-xl border border-[#1e232d] self-start sm:self-auto text-xs">
+        <div className="flex items-center gap-1 bg-card p-1 rounded-xl border border-line self-start sm:self-auto text-xs">
           <button
             onClick={() => setActiveTab('exercises')}
             className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               activeTab === 'exercises'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
+                ? 'bg-accent text-on-accent shadow-neu-sm'
+                : 'text-muted hover:text-ink'
             }`}
           >
             Exercise Library ({libraryExercises.length})
@@ -148,8 +147,8 @@ export const AdminAuditPage: React.FC = () => {
             onClick={() => setActiveTab('rag_logs')}
             className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               activeTab === 'rag_logs'
-                ? 'bg-[#00E5FF] text-black shadow-glow-cyan'
-                : 'text-[#848E9C] hover:text-white'
+                ? 'bg-info text-on-accent shadow-neu-sm'
+                : 'text-muted hover:text-ink'
             }`}
           >
             AI Scan History
@@ -158,8 +157,8 @@ export const AdminAuditPage: React.FC = () => {
             onClick={() => setActiveTab('knowledge')}
             className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               activeTab === 'knowledge'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
+                ? 'bg-accent text-on-accent shadow-neu-sm'
+                : 'text-muted hover:text-ink'
             }`}
           >
             Food Database
@@ -168,8 +167,8 @@ export const AdminAuditPage: React.FC = () => {
             onClick={() => setActiveTab('info')}
             className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
               activeTab === 'info'
-                ? 'bg-[#C8FF00] text-black shadow-glow-lime'
-                : 'text-[#848E9C] hover:text-white'
+                ? 'bg-accent text-on-accent shadow-neu-sm'
+                : 'text-muted hover:text-ink'
             }`}
           >
             Capstone Credits
@@ -180,27 +179,27 @@ export const AdminAuditPage: React.FC = () => {
       {/* Tab 1: Built-in exercise library (users add their own private exercises without approval) */}
       {activeTab === 'exercises' && (
         <div className="space-y-4">
-          <p className="text-sm text-[#848E9C]">
+          <p className="text-sm text-muted">
             These exercises show up for every athlete. Athletes can also add their own private exercises
             from the Workouts screen; those don’t need your approval.
           </p>
 
-          <form onSubmit={handleAddLibraryExercise} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
-            <label className="text-xs text-[#848E9C] space-y-1">
+          <form onSubmit={handleAddLibraryExercise} className="p-4 rounded-3xl bg-card border border-line grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+            <label className="text-xs text-muted space-y-1">
               <span>Exercise name</span>
               <input
                 value={newExName}
                 onChange={(e) => setNewExName(e.target.value)}
                 placeholder="e.g. Goblet Squat"
-                className="w-full h-11 rounded-xl bg-[#07080a] border border-[#1e232d] px-3 text-sm text-white focus:border-[#C8FF00] focus:outline-none"
+                className="w-full h-11 rounded-xl bg-well border border-line px-3 text-sm text-ink focus:border-accent focus:outline-none"
               />
             </label>
-            <label className="text-xs text-[#848E9C] space-y-1">
+            <label className="text-xs text-muted space-y-1">
               <span>Muscle</span>
               <select
                 value={newExMuscle}
                 onChange={(e) => setNewExMuscle(e.target.value)}
-                className="w-full h-11 rounded-xl bg-[#07080a] border border-[#1e232d] px-2 text-sm text-white capitalize"
+                className="w-full h-11 rounded-xl bg-well border border-line px-2 text-sm text-ink capitalize"
               >
                 {['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full body', 'cardio'].map((m) => (
                   <option key={m} value={m}>{m}</option>
@@ -210,38 +209,38 @@ export const AdminAuditPage: React.FC = () => {
             <button
               type="submit"
               disabled={libraryBusy}
-              className="h-11 px-5 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="h-11 px-5 rounded-xl bg-accent text-on-accent font-bold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <Plus className="h-4 w-4" /> Add to library
             </button>
           </form>
 
           {libraryError && (
-            <p role="alert" className="text-sm text-[#F6465D]">{libraryError}</p>
+            <p role="alert" className="text-sm text-danger">{libraryError}</p>
           )}
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#848E9C]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <input
               aria-label="Search library"
               value={libraryQuery}
               onChange={(e) => setLibraryQuery(e.target.value)}
               placeholder="Search library"
-              className="w-full h-11 pl-9 pr-3 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm text-white focus:border-[#C8FF00] focus:outline-none"
+              className="w-full h-11 pl-9 pr-3 rounded-xl bg-well border border-line text-sm text-ink focus:border-accent focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {visibleLibrary.map((ex) => (
-              <div key={ex.id} className="p-3 rounded-2xl bg-[#12151b] border border-[#1e232d] flex items-center justify-between gap-3">
+              <div key={ex.id} className="p-3 rounded-2xl bg-card border border-line flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{ex.name}</p>
-                  <p className="text-xs text-[#848E9C] capitalize">{ex.muscle_group} · {ex.category}</p>
+                  <p className="text-sm font-semibold text-ink truncate">{ex.name}</p>
+                  <p className="text-xs text-muted capitalize">{ex.muscle_group} · {ex.category}</p>
                 </div>
                 <button
                   onClick={() => handleRemoveLibraryExercise(ex)}
                   aria-label={`Remove ${ex.name}`}
-                  className="h-9 w-9 rounded-lg text-[#848E9C] hover:text-[#F6465D] flex items-center justify-center shrink-0"
+                  className="h-9 w-9 rounded-lg text-muted hover:text-danger flex items-center justify-center shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -254,8 +253,8 @@ export const AdminAuditPage: React.FC = () => {
       {/* Tab 2: RAG Traceability & Audit Logs (Requirement T4) */}
       {activeTab === 'rag_logs' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-[#0d1015] border border-[#1e232d] text-xs text-[#848E9C] flex items-center gap-2">
-            <Lock className="h-4 w-4 text-[#C8FF00] shrink-0" />
+          <div className="p-4 rounded-2xl bg-well border border-line text-xs text-muted flex items-center gap-2">
+            <Lock className="h-4 w-4 text-accent shrink-0" />
             <span>
               Requirement T4 RAG Audit Ledger: All semantic inferences record latency (ms), cosine similarity scores, prompt payloads, and fallback statuses.
             </span>
@@ -263,10 +262,10 @@ export const AdminAuditPage: React.FC = () => {
 
           {loadingLogs ? (
             <div className="p-12 text-center">
-              <div className="h-8 w-8 border-2 border-[#00E5FF] border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="h-8 w-8 border-2 border-info border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : ragLogs.length === 0 ? (
-            <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
+            <div className="p-12 text-center rounded-3xl bg-card border border-line text-xs text-muted">
               No RAG scan logs captured yet. Run a meal query in the RAG Scanner to populate the audit ledger.
             </div>
           ) : (
@@ -274,28 +273,28 @@ export const AdminAuditPage: React.FC = () => {
               {ragLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card space-y-3"
+                  className="p-5 rounded-3xl bg-card border border-line shadow-neu space-y-3"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-0.5">
-                      <span className="text-xs font-bold text-white font-mono">&ldquo;{log.query_input}&rdquo;</span>
-                      <p className="text-[11px] font-mono text-[#848E9C]">
+                      <span className="text-xs font-bold text-ink tabular-nums">&ldquo;{log.query_input}&rdquo;</span>
+                      <p className="text-[11px] tabular-nums text-muted">
                         {new Date(log.created_at).toLocaleString()} &bull; Model: {log.model_version}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 font-mono text-xs">
-                      <span className="px-2.5 py-1 rounded-xl bg-[#07080a] border border-[#1e232d] text-[#C8FF00] font-bold">
+                    <div className="flex items-center gap-3 tabular-nums text-xs">
+                      <span className="px-2.5 py-1 rounded-xl bg-well border border-line text-accent font-bold">
                         {(log.top_similarity_score * 100).toFixed(1)}% Sim
                       </span>
-                      <span className="px-2.5 py-1 rounded-xl bg-[#07080a] border border-[#1e232d] text-[#00E5FF]">
+                      <span className="px-2.5 py-1 rounded-xl bg-well border border-line text-info">
                         {log.latency_ms.toFixed(1)} ms
                       </span>
                       <span
                         className={`px-2.5 py-1 rounded-xl text-[10px] font-bold ${
                           log.used_fallback
-                            ? 'bg-[#FFB800]/20 text-[#FFB800] border border-[#FFB800]/30'
-                            : 'bg-[#00D26A]/20 text-[#00D26A] border border-[#00D26A]/30'
+                            ? 'bg-warning/20 text-warning border border-warning/30'
+                            : 'bg-success/20 text-success border border-success/30'
                         }`}
                       >
                         {log.used_fallback ? 'FALLBACK' : 'VECTOR GROUNDED'}
@@ -312,19 +311,19 @@ export const AdminAuditPage: React.FC = () => {
       {/* Tab 3: Knowledge Base Vector Explorer */}
       {activeTab === 'knowledge' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] flex items-center gap-3">
-            <Search className="h-4 w-4 text-[#848E9C]" />
+          <div className="p-4 rounded-3xl bg-card border border-line flex items-center gap-3">
+            <Search className="h-4 w-4 text-muted" />
             <input
               type="text"
               value={knowledgeQuery}
               onChange={(e) => setKnowledgeQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadKnowledgeBase()}
               placeholder="Filter knowledge items by name (Press Enter)..."
-              className="w-full bg-transparent text-xs text-white placeholder-[#848E9C] focus:outline-none"
+              className="w-full bg-transparent text-xs text-ink placeholder-muted focus:outline-none"
             />
             <button
               onClick={loadKnowledgeBase}
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-[#C8FF00] text-black hover:bg-[#d4ff33]"
+              className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-accent text-on-accent hover:bg-accent-hover"
             >
               Search
             </button>
@@ -332,28 +331,28 @@ export const AdminAuditPage: React.FC = () => {
 
           {loadingKnowledge ? (
             <div className="p-12 text-center">
-              <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {knowledgeItems.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] space-y-2 shadow-cyber-card"
+                  className="p-4 rounded-2xl bg-card border border-line space-y-2 shadow-neu"
                 >
                   <div className="flex items-start justify-between">
-                    <p className="text-xs font-bold text-white leading-snug">{item.food_name}</p>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#07080a] border border-[#1e232d] text-[#00E5FF]">
+                    <p className="text-xs font-bold text-ink leading-snug">{item.food_name}</p>
+                    <span className="text-[10px] tabular-nums px-2 py-0.5 rounded bg-well border border-line text-info">
                       {item.source_dataset}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs font-mono text-[#848E9C]">
-                    <span className="text-[#C8FF00] font-bold">{item.kcal_per_100g} kcal/100g</span>
+                  <div className="flex items-center justify-between text-xs tabular-nums text-muted">
+                    <span className="text-accent font-bold">{item.kcal_per_100g} kcal/100g</span>
                     <span>P: {item.protein_per_100g}g</span>
                   </div>
-                  <div className="text-[10px] font-mono text-[#848E9C] pt-1 border-t border-[#1e232d] flex justify-between">
+                  <div className="text-[10px] tabular-nums text-muted pt-1 border-t border-line flex justify-between">
                     <span>Embedding:</span>
-                    <span className="text-[#C8FF00]">pgvector[384]</span>
+                    <span className="text-accent">pgvector[384]</span>
                   </div>
                 </div>
               ))}
@@ -365,73 +364,73 @@ export const AdminAuditPage: React.FC = () => {
       {/* Tab 4: Project & Capstone Information */}
       {activeTab === 'info' && (
         <div className="space-y-6">
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#12151b] via-[#0d1015] to-[#000000] border border-[#1e232d] shadow-2xl space-y-6">
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-card via-well to-page border border-line shadow-2xl space-y-6">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#C8FF00] font-bold">
+              <span className="text-[10px] tabular-nums uppercase tracking-widest text-accent font-bold">
                 Academic Capstone Specification
               </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+              <h2 className="text-xl sm:text-2xl font-black text-ink mt-1">
                 NutriSync-RAG: Activity-Synced Nutrition & Workout Tracking
               </h2>
-              <p className="text-xs text-[#848E9C] mt-1">
+              <p className="text-xs text-muted mt-1">
                 ITSD 85 &bull; Special Topics in Software Development &bull; Academic Year 2026–2027
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
-                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Developer / Student</span>
-                <p className="text-sm font-bold text-white">Yuri D. Salise</p>
-                <p className="text-[11px] text-[#00E5FF] font-mono">Solo Full-Stack Architect</p>
+              <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
+                <span className="text-[10px] text-muted tabular-nums uppercase">Developer / Student</span>
+                <p className="text-sm font-bold text-ink">Yuri D. Salise</p>
+                <p className="text-[11px] text-info tabular-nums">Solo Full-Stack Architect</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
-                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Course & Section</span>
-                <p className="text-sm font-bold text-white">ITSD 85</p>
-                <p className="text-[11px] text-[#C8FF00] font-mono">BSIT 4A</p>
+              <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
+                <span className="text-[10px] text-muted tabular-nums uppercase">Course & Section</span>
+                <p className="text-sm font-bold text-ink">ITSD 85</p>
+                <p className="text-[11px] text-accent tabular-nums">BSIT 4A</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
-                <span className="text-[10px] text-[#848E9C] font-mono uppercase">Instructor / Coach</span>
-                <p className="text-sm font-bold text-white">Coach Rinante Buntod</p>
-                <p className="text-[11px] text-[#848E9C] font-mono">Project Evaluator</p>
+              <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
+                <span className="text-[10px] text-muted tabular-nums uppercase">Instructor / Coach</span>
+                <p className="text-sm font-bold text-ink">Coach Rinante Buntod</p>
+                <p className="text-[11px] text-muted tabular-nums">Project Evaluator</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-1">
-                <span className="text-[10px] text-[#848E9C] font-mono uppercase">System Version</span>
-                <p className="text-sm font-bold text-white">v1.0.0-production</p>
-                <p className="text-[11px] text-[#00D26A] font-mono">Docker Compose + Caddy</p>
+              <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
+                <span className="text-[10px] text-muted tabular-nums uppercase">System Version</span>
+                <p className="text-sm font-bold text-ink">v1.0.0-production</p>
+                <p className="text-[11px] text-success tabular-nums">Docker Compose + Caddy</p>
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#07080a] border border-[#1e232d] space-y-3">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+            <div className="p-5 rounded-2xl bg-well border border-line space-y-3">
+              <h4 className="text-xs font-bold text-ink uppercase tracking-wider tabular-nums">
                 ITSD 85 Rubric Architecture Compliance
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs font-mono">
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">F1–F6</span>
-                  <span className="text-[10px] text-[#848E9C]">Frontend SPA</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs tabular-nums">
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">F1–F6</span>
+                  <span className="text-[10px] text-muted">Frontend SPA</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">B1–B9</span>
-                  <span className="text-[10px] text-[#848E9C]">FastAPI REST</span>
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">B1–B9</span>
+                  <span className="text-[10px] text-muted">FastAPI REST</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">D1–D4</span>
-                  <span className="text-[10px] text-[#848E9C]">Postgres & RLS</span>
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">D1–D4</span>
+                  <span className="text-[10px] text-muted">Postgres & RLS</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">Q1–Q5</span>
-                  <span className="text-[10px] text-[#848E9C]">Pytest & Coverage</span>
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">Q1–Q5</span>
+                  <span className="text-[10px] text-muted">Pytest & Coverage</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">DP1–DP6</span>
-                  <span className="text-[10px] text-[#848E9C]">Caddy Proxy</span>
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">DP1–DP6</span>
+                  <span className="text-[10px] text-muted">Caddy Proxy</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#12151b] border border-[#1e232d]">
-                  <span className="text-[#00D26A] font-bold block">T1–T6</span>
-                  <span className="text-[10px] text-[#848E9C]">Traceability</span>
+                <div className="p-2.5 rounded-xl bg-card border border-line">
+                  <span className="text-success font-bold block">T1–T6</span>
+                  <span className="text-[10px] text-muted">Traceability</span>
                 </div>
               </div>
             </div>

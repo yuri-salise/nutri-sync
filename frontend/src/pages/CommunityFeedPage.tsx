@@ -153,15 +153,15 @@ export const CommunityFeedPage: React.FC = () => {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-          <Users className="h-6 w-6 text-[#C8FF00]" />
+        <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+          <Users className="h-6 w-6 text-accent" />
           <span>Community</span>
         </h1>
-        <p className="text-sm text-[#848E9C] mt-1">See what everyone is training, cheer them on, and share your own wins.</p>
+        <p className="text-sm text-muted mt-1">See what everyone is training, cheer them on, and share your own wins.</p>
       </div>
 
       {/* Composer */}
-      <form onSubmit={submitPost} className="p-4 rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-3">
+      <form onSubmit={submitPost} className="p-4 rounded-3xl bg-card border border-line space-y-3">
         <div className="flex items-start gap-3">
           <Avatar name={viewerName} id={viewerId} />
           <div className="flex-1 min-w-0">
@@ -176,13 +176,13 @@ export const CommunityFeedPage: React.FC = () => {
               onFocus={() => setComposerOpen(true)}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={`What's on your mind, ${viewerName.split(' ')[0]}?`}
-              className="w-full bg-[#07080a] border border-[#1e232d] rounded-2xl px-4 py-3 text-base text-white placeholder-[#848E9C] focus:border-[#C8FF00] focus:outline-none resize-none"
+              className="w-full bg-well border border-line rounded-2xl px-4 py-3 text-base text-ink placeholder-muted focus:border-accent focus:outline-none resize-none"
             />
           </div>
         </div>
         {(composerOpen || draft) && (
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-[#848E9C]">
+            <span className="text-xs text-muted">
               {draft.length}/{MAX_POST}
             </span>
             <div className="flex gap-2">
@@ -192,21 +192,21 @@ export const CommunityFeedPage: React.FC = () => {
                   setDraft('');
                   setComposerOpen(false);
                 }}
-                className="h-10 px-4 rounded-xl text-sm text-[#848E9C] hover:text-white"
+                className="h-10 px-4 rounded-xl text-sm text-muted hover:text-ink"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!draft.trim() || posting}
-                className="h-10 px-5 rounded-xl bg-[#C8FF00] text-black font-bold text-sm flex items-center gap-1.5 disabled:opacity-40"
+                className="h-10 px-5 rounded-xl bg-accent text-on-accent font-bold text-sm flex items-center gap-1.5 disabled:opacity-40"
               >
                 <Send className="h-4 w-4" /> {posting ? 'Posting…' : 'Post'}
               </button>
             </div>
           </div>
         )}
-        <p className="text-xs text-[#848E9C]">
+        <p className="text-xs text-muted">
           Workouts and activities you share appear here automatically when you finish them.
         </p>
       </form>
@@ -221,8 +221,8 @@ export const CommunityFeedPage: React.FC = () => {
             onClick={() => setFilter(f.id)}
             className={`shrink-0 h-10 px-4 rounded-full text-sm font-semibold border transition-colors ${
               filter === f.id
-                ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
-                : 'bg-[#12151b] text-[#B7BDC6] border-[#1e232d] hover:text-white'
+                ? 'bg-accent text-on-accent border-accent'
+                : 'bg-card text-soft border-line hover:text-ink'
             }`}
           >
             {f.label}
@@ -231,7 +231,7 @@ export const CommunityFeedPage: React.FC = () => {
       </div>
 
       {error && (
-        <div role="alert" className="p-4 rounded-2xl bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] text-sm flex items-center gap-2.5">
+        <div role="alert" className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-sm flex items-center gap-2.5">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="flex-1">{error}</span>
           <button onClick={() => load(1, true, filter)} className="font-semibold underline">
@@ -244,13 +244,13 @@ export const CommunityFeedPage: React.FC = () => {
       {loading ? (
         <div className="space-y-4" aria-busy="true">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-48 rounded-3xl bg-[#12151b] border border-[#1e232d] animate-pulse" />
+            <div key={i} className="h-48 rounded-3xl bg-card border border-line animate-pulse" />
           ))}
         </div>
       ) : items.length === 0 && !error ? (
-        <div className="p-10 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] space-y-2">
-          <p className="text-base font-bold text-white">It’s quiet in here</p>
-          <p className="text-sm text-[#848E9C]">
+        <div className="p-10 text-center rounded-3xl bg-card border border-line space-y-2">
+          <p className="text-base font-bold text-ink">It’s quiet in here</p>
+          <p className="text-sm text-muted">
             {filter === 'all' || filter === 'posts'
               ? 'Be the first to post something above, or finish a workout and share it.'
               : 'Nothing here yet. Finish a workout or activity and share it to get things started.'}
@@ -273,13 +273,13 @@ export const CommunityFeedPage: React.FC = () => {
 
           <div ref={sentinelRef} className="h-10 flex items-center justify-center">
             {loadingMore ? (
-              <Loader2 className="h-5 w-5 text-[#848E9C] animate-spin" aria-label="Loading more" />
+              <Loader2 className="h-5 w-5 text-muted animate-spin" aria-label="Loading more" />
             ) : hasMore ? (
-              <button onClick={() => load(page + 1, false, filter)} className="h-10 px-5 rounded-xl bg-[#12151b] border border-[#1e232d] text-sm font-semibold text-white">
+              <button onClick={() => load(page + 1, false, filter)} className="h-10 px-5 rounded-xl bg-card border border-line text-sm font-semibold text-ink">
                 Load more
               </button>
             ) : (
-              <span className="text-sm text-[#5E6673]">You’re all caught up</span>
+              <span className="text-sm text-faint">You’re all caught up</span>
             )}
           </div>
         </div>

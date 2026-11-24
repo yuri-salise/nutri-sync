@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 
 /** Small "Coach" tag shown next to a coach's name on posts and comments. */
 export const CoachBadge: React.FC = () => (
-  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-bold align-middle whitespace-nowrap">
+  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info/15 border border-info/40 text-info text-xs font-bold align-middle whitespace-nowrap">
     <ShieldCheck className="h-3 w-3" aria-hidden="true" />
     Coach
   </span>
@@ -17,7 +17,7 @@ export const CoachApproval: React.FC<{ count: number }> = ({ count }) => {
   const text = coachApprovalText(count);
   if (!text) return null;
   return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#00E5FF]/10 border border-[#00E5FF]/40 text-[#00E5FF] text-sm font-bold">
+    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-info/10 border border-info/40 text-info text-sm font-bold">
       <ShieldCheck className="h-4 w-4" aria-hidden="true" />
       {text}
     </div>

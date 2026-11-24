@@ -268,7 +268,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # Start FastAPI server (SQLite dev DB by default, or PostgreSQL via .env)
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload

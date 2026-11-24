@@ -210,3 +210,13 @@ class NutritionLog(Base):
     # Relationships
     user = relationship("User", back_populates="nutrition_logs")
     rag_scan = relationship("RagScanLog", back_populates="nutrition_logs")
+
+
+class LoginAttempt(Base):
+    """One login try, kept for the rate-limit window. Lives in the DB so every API instance shares it."""
+
+    __tablename__ = "login_attempts"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), nullable=False, index=True)
+    attempted_at = Column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)

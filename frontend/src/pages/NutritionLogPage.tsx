@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { NutritionLog } from '../types';
 import { useDialogs } from '../components/common/DialogProvider';
@@ -98,18 +97,18 @@ export const NutritionLogPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <UtensilsCrossed className="h-6 w-6 text-[#C8FF00]" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink flex items-center gap-2.5">
+            <UtensilsCrossed className="h-6 w-6 text-accent" />
             <span>Daily Food Log</span>
           </h1>
-          <p className="text-sm text-[#848E9C]">
+          <p className="text-sm text-muted">
             Track your daily meals, calories, and macros with verified nutrition data.
           </p>
         </div>
 
         <button
           onClick={() => setShowAddForm(true)}
-          className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#C8FF00] text-black hover:bg-[#d4ff33] shadow-glow-lime flex items-center gap-2 transition-all self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl text-xs font-bold bg-accent text-on-accent hover:bg-accent-hover shadow-neu-sm flex items-center gap-2 transition-all self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
           <span>Manual Entry</span>
@@ -118,95 +117,95 @@ export const NutritionLogPage: React.FC = () => {
 
       {/* Aggregate Order-Book Tickers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
-          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Total Calories</span>
-          <p className="text-2xl font-black font-mono text-[#C8FF00] mt-1">
+        <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
+          <span className="text-[10px] tabular-nums text-muted uppercase">Total Calories</span>
+          <p className="text-2xl font-black tabular-nums text-accent mt-1">
             {Math.round(totalCalories).toLocaleString()}
-            <span className="text-xs text-[#848E9C] ml-1">kcal</span>
+            <span className="text-xs text-muted ml-1">kcal</span>
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
-          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Protein</span>
-          <p className="text-2xl font-black font-mono text-[#00E5FF] mt-1">
+        <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
+          <span className="text-[10px] tabular-nums text-muted uppercase">Protein</span>
+          <p className="text-2xl font-black tabular-nums text-info mt-1">
             {totalProtein.toFixed(1)}
-            <span className="text-xs text-[#848E9C] ml-1">g</span>
+            <span className="text-xs text-muted ml-1">g</span>
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
-          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Carbohydrates</span>
-          <p className="text-2xl font-black font-mono text-white mt-1">
+        <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
+          <span className="text-[10px] tabular-nums text-muted uppercase">Carbohydrates</span>
+          <p className="text-2xl font-black tabular-nums text-ink mt-1">
             {totalCarbs.toFixed(1)}
-            <span className="text-xs text-[#848E9C] ml-1">g</span>
+            <span className="text-xs text-muted ml-1">g</span>
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card">
-          <span className="text-[10px] font-mono text-[#848E9C] uppercase">Fat</span>
-          <p className="text-2xl font-black font-mono text-[#FFB800] mt-1">
+        <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
+          <span className="text-[10px] tabular-nums text-muted uppercase">Fat</span>
+          <p className="text-2xl font-black tabular-nums text-warning mt-1">
             {totalFat.toFixed(1)}
-            <span className="text-xs text-[#848E9C] ml-1">g</span>
+            <span className="text-xs text-muted ml-1">g</span>
           </p>
         </div>
       </div>
 
       {/* Meal Ledger List */}
       <div className="space-y-3">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#848E9C] flex items-center gap-2">
-          <Clock className="h-4 w-4 text-[#C8FF00]" />
+        <h3 className="text-xs tabular-nums font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+          <Clock className="h-4 w-4 text-accent" />
           <span>Logged Meals ({logs.length})</span>
         </h3>
 
         {loading ? (
           <div className="p-12 text-center">
-            <div className="h-8 w-8 border-2 border-[#C8FF00] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center rounded-3xl bg-[#12151b] border border-[#1e232d] text-xs text-[#848E9C]">
+          <div className="p-12 text-center rounded-3xl bg-card border border-line text-xs text-muted">
             No meals logged today yet. Use "Scan Meal with AI" or "Manual Entry" above to add your food.
           </div>
         ) : (
           logs.map((log) => (
             <div
               key={log.id}
-              className="p-5 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-cyber-card hover:border-[#2a313f] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-5 rounded-3xl bg-card border border-line shadow-neu hover:border-line-strong transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">{log.meal_name}</span>
+                  <span className="text-sm font-bold text-ink">{log.meal_name}</span>
                   {log.rag_scan_id && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C8FF00]/15 text-[#C8FF00] border border-[#C8FF00]/30">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] tabular-nums font-bold bg-accent/15 text-accent border border-accent/30">
                       AI VERIFIED
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] font-mono text-[#848E9C]">
+                <p className="text-[11px] tabular-nums text-muted">
                   {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull;{' '}
                   {new Date(log.logged_at).toLocaleDateString()}
                 </p>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <span className="px-2.5 py-1 rounded-lg bg-[#07080a] border border-[#1e232d] text-[#00E5FF]">
+                <div className="flex items-center gap-2 tabular-nums text-xs">
+                  <span className="px-2.5 py-1 rounded-lg bg-well border border-line text-info">
                     P: {log.protein_g}g
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-[#07080a] border border-[#1e232d] text-white">
+                  <span className="px-2.5 py-1 rounded-lg bg-well border border-line text-ink">
                     C: {log.carbs_g}g
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-[#07080a] border border-[#1e232d] text-[#FFB800]">
+                  <span className="px-2.5 py-1 rounded-lg bg-well border border-line text-warning">
                     F: {log.fat_g}g
                   </span>
                 </div>
 
-                <span className="text-base font-black font-mono text-[#C8FF00] min-w-[70px] text-right">
+                <span className="text-base font-black tabular-nums text-accent min-w-[70px] text-right">
                   {Math.round(log.total_kcal)} kcal
                 </span>
 
                 <button
                   onClick={() => handleDelete(log.id)}
-                  className="p-2 text-[#848E9C] hover:text-[#F6465D] hover:bg-[#F6465D]/10 rounded-xl transition-colors"
+                  className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors"
                   title="Delete Entry"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -218,23 +217,19 @@ export const NutritionLogPage: React.FC = () => {
       </div>
 
       {/* Manual Entry Modal */}
-      <AnimatePresence>
         {showAddForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md p-6 rounded-3xl bg-[#12151b] border border-[#1e232d] shadow-2xl space-y-4"
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-md">
+            <div
+              className="animate-rise w-full max-w-md p-6 rounded-3xl bg-card border border-line shadow-2xl space-y-4"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#1e232d]">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-[#C8FF00]" />
+              <div className="flex items-center justify-between pb-2 border-b border-line">
+                <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-accent" />
                   <span>Manual Meal Entry</span>
                 </h3>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="p-1 text-[#848E9C] hover:text-white"
+                  className="p-1 text-muted hover:text-ink"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -242,63 +237,63 @@ export const NutritionLogPage: React.FC = () => {
 
               <form onSubmit={handleCreateManualMeal} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="meal-title" className="text-xs font-semibold text-[#848E9C]">Meal / Food Title</label>
+                  <label htmlFor="meal-title" className="text-xs font-semibold text-muted">Meal / Food Title</label>
                   <input id="meal-title"
                     type="text"
                     required
                     value={mealName}
                     onChange={(e) => setMealName(e.target.value)}
                     placeholder="e.g. Scrambled Eggs with Avocado"
-                    className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none"
+                    className="w-full bg-well border border-line focus:border-accent rounded-xl px-3.5 py-2 text-xs text-ink focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="meal-kcal" className="text-xs font-semibold text-[#848E9C]">Calories (kcal)</label>
+                    <label htmlFor="meal-kcal" className="text-xs font-semibold text-muted">Calories (kcal)</label>
                     <input id="meal-kcal"
                       type="number"
                       required
                       value={kcal}
                       onChange={(e) => setKcal(e.target.value)}
                       placeholder="450"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none"
+                      className="w-full bg-well border border-line focus:border-accent rounded-xl px-3.5 py-2 text-xs text-ink tabular-nums focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="meal-protein" className="text-xs font-semibold text-[#848E9C]">Protein (g)</label>
+                    <label htmlFor="meal-protein" className="text-xs font-semibold text-muted">Protein (g)</label>
                     <input id="meal-protein"
                       type="number"
                       step="0.1"
                       value={protein}
                       onChange={(e) => setProtein(e.target.value)}
                       placeholder="35"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none"
+                      className="w-full bg-well border border-line focus:border-accent rounded-xl px-3.5 py-2 text-xs text-ink tabular-nums focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="meal-carbs" className="text-xs font-semibold text-[#848E9C]">Carbs (g)</label>
+                    <label htmlFor="meal-carbs" className="text-xs font-semibold text-muted">Carbs (g)</label>
                     <input id="meal-carbs"
                       type="number"
                       step="0.1"
                       value={carbs}
                       onChange={(e) => setCarbs(e.target.value)}
                       placeholder="50"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none"
+                      className="w-full bg-well border border-line focus:border-accent rounded-xl px-3.5 py-2 text-xs text-ink tabular-nums focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="meal-fat" className="text-xs font-semibold text-[#848E9C]">Fat (g)</label>
+                    <label htmlFor="meal-fat" className="text-xs font-semibold text-muted">Fat (g)</label>
                     <input id="meal-fat"
                       type="number"
                       step="0.1"
                       value={fat}
                       onChange={(e) => setFat(e.target.value)}
                       placeholder="15"
-                      className="w-full bg-[#07080a] border border-[#1e232d] focus:border-[#C8FF00] rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none"
+                      className="w-full bg-well border border-line focus:border-accent rounded-xl px-3.5 py-2 text-xs text-ink tabular-nums focus:outline-none"
                     />
                   </div>
                 </div>
@@ -307,16 +302,15 @@ export const NutritionLogPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-3 rounded-xl bg-[#C8FF00] text-black font-bold text-xs hover:bg-[#d4ff33] shadow-glow-lime transition-all"
+                    className="w-full py-3 rounded-xl bg-accent text-on-accent font-bold text-xs hover:bg-accent-hover shadow-neu-sm transition-all"
                   >
                     {submitting ? 'Recording...' : 'Commit Meal to Ledger'}
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

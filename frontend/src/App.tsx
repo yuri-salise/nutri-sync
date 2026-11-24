@@ -32,8 +32,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0d14] flex items-center justify-center">
-        <div className="h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

@@ -73,19 +73,19 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
   return (
     <Overlay>
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="picker-title">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full sm:max-w-lg max-h-[88vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0d1015] border border-[#1e232d]">
-        <div className="p-4 border-b border-[#1e232d] space-y-3">
+      <div className="absolute inset-0 bg-ink/40" onClick={onClose} aria-hidden="true" />
+      <div className="relative w-full sm:max-w-lg max-h-[88vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-well border border-line">
+        <div className="p-4 border-b border-line space-y-3">
           <div className="flex items-center justify-between">
-            <h2 id="picker-title" className="text-base font-bold text-white">
+            <h2 id="picker-title" className="text-base font-bold text-ink">
               Add an exercise
             </h2>
-            <button onClick={onClose} aria-label="Close" className="p-2 rounded-lg text-[#848E9C] hover:text-white">
+            <button onClick={onClose} aria-label="Close" className="p-2 rounded-lg text-muted hover:text-ink">
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#848E9C]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <label htmlFor="exercise-search" className="sr-only">Search exercises</label>
             <input
               id="exercise-search"
@@ -96,7 +96,7 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
                 setCreating(false);
               }}
               placeholder="Search, e.g. squat"
-              className="w-full h-11 pl-9 pr-3 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm text-white placeholder-[#848E9C] focus:border-[#C8FF00] focus:outline-none"
+              className="w-full h-11 pl-9 pr-3 rounded-xl bg-well border border-line text-sm text-ink placeholder-muted focus:border-accent focus:outline-none"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
@@ -107,8 +107,8 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
                 aria-pressed={muscle === m}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold capitalize border ${
                   muscle === m
-                    ? 'bg-[#C8FF00] text-black border-[#C8FF00]'
-                    : 'bg-[#07080a] text-[#B7BDC6] border-[#1e232d]'
+                    ? 'bg-accent text-on-accent border-accent'
+                    : 'bg-well text-soft border-line'
                 }`}
               >
                 {m ?? 'All'}
@@ -124,49 +124,49 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
               <button
                 key={e.id}
                 onClick={() => onPick(e)}
-                className="w-full flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-[#12151b] text-left"
+                className="w-full flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-card text-left"
               >
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-white truncate">{e.name}</span>
-                  <span className="block text-xs text-[#848E9C] capitalize">
+                  <span className="block text-sm font-semibold text-ink truncate">{e.name}</span>
+                  <span className="block text-xs text-muted capitalize">
                     {e.muscle_group}
                     {e.status === 'private' && ' · your exercise'}
                   </span>
                 </span>
                 {added ? (
-                  <span className="text-xs text-[#848E9C] flex items-center gap-1 shrink-0">
+                  <span className="text-xs text-muted flex items-center gap-1 shrink-0">
                     <Check className="h-3.5 w-3.5" /> Added
                   </span>
                 ) : (
-                  <Plus className="h-4 w-4 text-[#C8FF00] shrink-0" />
+                  <Plus className="h-4 w-4 text-accent shrink-0" />
                 )}
               </button>
             );
           })}
 
           {filtered.length === 0 && !query && (
-            <p className="p-4 text-sm text-[#848E9C]">No exercises for this muscle yet.</p>
+            <p className="p-4 text-sm text-muted">No exercises for this muscle yet.</p>
           )}
 
           {query.trim().length >= 2 && !exactMatch && (
-            <div className="m-2 p-4 rounded-2xl bg-[#12151b] border border-dashed border-[#2a313f] space-y-3">
+            <div className="m-2 p-4 rounded-2xl bg-card border border-dashed border-line-strong space-y-3">
               {!creating ? (
-                <button onClick={() => setCreating(true)} className="w-full text-left text-sm text-white">
+                <button onClick={() => setCreating(true)} className="w-full text-left text-sm text-ink">
                   {filtered.length === 0 ? 'Can’t find it? ' : ''}Add{' '}
-                  <span className="font-bold text-[#C8FF00]">“{query.trim()}”</span> as your own exercise
+                  <span className="font-bold text-accent">“{query.trim()}”</span> as your own exercise
                 </button>
               ) : (
                 <>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-ink">
                     New exercise: <span className="font-bold">{query.trim()}</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="text-xs text-[#848E9C] space-y-1">
+                    <label className="text-xs text-muted space-y-1">
                       <span>Muscle</span>
                       <select
                         value={newMuscle}
                         onChange={(e) => setNewMuscle(e.target.value)}
-                        className="w-full h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm text-white px-2 capitalize"
+                        className="w-full h-10 rounded-xl bg-well border border-line text-sm text-ink px-2 capitalize"
                       >
                         {MUSCLE_GROUPS.map((m) => (
                           <option key={m} value={m}>
@@ -175,27 +175,27 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
                         ))}
                       </select>
                     </label>
-                    <label className="text-xs text-[#848E9C] space-y-1">
+                    <label className="text-xs text-muted space-y-1">
                       <span>Type</span>
                       <select
                         value={newCategory}
                         onChange={(e) => setNewCategory(e.target.value as 'compound' | 'isolation')}
-                        className="w-full h-10 rounded-xl bg-[#07080a] border border-[#1e232d] text-sm text-white px-2"
+                        className="w-full h-10 rounded-xl bg-well border border-line text-sm text-ink px-2"
                       >
                         <option value="compound">Multi-joint</option>
                         <option value="isolation">Single-joint</option>
                       </select>
                     </label>
                   </div>
-                  {error && <p role="alert" className="text-sm text-[#F6465D]">{error}</p>}
+                  {error && <p role="alert" className="text-sm text-danger">{error}</p>}
                   <button
                     onClick={handleCreate}
                     disabled={saving}
-                    className="w-full h-11 rounded-xl bg-[#C8FF00] text-black font-bold text-sm disabled:opacity-50"
+                    className="w-full h-11 rounded-xl bg-accent text-on-accent font-bold text-sm disabled:opacity-50"
                   >
                     {saving ? 'Adding…' : 'Add and use it'}
                   </button>
-                  <p className="text-xs text-[#848E9C]">Only you can see your custom exercises.</p>
+                  <p className="text-xs text-muted">Only you can see your custom exercises.</p>
                 </>
               )}
             </div>
