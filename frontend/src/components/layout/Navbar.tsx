@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { currentTheme, setTheme } from '../../utils/theme';
 import {
+  Moon,
+  Sun,
   Activity,
   Shield,
   User,
@@ -9,8 +12,6 @@ import {
   Menu,
   X,
   Sparkles,
-  Cpu,
-  Lock,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -20,12 +21,18 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
   const { user, role, logout, quickLoginAthlete, quickLoginAdmin } = useAuth();
+  const [theme, setThemeState] = useState(currentTheme);
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    setThemeState(next);
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-line bg-page/90 backdrop-blur-xl transition-all">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left: Brand & Mobile Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onToggleMobileMenu}
             className="p-2 text-muted hover:text-ink lg:hidden rounded-xl hover:bg-card transition-colors focus:outline-none"
@@ -41,36 +48,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenu
               </div>
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg tracking-tight text-ink ">
-                  NUTRI<span className="text-accent">SYNC</span>
-                </span>
-                <span className="text-[10px] tabular-nums font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/30 tracking-wider">
-                  PRO
-                </span>
-              </div>
-              <span className="text-[10px] text-muted tracking-wide font-medium -mt-0.5">
-                SMART FITNESS & NUTRITION
+              <span className="font-extrabold text-lg tracking-tight text-ink ">
+                NUTRI<span className="text-accent">SYNC</span>
+              </span>
+              <span className="hidden sm:block text-[10px] text-muted tracking-wide font-medium -mt-0.5">
+                FITNESS & NUTRITION
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Center: status badges */}
-        <div className="hidden lg:flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-well border border-line text-muted">
-            <Lock className="h-3.5 w-3.5 text-accent" />
-            <span className="text-ink font-semibold">Private & Secure</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-well border border-line text-muted">
-            <Cpu className="h-3.5 w-3.5 text-accent" />
-            <span className="text-accent">AI Food Engine Ready</span>
-          </div>
-        </div>
-
         {/* Right: Quick Role Switcher & User Profile */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {/* Quick Demo Switcher (Instant Evaluation for Evaluator / Grader) */}
           <div className="hidden sm:flex items-center gap-1 bg-well p-1 rounded-xl border border-line text-xs">
             <span className="px-2 text-muted flex items-center gap-1 font-medium">
@@ -98,10 +87,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileMenu
             </button>
           </div>
 
+          <button
+            onClick={toggleTheme}
+            className="h-11 w-11 flex items-center justify-center rounded-xl text-muted hover:text-ink hover:bg-card-hover transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
           {/* User Profile & Logout */}
           {user ? (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-card border border-line px-3 py-1.5 rounded-xl shadow-neu">
+              <div className="hidden sm:flex items-center gap-2 bg-card border border-line px-3 py-1.5 rounded-xl shadow-neu">
                 <div
                   className={`p-1.5 rounded-lg ${
                     role === 'admin'

@@ -36,6 +36,36 @@
     color-scheme: light;
   }
 
+  /* Dark soft UI: same tokens, set by the .dark class on <html> (see index.html).
+     Text tokens keep >= 5.5:1 on --page; --on-accent is dark text on the light accents. */
+  .dark {
+    --page: 27 32 42;           /* #1B202A */
+    --card: 27 32 42;
+    --card-hover: 33 39 51;     /* #212733 */
+    --well: 22 26 34;           /* #161A22 */
+    --line: 44 52 66;           /* #2C3442 */
+    --line-strong: 58 68 86;    /* #3A4456 */
+    --shade-dark: 15 18 24;     /* #0F1218 */
+    --shade-light: 39 45 58;    /* #272D3A */
+
+    --ink: 231 235 242;         /* #E7EBF2 13.7:1 */
+    --soft: 197 204 216;        /* #C5CCD8 10.1:1 */
+    --muted: 161 171 188;       /* #A1ABBC  7.1:1 */
+    --faint: 140 151 170;       /* #8C97AA  5.5:1 */
+
+    --accent: 122 162 247;      /* #7AA2F7 */
+    --accent-hover: 150 182 250;
+    --on-accent: 11 18 32;      /* #0B1220 */
+    --success: 52 211 153;      /* #34D399 */
+    --warning: 251 191 36;      /* #FBBF24 */
+    --danger: 248 113 113;      /* #F87171 */
+    --info: 56 189 248;         /* #38BDF8 */
+    --violet: 167 139 250;      /* #A78BFA */
+    --coral: 251 146 60;        /* #FB923C */
+
+    color-scheme: dark;
+  }
+
   * {
     border-color: rgb(var(--line));
   }
@@ -140,6 +170,20 @@
   isolation: isolate;
   background: rgb(var(--well)) !important;
   font-family: inherit !important;
+}
+
+/* OpenStreetMap only ships light tiles; darken them for the dark theme. */
+.dark .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6);
+}
+.dark .leaflet-bar a,
+.dark .leaflet-control-attribution {
+  background: rgb(var(--card) / 0.9);
+  color: rgb(var(--soft));
+  border-color: rgb(var(--line));
+}
+.dark .leaflet-control-attribution a {
+  color: rgb(var(--accent));
 }
 
 /* Floating Community button (mobile). Lifts out of the way while the workout rest timer shows. */

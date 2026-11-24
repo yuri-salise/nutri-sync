@@ -709,7 +709,7 @@ export const WorkoutLoggerPage: React.FC = () => {
       {finishOpen && workout && (
         <Overlay>
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="finish-title">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setFinishOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setFinishOpen(false)} aria-hidden="true" />
           <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-well border border-line p-5 space-y-4">
             <h2 id="finish-title" className="text-lg font-bold text-ink">
               Finish workout?

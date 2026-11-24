@@ -36,6 +36,8 @@ The **Quick Demo Login** buttons on the sign-in page (Athlete Yuri, Coach Rinant
 
 **On a phone.** Every page works at 360 px wide, and the main menu is at the bottom of the screen.
 
+**Light or dark.** The app follows your phone's light or dark setting. Tap the moon or sun icon in the top bar to switch; your choice is remembered on that device.
+
 ![Login on a phone](images/10-login-phone.png)
 
 ## 3. Athlete guide
@@ -71,7 +73,7 @@ Energy is estimated from distance, time and body weight. Heart rate is not used.
 ### 3.4 Estimate a meal (Smart Meal Scanner)
 
 1. Open **Smart Meal Scanner**.
-2. Type what you ate, in English or Tagalog, with amounts if you know them: `chicken adobo with 1 cup rice and a boiled egg`, `200g grilled chicken breast`, `2 pandesal and 1 cup oatmeal`. Press **Analyze meal**.
+2. Type what you ate in English (Filipino dish names and words like "kanin" also work), with amounts if you know them: `chicken adobo with 1 cup rice and a boiled egg`, `200g grilled chicken breast`, `2 pandesal and 1 cup oatmeal`. Press **Analyze meal**.
 3. The page lists each food it found, the amount in grams and the calories. Change the grams, or remove a food that is wrong. Foods it could not find are listed separately and add nothing.
 4. Read the totals. A note reminds you that this is a machine-generated estimate.
 5. Press **Looks right — save to food log** to save it.

@@ -256,7 +256,7 @@ export const AdminAuditPage: React.FC = () => {
           <div className="p-4 rounded-2xl bg-well border border-line text-xs text-muted flex items-center gap-2">
             <Lock className="h-4 w-4 text-accent shrink-0" />
             <span>
-              Requirement T4 RAG Audit Ledger: All semantic inferences record latency (ms), cosine similarity scores, prompt payloads, and fallback statuses.
+              Every meal scan is logged with its input, matcher version, match score, time taken, and which embedding was used.
             </span>
           </div>
 
@@ -297,7 +297,7 @@ export const AdminAuditPage: React.FC = () => {
                             : 'bg-success/20 text-success border border-success/30'
                         }`}
                       >
-                        {log.used_fallback ? 'FALLBACK' : 'VECTOR GROUNDED'}
+                        {log.used_fallback ? 'HASH EMBEDDING' : 'NEURAL EMBEDDING'}
                       </span>
                     </div>
                   </div>
@@ -350,10 +350,6 @@ export const AdminAuditPage: React.FC = () => {
                     <span className="text-accent font-bold">{item.kcal_per_100g} kcal/100g</span>
                     <span>P: {item.protein_per_100g}g</span>
                   </div>
-                  <div className="text-[10px] tabular-nums text-muted pt-1 border-t border-line flex justify-between">
-                    <span>Embedding:</span>
-                    <span className="text-accent">pgvector[384]</span>
-                  </div>
                 </div>
               ))}
             </div>
@@ -377,7 +373,7 @@ export const AdminAuditPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
                 <span className="text-[10px] text-muted tabular-nums uppercase">Developer / Student</span>
                 <p className="text-sm font-bold text-ink">Yuri D. Salise</p>
@@ -394,44 +390,6 @@ export const AdminAuditPage: React.FC = () => {
                 <span className="text-[10px] text-muted tabular-nums uppercase">Instructor / Coach</span>
                 <p className="text-sm font-bold text-ink">Coach Rinante Buntod</p>
                 <p className="text-[11px] text-muted tabular-nums">Project Evaluator</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-well border border-line space-y-1">
-                <span className="text-[10px] text-muted tabular-nums uppercase">System Version</span>
-                <p className="text-sm font-bold text-ink">v1.0.0-production</p>
-                <p className="text-[11px] text-success tabular-nums">Docker Compose + Caddy</p>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-well border border-line space-y-3">
-              <h4 className="text-xs font-bold text-ink uppercase tracking-wider tabular-nums">
-                ITSD 85 Rubric Architecture Compliance
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs tabular-nums">
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">F1–F6</span>
-                  <span className="text-[10px] text-muted">Frontend SPA</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">B1–B9</span>
-                  <span className="text-[10px] text-muted">FastAPI REST</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">D1–D4</span>
-                  <span className="text-[10px] text-muted">Postgres & RLS</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">Q1–Q5</span>
-                  <span className="text-[10px] text-muted">Pytest & Coverage</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">DP1–DP6</span>
-                  <span className="text-[10px] text-muted">Caddy Proxy</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-card border border-line">
-                  <span className="text-success font-bold block">T1–T6</span>
-                  <span className="text-[10px] text-muted">Traceability</span>
-                </div>
               </div>
             </div>
           </div>

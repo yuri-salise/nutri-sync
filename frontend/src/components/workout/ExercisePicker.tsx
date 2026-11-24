@@ -73,7 +73,7 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
   return (
     <Overlay>
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="picker-title">
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full sm:max-w-lg max-h-[88vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-well border border-line">
         <div className="p-4 border-b border-line space-y-3">
           <div className="flex items-center justify-between">

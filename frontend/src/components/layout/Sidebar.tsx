@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   ChevronRight,
   ShieldAlert,
-  Lock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-ink/40 backdrop-blur-md lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-md lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -61,7 +60,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <p className="text-[10px] tabular-nums font-bold tracking-widest text-muted uppercase">
                 Menu
               </p>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
             </div>
             <nav className="mt-3 space-y-1">
               {navItems.map((item) => {
@@ -89,33 +87,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               })}
             </nav>
           </div>
-
-          {/* Privacy & Engine Card */}
-          <div className="p-4 rounded-2xl bg-well border border-line space-y-2.5 shadow-neu">
-            <div className="flex items-center justify-between text-xs font-medium">
-              <span className="text-muted flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-accent" /> Data Protection
-              </span>
-              <span className="text-success font-bold">Encrypted</span>
-            </div>
-            <div className="w-full bg-line rounded-full h-1 overflow-hidden">
-              <div className="bg-gradient-to-r from-accent to-success h-1 rounded-full w-full" />
-            </div>
-            <div className="flex justify-between gap-2 text-[10px] text-muted font-medium">
-              <span>AI Search Ready</span>
-              <span>FNRI & USDA Grounded</span>
-            </div>
-          </div>
         </div>
 
-        {/* Bottom System Footer */}
+        {/* Bottom footer: food data sources the scanner really uses */}
         <div className="p-4 border-t border-line bg-well text-center space-y-0.5">
-          <p className="text-[11px] font-semibold text-ink tracking-wide">
-            NutriSync Pro <span className="text-accent tabular-nums text-[10px]">v1.0</span>
-          </p>
-          <p className="text-[10px] text-muted">
-            Smart Workout & Nutrition Engine
-          </p>
+          <p className="text-[11px] font-semibold text-ink tracking-wide">NutriSync</p>
+          <p className="text-[10px] text-muted">Food data: DOST-FNRI and USDA</p>
         </div>
       </aside>
     </>

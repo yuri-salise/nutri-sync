@@ -13,6 +13,17 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="NutriSync" />
     <title>NutriSync | Training & Nutrition</title>
+    <script>
+      // Apply the saved theme (or the phone's setting) before first paint, so there is no flash.
+      // Keep in sync with src/utils/theme.ts.
+      (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('theme'); } catch (e) {}
+        var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#1B202A' : '#E6EBF2';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -130,7 +130,7 @@ export const RunTrackerPage: React.FC = () => {
     }).addTo(map);
 
     polylineRef.current = L.polyline([], {
-      color: '#1D4ED8',
+      color: '#2F74E8',
       weight: 5,
       opacity: 0.95,
       lineJoin: 'round',
@@ -154,14 +154,14 @@ export const RunTrackerPage: React.FC = () => {
     if (!markerRef.current) {
       markerRef.current = L.circleMarker(latlng, {
         radius: 8,
-        fillColor: '#1D4ED8',
+        fillColor: '#2F74E8',
         fillOpacity: 1,
         color: '#FFFFFF',
         weight: 3,
       }).addTo(map);
       accuracyRef.current = L.circle(latlng, {
         radius: fix.accuracy,
-        color: '#0369A1',
+        color: '#0891B2',
         weight: 1,
         fillOpacity: 0.08,
       }).addTo(map);
@@ -590,10 +590,11 @@ export const RunTrackerPage: React.FC = () => {
             </div>
             {phase !== 'idle' && (
               <div
-                className="px-2.5 py-1.5 rounded-xl bg-card/90 backdrop-blur-md border border-line text-xs font-bold flex items-center gap-1.5 shadow-lg"
-                style={{ color: info.color }}
+                className="px-2.5 py-1.5 rounded-xl bg-card/90 backdrop-blur-md border border-line text-xs font-bold text-ink flex items-center gap-1.5 shadow-lg"
               >
-                <SportIcon sport={sport} className="h-4 w-4" />
+                <span style={{ color: info.color }}>
+                  <SportIcon sport={sport} className="h-4 w-4" />
+                </span>
                 <span>{info.label}</span>
               </div>
             )}
@@ -603,7 +604,7 @@ export const RunTrackerPage: React.FC = () => {
             <button
               onClick={() => mapInstanceRef.current?.setView([currentFix.lat, currentFix.lng], 17)}
               aria-label="Center map on my location"
-              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-ink/40 border border-line text-ink flex items-center justify-center"
+              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-card/90 backdrop-blur-md shadow-neu-sm border border-line text-ink flex items-center justify-center"
             >
               <LocateFixed className="h-5 w-5" />
             </button>
@@ -837,7 +838,7 @@ export const RunTrackerPage: React.FC = () => {
       {finishOpen && (
         <Overlay>
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="save-activity-title">
-            <div className="absolute inset-0 bg-ink/40" onClick={() => !saving && setFinishOpen(false)} aria-hidden="true" />
+            <div className="absolute inset-0 bg-black/50" onClick={() => !saving && setFinishOpen(false)} aria-hidden="true" />
             <div className="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-well border border-line p-5 space-y-4">
               <h2 id="save-activity-title" className="text-lg font-bold text-ink">
                 Save your {info.label.toLowerCase()}

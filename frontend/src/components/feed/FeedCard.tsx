@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Award, Dumbbell, Flame, Heart, MessageCircle, Trash2, ShieldCheck } from 'lucide-react';
+import { Award, Dumbbell, Flame, Heart, MessageCircle, Trash2 } from 'lucide-react';
 import { FeedItem } from '../../types';
 import { Avatar } from '../common/Avatar';
 import { RouteThumb } from '../activity/RouteThumb';
@@ -40,7 +40,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({
 }) => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const sport = item.type === 'run' ? sportInfo(item.sport_type) : null;
-  const accent = sport?.color ?? '#1D4ED8';
+  const accent = sport?.color ?? '#2F74E8';
 
   const headline =
     item.type === 'workout'
@@ -118,11 +118,6 @@ export const FeedCard: React.FC<FeedCardProps> = ({
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 text-warning text-sm font-bold">
                 <Award className="h-4 w-4" />
                 {item.prs_count} new PR{item.prs_count > 1 ? 's' : ''}
-                {item.has_verified_pr && (
-                  <span className="flex items-center gap-1 text-success font-semibold">
-                    <ShieldCheck className="h-3.5 w-3.5" /> verified
-                  </span>
-                )}
               </div>
             )}
           </>

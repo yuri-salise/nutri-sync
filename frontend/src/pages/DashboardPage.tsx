@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { ActivitySyncedSummary, WorkoutSession, NutritionLog } from '../types';
+import { parseApiDate } from '../utils/activity';
 import {
   Flame,
   Dumbbell,
@@ -16,7 +17,6 @@ import {
   Zap,
   Activity,
   Layers,
-  Award,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -66,6 +66,9 @@ export const DashboardPage: React.FC = () => {
   const dynamicKcal = summary?.dynamic_targets.calories || (baseKcal + burnedKcal);
   const consumedKcal = summary?.consumed.calories || 0;
   const remainingKcal = dynamicKcal - consumedKcal;
+  // shortcut: counts today's sessions among the 5 most recent; more than 5 in a day shows 5.
+  const today = new Date().toDateString();
+  const workoutsToday = workouts.filter((w) => parseApiDate(w.session_date).toDateString() === today).length;
 
   const kcalPct = Math.min(Math.round((consumedKcal / dynamicKcal) * 100), 100);
 
@@ -148,13 +151,9 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-black tabular-nums text-ink tracking-tight">
-              {workouts.length}
+              {workoutsToday}
             </span>
             <span className="text-xs tabular-nums text-muted">today</span>
-          </div>
-          <div className="mt-1 text-[11px] font-medium text-accent flex items-center gap-1">
-            <Award className="h-3 w-3" />
-            <span>PRs Monitored</span>
           </div>
         </div>
       </div>
@@ -179,7 +178,7 @@ export const DashboardPage: React.FC = () => {
             </h1>
 
             <p className="text-sm text-muted leading-relaxed">
-              Your calorie and nutrient goals automatically increase whenever you log gym workouts or outdoor runs, helping you recover stronger and hit your goals.
+              Calories you burn in workouts and recorded activities are added to today's calorie target, with extra carbs and fat to match (and +20 g protein on strength days).
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -188,7 +187,7 @@ export const DashboardPage: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold bg-accent text-on-accent hover:bg-accent-hover shadow-neu-sm transition-all transform hover:-translate-y-0.5"
               >
                 <Compass className="h-4 w-4" />
-                <span>Scan Meal with AI</span>
+                <span>Scan a meal</span>
               </Link>
               <Link
                 to="/workouts"
@@ -223,7 +222,7 @@ export const DashboardPage: React.FC = () => {
                 cx="96"
                 cy="96"
                 r={radius}
-                stroke="#1D4ED8"
+                className="stroke-accent"
                 strokeWidth="12"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
@@ -358,7 +357,7 @@ export const DashboardPage: React.FC = () => {
                 <div>
                   <p className="text-xs font-semibold text-ink">Strength Training</p>
                   <p className="text-[11px] text-muted">
-                    {workouts.length} session(s) logged
+                    {workoutsToday} session{workoutsToday === 1 ? '' : 's'} today
                   </p>
                 </div>
               </div>
@@ -373,7 +372,7 @@ export const DashboardPage: React.FC = () => {
                   <MapPin className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-ink">Outdoor Running</p>
+                  <p className="text-xs font-semibold text-ink">Recorded activities</p>
                   <p className="text-[11px] text-muted">
                     {(summary?.activity_burn.run_distance_km || 0).toFixed(1)} km recorded
                   </p>
@@ -390,8 +389,8 @@ export const DashboardPage: React.FC = () => {
                   <Zap className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-ink">Base Energy Needs (BMR)</p>
-                  <p className="text-[11px] text-muted">Calories your body burns at rest</p>
+                  <p className="text-xs font-semibold text-ink">Base calorie goal</p>
+                  <p className="text-[11px] text-muted">Your daily target before exercise</p>
                 </div>
               </div>
               <span className="tabular-nums text-xs font-bold text-ink">
@@ -437,7 +436,7 @@ export const DashboardPage: React.FC = () => {
               ))
             ) : (
               <div className="p-8 text-center text-xs text-muted border border-dashed border-line rounded-2xl">
-                No meals logged yet today. Tap "Scan Meal with AI" to quickly add your food.
+                No meals logged yet. Tap "Scan a meal" to add one.
               </div>
             )}
           </div>

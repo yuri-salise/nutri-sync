@@ -246,7 +246,8 @@ export const RagNutritionScannerPage: React.FC = () => {
           <span>Smart Meal Scanner</span>
         </h1>
         <p className="text-sm text-muted mt-1">
-          Snap a photo of your meal, or tell us what you ate in English or Tagalog. Add amounts
+          Snap a photo of your meal, or type what you ate in English (Filipino dish names and
+          words like “kanin” and “tasa” work too). Add amounts
           like “1 cup” or “200g” for a better estimate.
         </p>
       </div>
@@ -509,7 +510,7 @@ export const RagNutritionScannerPage: React.FC = () => {
 
             <p className="text-xs text-faint flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5" />
-              Match confidence {Math.round(scanResult.top_similarity_score * 100)}% ·{' '}
+              Match score at scan {Math.round(scanResult.top_similarity_score * 100)}% ·{' '}
               {scanResult.latency_ms.toFixed(0)} ms
             </p>
           </div>

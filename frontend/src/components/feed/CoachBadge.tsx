@@ -9,9 +9,9 @@ export const CoachBadge: React.FC = () => (
   </span>
 );
 
-/** "A coach approved" / "2 coaches approved", or null when no coach gave kudos. */
+/** "Kudos from a coach" / "Kudos from 2 coaches", or null when no coach gave kudos. */
 export const coachApprovalText = (count: number): string | null =>
-  count <= 0 ? null : count === 1 ? 'A coach approved' : `${count} coaches approved`;
+  count <= 0 ? null : count === 1 ? 'Kudos from a coach' : `Kudos from ${count} coaches`;
 
 export const CoachApproval: React.FC<{ count: number }> = ({ count }) => {
   const text = coachApprovalText(count);

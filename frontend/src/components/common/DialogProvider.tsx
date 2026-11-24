@@ -175,7 +175,7 @@ const DialogView: React.FC<{ request: Request; onClose: () => void }> = ({ reque
         className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4"
         onKeyDown={onKeyDown}
       >
-        <div className="absolute inset-0 bg-ink/40" onClick={cancel} aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/50" onClick={cancel} aria-hidden="true" />
         <div
           ref={panelRef}
           role={request.kind === 'prompt' ? 'dialog' : 'alertdialog'}
