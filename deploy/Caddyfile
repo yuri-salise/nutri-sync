@@ -8,6 +8,9 @@
         -Server
     }
 
+    # Compress API JSON and pages (food lists and scan results shrink ~5-10x).
+    encode zstd gzip
+
     # API and Swagger Documentation Routes (Requirement B1, B7, B8, DP2)
     handle /api/* {
         reverse_proxy api:8000

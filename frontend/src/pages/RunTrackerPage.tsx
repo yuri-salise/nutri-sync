@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { RunActivity, SportType } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -22,7 +23,6 @@ import {
   Lock,
 } from 'lucide-react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import {
   GpsFix,
   READY_ACCURACY_M,
@@ -601,7 +601,7 @@ export const RunTrackerPage: React.FC = () => {
             <button
               onClick={() => mapInstanceRef.current?.setView([currentFix.lat, currentFix.lng], 17)}
               aria-label="Center map on my location"
-              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-card/90 border border-line text-ink flex items-center justify-center"
+              className="absolute bottom-3 right-3 z-[500] h-11 w-11 rounded-xl bg-ink/40 border border-line text-ink flex items-center justify-center"
             >
               <LocateFixed className="h-5 w-5" />
             </button>
@@ -772,7 +772,12 @@ export const RunTrackerPage: React.FC = () => {
               const sp = sportInfo(r.sport_type);
               const route = parseRoute(r.route_geojson);
               return (
-                <div key={r.id} className="p-4 rounded-3xl bg-card border border-line shadow-neu flex gap-4">
+                <Link
+                  key={r.id}
+                  to={`/record/${r.id}`}
+                  aria-label={`View ${r.title || sp.label} details`}
+                  className="p-4 rounded-3xl bg-card border border-line shadow-neu flex gap-4 hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-well border border-line flex items-center justify-center overflow-hidden">
                     {route.length > 1 ? (
                       <RouteThumb points={route} color={sp.color} />
@@ -819,7 +824,7 @@ export const RunTrackerPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

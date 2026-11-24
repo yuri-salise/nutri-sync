@@ -93,6 +93,65 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
+  e2e:
+    # Browser tests against the real stack. Not part of `deploy.needs`, so a flaky
+    # browser run never blocks a release; check it before tagging.
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create throwaway environment file
+        run: |
+          {
+            echo "SECRET_KEY=$(openssl rand -hex 32)"
+            echo "DB_PASSWORD=$(openssl rand -hex 16)"
+            echo "PUBLIC_APP_URL=http://localhost:8080"
+            echo "APP_ENV=production"
+          } > .env
+
+      - name: Start the stack with Docker Compose
+        run: docker compose up -d --build
+
+      - name: Wait for the API, migrate and seed
+        run: |
+          for i in $(seq 1 40); do
+            curl -fs http://localhost:8080/api/health > /dev/null && break
+            sleep 3
+          done
+          docker compose exec -T api alembic upgrade head
+          docker compose exec -T api python -m app.scripts.seed_nutrition --truncate
+          docker compose exec -T api python -m app.scripts.seed_demo_data
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install Playwright
+        working-directory: ./e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: ./e2e
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+
+      - name: Show API logs on failure
+        if: failure()
+        run: docker compose logs --tail 100 api
+
   deploy:
     name: Self-Hosted Production Deployment
     runs-on: [ self-hosted, linux, deploy ]

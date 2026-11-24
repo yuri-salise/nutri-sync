@@ -87,7 +87,7 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
+          <div role="alert" className="p-3.5 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -96,10 +96,10 @@ export const RegisterPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 rounded-3xl bg-card border border-line shadow-2xl space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+              <label htmlFor="reg-name" className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-accent" /> Full Name
               </label>
-              <input
+              <input id="reg-name"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -110,10 +110,10 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+              <label htmlFor="reg-email" className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 text-accent" /> Email
               </label>
-              <input
+              <input id="reg-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -126,10 +126,10 @@ export const RegisterPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+              <label htmlFor="reg-password" className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5 text-accent" /> Password (min 8 chars)
               </label>
-              <input
+              <input id="reg-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -140,10 +140,10 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+              <label htmlFor="reg-confirm" className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5 text-accent" /> Confirm Password
               </label>
-              <input
+              <input id="reg-confirm"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -156,10 +156,10 @@ export const RegisterPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1">
+              <label htmlFor="reg-weight" className="text-xs font-semibold text-muted flex items-center gap-1">
                 <Scale className="h-3.5 w-3.5 text-accent" /> Weight (kg)
               </label>
-              <input
+              <input id="reg-weight"
                 type="number"
                 step="0.5"
                 value={weightKg}
@@ -170,10 +170,10 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted flex items-center gap-1">
+              <label htmlFor="reg-kcal" className="text-xs font-semibold text-muted flex items-center gap-1">
                 <Flame className="h-3.5 w-3.5 text-accent" /> Daily Calorie Goal (kcal)
               </label>
-              <input
+              <input id="reg-kcal"
                 type="number"
                 value={baseKcal}
                 onChange={(e) => setBaseKcal(e.target.value)}
@@ -183,8 +183,8 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted">Account Role</label>
-              <select
+              <label htmlFor="reg-role" className="text-xs font-semibold text-muted">Account Role</label>
+              <select id="reg-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as any)}
                 className="w-full bg-well border border-line rounded-2xl px-3 py-2 text-xs text-ink focus:outline-none"

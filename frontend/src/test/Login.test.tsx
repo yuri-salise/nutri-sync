@@ -20,4 +20,17 @@ describe('LoginPage Component (Requirement Q2)', () => {
     expect(screen.getByText(/Athlete Yuri/i)).toBeInTheDocument();
     expect(screen.getByText(/Coach Rinante/i)).toBeInTheDocument();
   });
+
+  it('links each label to its field so screen readers can announce them (F6)', () => {
+    render(
+      <AuthProvider>
+        <BrowserRouter>
+          <LoginPage />
+        </BrowserRouter>
+      </AuthProvider>
+    );
+
+    expect(screen.getByLabelText('Email Address')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+  });
 });

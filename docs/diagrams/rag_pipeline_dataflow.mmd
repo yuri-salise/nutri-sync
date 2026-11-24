@@ -1,0 +1,17 @@
+flowchart TD
+    A["User types a meal<br/>'chicken adobo with 1 cup rice and a boiled egg'"] --> B["POST /api/v1/rag-nutrition-scans"]
+    B --> C["Split into items on connectors<br/>(with, and, on, commas)"]
+    C --> D["Read the amount and unit of each item<br/>(1 cup, 200g, a, half, 3 oz)"]
+    D --> E["Find candidate foods that share a word<br/>(token index over FNRI + USDA rows)"]
+    E --> F["Score each candidate<br/>0.8 x word match + 0.2 x embedding similarity<br/>head-noun bonus, off-form and dry-staple penalties"]
+    F --> G{"Best score"}
+    G -->|">= 0.60 high"| H["Pick the portion that matches the unit<br/>(cup, medium piece, serving) and scale per-100 g macros"]
+    G -->|"0.40 - 0.59 low"| H
+    G -->|"< 0.40 none"| I["Report as 'not found'; macros stay 0;<br/>suggest nearest foods"]
+    H --> J["Sum the items"]
+    I --> J
+    J --> K["Write rag_scan_logs row<br/>(input, retrieved IDs, score, macros, model version, latency, fallback flag)"]
+    K --> L["Return estimate flagged machine-generated<br/>+ requires_human_confirmation"]
+    L --> M["User edits grams, removes items, confirms"]
+    M --> N["POST /api/v1/nutrition-logs saves the confirmed meal"]
+    E -.->|"embedding model missing"| F2["Deterministic hash embedding is used<br/>(used_fallback = true)"]

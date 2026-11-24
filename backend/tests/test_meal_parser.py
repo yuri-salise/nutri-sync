@@ -106,3 +106,35 @@ def test_scanner_holdout_does_not_regress():
     assert report.meals >= 30
     assert report.family_recall >= 0.80
     assert report.family_precision >= 0.80
+
+
+def test_third_set_does_not_regress():
+    # A third batch of meals, written from the tables before the matcher fixes that
+    # followed it. Regression floor only; see docs/evaluation/README.md.
+    from pathlib import Path
+
+    from app.scripts.evaluate_scanner import DATA_DIR
+
+    report = evaluate(eval_set=Path(DATA_DIR) / "scanner_third_set.csv")
+    assert report.meals >= 30
+    assert report.family_recall >= 0.80
+    assert report.family_precision >= 0.80
+    assert report.kcal_mape <= 20.0
+
+
+def test_medium_default_is_a_single_piece_not_a_whole_head():
+    cabbage = parse_servings(
+        "1 cup, chopped (89g)", "1 cup, chopped (89g) | 1 head, medium (about 5-1/2 dia) (908g)"
+    )
+    assert grams_for_servings(None, None, cabbage) == 89.0
+
+
+def test_on_connects_foods_and_scoop_of_a_dessert_is_one_serving():
+    assert [seg for _, seg in split_meal("peanut butter on 1 slice bread")] == [
+        "peanut butter",
+        "1 slice bread",
+    ]
+    ice_cream = parse_servings("1 serving 1/2 cup (66g)")
+    assert grams_for_servings(1, "scoop", ice_cream) == 66.0
+    whey = parse_servings("1 scoop (30g)")
+    assert grams_for_servings(1, "scoop", whey) == 30.0

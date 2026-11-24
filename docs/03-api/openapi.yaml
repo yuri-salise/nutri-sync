@@ -115,9 +115,10 @@ paths:
     get:
       tags:
       - Exercises
-      summary: List exercises with pagination, filtering, and sorting (Requirement
-        B6)
+      summary: 'List the built-in exercises plus my custom ones (Role: athlete, admin)'
       operationId: list_exercises_api_v1_exercises_get
+      security:
+      - OAuth2PasswordBearer: []
       parameters:
       - name: page
         in: query
@@ -160,16 +161,15 @@ paths:
           description: Filter by exercise category
           title: Category
         description: Filter by exercise category
-      - name: status
+      - name: mine
         in: query
         required: false
         schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Filter by status (pending|approved)
-          title: Status
-        description: Filter by status (pending|approved)
+          type: boolean
+          description: Only my custom exercises
+          default: false
+          title: Mine
+        description: Only my custom exercises
       - name: q
         in: query
         required: false
@@ -177,9 +177,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: Search query string
+          description: Search by name, muscle group or category
           title: Q
-        description: Search query string
+        description: Search by name, muscle group or category
       - name: sort
         in: query
         required: false
@@ -188,7 +188,7 @@ paths:
           - type: string
           - type: 'null'
           description: Sort field (prefix with - for desc)
-          default: -created_at
+          default: name
           title: Sort
         description: Sort field (prefix with - for desc)
       responses:
@@ -207,7 +207,7 @@ paths:
     post:
       tags:
       - Exercises
-      summary: Create or submit a custom exercise
+      summary: 'Add a custom exercise; it''s usable right away (Role: athlete, admin)'
       operationId: create_exercise_api_v1_exercises_post
       security:
       - OAuth2PasswordBearer: []
@@ -224,6 +224,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExerciseResponse'
+        '409':
+          description: An exercise with this name already exists
         '422':
           description: Validation Error
           content:
@@ -234,8 +236,10 @@ paths:
     get:
       tags:
       - Exercises
-      summary: Get single exercise by ID
+      summary: 'Get one exercise (Role: athlete, admin)'
       operationId: get_exercise_api_v1_exercises__id__get
+      security:
+      - OAuth2PasswordBearer: []
       parameters:
       - name: id
         in: path
@@ -250,6 +254,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExerciseResponse'
+        '404':
+          description: Not found or not visible to you
         '422':
           description: Validation Error
           content:
@@ -259,8 +265,7 @@ paths:
     patch:
       tags:
       - Exercises
-      summary: Update an exercise (Admins can approve/reject; Creators can update
-        fields)
+      summary: Edit my custom exercise; admins can also add it to the shared library
       operationId: update_exercise_api_v1_exercises__id__patch
       security:
       - OAuth2PasswordBearer: []
@@ -284,6 +289,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExerciseResponse'
+        '403':
+          description: Not your exercise, or status change by non-admin
         '422':
           description: Validation Error
           content:
@@ -293,7 +300,7 @@ paths:
     delete:
       tags:
       - Exercises
-      summary: Delete an exercise
+      summary: 'Delete my custom exercise (admins: any exercise)'
       operationId: delete_exercise_api_v1_exercises__id__delete
       security:
       - OAuth2PasswordBearer: []
@@ -307,6 +314,10 @@ paths:
       responses:
         '204':
           description: Successful Response
+        '403':
+          description: Not your exercise
+        '404':
+          description: Not found
         '422':
           description: Validation Error
           content:
@@ -505,11 +516,186 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/workout-routines:
+    get:
+      tags:
+      - Workout Routines
+      summary: 'List my saved workout routines (Role: athlete, admin)'
+      operationId: list_routines_api_v1_workout_routines_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search by routine name
+          title: Q
+        description: Search by routine name
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          description: name | created_at | updated_at, '-' for desc
+          default: -updated_at
+          title: Sort
+        description: name | created_at | updated_at, '-' for desc
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_RoutineResponse_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Workout Routines
+      summary: 'Save a workout routine (Role: athlete, admin)'
+      operationId: create_routine_api_v1_workout_routines_post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '409':
+          description: Routine name already used
+        '422':
+          description: Bad input
+  /api/v1/workout-routines/{id}:
+    get:
+      tags:
+      - Workout Routines
+      summary: 'Get one of my routines (Role: athlete, admin)'
+      operationId: get_routine_api_v1_workout_routines__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '404':
+          description: Not found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Workout Routines
+      summary: 'Update a routine; a new exercise list replaces the old one (Role:
+        owner)'
+      operationId: update_routine_api_v1_workout_routines__id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineResponse'
+        '404':
+          description: Not found
+        '409':
+          description: Name already used
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Workout Routines
+      summary: 'Delete a routine (Role: owner)'
+      operationId: delete_routine_api_v1_workout_routines__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: Not found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/run-activities:
     get:
       tags:
       - Runs
-      summary: List GPS run activities
+      summary: List GPS activities (run, walk, ride, hike)
       operationId: list_run_activities_api_v1_run_activities_get
       security:
       - OAuth2PasswordBearer: []
@@ -541,6 +727,16 @@ paths:
           description: road or trail
           title: Surface Type
         description: road or trail
+      - name: sport_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: run | walk | ride | hike
+          title: Sport Type
+        description: run | walk | ride | hike
       - name: only_mine
         in: query
         required: false
@@ -564,7 +760,7 @@ paths:
     post:
       tags:
       - Runs
-      summary: Record a GPS road or trail run activity
+      summary: Record a GPS activity (run, walk, ride or hike)
       operationId: create_run_activity_api_v1_run_activities_post
       security:
       - OAuth2PasswordBearer: []
@@ -964,9 +1160,11 @@ paths:
     get:
       tags:
       - Community
-      summary: Get paginated community feed of public workouts, verified PRs, and
-        runs
+      summary: 'Community feed: public workouts, GPS activities and posts, newest
+        first'
       operationId: get_community_feed_api_v1_community_feed_get
+      security:
+      - OAuth2PasswordBearer: []
       parameters:
       - name: page
         in: query
@@ -983,7 +1181,7 @@ paths:
           type: integer
           maximum: 50
           minimum: 1
-          default: 20
+          default: 10
           title: Limit
       - name: activity_type
         in: query
@@ -991,16 +1189,261 @@ paths:
         schema:
           anyOf:
           - type: string
+            pattern: ^(all|workouts|runs|posts)$
           - type: 'null'
-          description: all | workouts | runs
+          description: all | workouts | runs | posts
+          default: all
           title: Activity Type
-        description: all | workouts | runs
+        description: all | workouts | runs | posts
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_FeedItem_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/community-feed/posts:
+    post:
+      tags:
+      - Community
+      summary: 'Share a text post with the community (Role: athlete, admin)'
+      operationId: create_post_api_v1_community_feed_posts_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedItem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/community-feed/posts/{id}:
+    delete:
+      tags:
+      - Community
+      summary: 'Delete a post (Role: author, or admin for moderation)'
+      operationId: delete_post_api_v1_community_feed_posts__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '204':
+          description: Successful Response
+        '403':
+          description: Not your post
+        '404':
+          description: Not found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/community-feed/{target_type}/{target_id}/kudos:
+    put:
+      tags:
+      - Community
+      summary: 'Give kudos to a feed item; safe to repeat (Role: athlete, admin)'
+      operationId: give_kudos_api_v1_community_feed__target_type___target_id__kudos_put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: target_type
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Type
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Target Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KudosState'
+        '404':
+          description: Item doesn't exist or is private
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Community
+      summary: 'Take back my kudos (Role: athlete, admin)'
+      operationId: remove_kudos_api_v1_community_feed__target_type___target_id__kudos_delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: target_type
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Type
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Target Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/community-feed/{target_type}/{target_id}/comments:
+    get:
+      tags:
+      - Community
+      summary: 'List comments on a feed item, oldest first (Role: athlete, admin)'
+      operationId: list_comments_api_v1_community_feed__target_type___target_id__comments_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: target_type
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Type
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Target Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_CommentResponse_'
+        '404':
+          description: Item doesn't exist or is private
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Community
+      summary: 'Comment on a feed item (Role: athlete, admin)'
+      operationId: add_comment_api_v1_community_feed__target_type___target_id__comments_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: target_type
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Type
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Target Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+        '404':
+          description: Item doesn't exist or is private
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/community-feed/comments/{comment_id}:
+    delete:
+      tags:
+      - Community
+      summary: 'Delete a comment (Role: its author, or admin for moderation)'
+      operationId: delete_comment_api_v1_community_feed_comments__comment_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: comment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Comment Id
+      responses:
+        '204':
+          description: Successful Response
+        '403':
+          description: Not your comment
+        '404':
+          description: Not found
         '422':
           description: Validation Error
           content:
@@ -1009,6 +1452,44 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    CommentCreate:
+      properties:
+        body:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Body
+      type: object
+      required:
+      - body
+      title: CommentCreate
+      example:
+        body: Great pace!
+    CommentResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        author:
+          $ref: '#/components/schemas/FeedAuthor'
+        body:
+          type: string
+          title: Body
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        mine:
+          type: boolean
+          title: Mine
+          default: false
+      type: object
+      required:
+      - id
+      - author
+      - body
+      - created_at
+      title: CommentResponse
     ExerciseCreate:
       properties:
         name:
@@ -1110,11 +1591,179 @@ components:
         status:
           anyOf:
           - type: string
-            pattern: ^(pending|approved|rejected)$
+            pattern: ^(private|approved)$
           - type: 'null'
           title: Status
       type: object
       title: ExerciseUpdate
+    FeedAuthor:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        is_coach:
+          type: boolean
+          title: Is Coach
+          description: True when the author is a coach (admin role)
+          default: false
+      type: object
+      required:
+      - id
+      - name
+      title: FeedAuthor
+    FeedExercise:
+      properties:
+        name:
+          type: string
+          title: Name
+        sets:
+          type: integer
+          title: Sets
+        reps:
+          type: integer
+          title: Reps
+        top_weight_kg:
+          type: number
+          title: Top Weight Kg
+        is_pr:
+          type: boolean
+          title: Is Pr
+          default: false
+      type: object
+      required:
+      - name
+      - sets
+      - reps
+      - top_weight_kg
+      title: FeedExercise
+    FeedItem:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: Stable key such as 'workout-12'
+        type:
+          type: string
+          title: Type
+          description: workout | run | post
+        id:
+          type: integer
+          title: Id
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        author:
+          $ref: '#/components/schemas/FeedAuthor'
+        title:
+          type: string
+          title: Title
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        burned_kcal:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Burned Kcal
+        duration_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration Min
+        exercises:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FeedExercise'
+            type: array
+          - type: 'null'
+          title: Exercises
+        prs_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Prs Count
+        has_verified_pr:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Has Verified Pr
+        sport_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sport Type
+        surface_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Surface Type
+        distance_km:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Distance Km
+        duration_sec:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration Sec
+        elevation_gain_m:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Elevation Gain M
+        route:
+          anyOf:
+          - items:
+              items:
+                type: number
+              type: array
+            type: array
+          - type: 'null'
+          title: Route
+          description: '[[lat, lng], ...], thinned, start/end hidden for other users'
+        route_hidden_ends:
+          type: boolean
+          title: Route Hidden Ends
+          default: false
+        kudos_count:
+          type: integer
+          title: Kudos Count
+          default: 0
+        kudos_by_me:
+          type: boolean
+          title: Kudos By Me
+          default: false
+        coach_kudos_count:
+          type: integer
+          title: Coach Kudos Count
+          description: How many of the kudos came from coaches
+          default: 0
+        comments_count:
+          type: integer
+          title: Comments Count
+          default: 0
+        mine:
+          type: boolean
+          title: Mine
+          default: false
+      type: object
+      required:
+      - key
+      - type
+      - id
+      - timestamp
+      - author
+      - title
+      title: FeedItem
+      description: One card in the community feed (a workout, a GPS activity, or a
+        text post).
     FoodItemSummary:
       properties:
         id:
@@ -1161,6 +1810,23 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    KudosState:
+      properties:
+        kudos_count:
+          type: integer
+          title: Kudos Count
+        kudos_by_me:
+          type: boolean
+          title: Kudos By Me
+        coach_kudos_count:
+          type: integer
+          title: Coach Kudos Count
+          default: 0
+      type: object
+      required:
+      - kudos_count
+      - kudos_by_me
+      title: KudosState
     LoginRequest:
       properties:
         email:
@@ -1295,6 +1961,20 @@ components:
           title: Fat G
       type: object
       title: NutritionLogUpdate
+    PaginatedResponse_CommentResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/CommentResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[CommentResponse]
     PaginatedResponse_ExerciseResponse_:
       properties:
         data:
@@ -1309,6 +1989,20 @@ components:
       - data
       - meta
       title: PaginatedResponse[ExerciseResponse]
+    PaginatedResponse_FeedItem_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/FeedItem'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[FeedItem]
     PaginatedResponse_FoodItemSummary_:
       properties:
         data:
@@ -1351,6 +2045,20 @@ components:
       - data
       - meta
       title: PaginatedResponse[RagScanLogResponse]
+    PaginatedResponse_RoutineResponse_:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/RoutineResponse'
+          type: array
+          title: Data
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      type: object
+      required:
+      - data
+      - meta
+      title: PaginatedResponse[RoutineResponse]
     PaginatedResponse_RunActivityResponse_:
       properties:
         data:
@@ -1400,6 +2108,19 @@ components:
       - total
       - total_pages
       title: PaginationMeta
+    PostCreate:
+      properties:
+        body:
+          type: string
+          maxLength: 1000
+          minLength: 1
+          title: Body
+      type: object
+      required:
+      - body
+      title: PostCreate
+      example:
+        body: Hit a new squat PR today!
     PredictedMacros:
       properties:
         calories:
@@ -1472,18 +2193,18 @@ components:
         query_input:
           type: string
           maxLength: 1000
-          minLength: 2
           title: Query Input
-          description: Natural language meal description or food item.
+          description: Natural language meal description or food item. Optional with
+            a photo.
+          default: ''
         image_base64:
           anyOf:
           - type: string
+            maxLength: 4000000
           - type: 'null'
           title: Image Base64
-          description: Optional meal photo base64 string.
+          description: Optional meal photo, base64 JPEG.
       type: object
-      required:
-      - query_input
       title: RagScanRequest
     RagScanResponse:
       properties:
@@ -1512,6 +2233,16 @@ components:
           title: Top Similarity Score
         predicted_macros:
           $ref: '#/components/schemas/PredictedMacros'
+        items:
+          items:
+            $ref: '#/components/schemas/ScannedMealItem'
+          type: array
+          title: Items
+        unmatched:
+          items:
+            type: string
+          type: array
+          title: Unmatched
         retrieved_items:
           items:
             $ref: '#/components/schemas/FoodItemSummary'
@@ -1520,6 +2251,30 @@ components:
         model_version:
           type: string
           title: Model Version
+        photo_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photo Status
+          description: null (no photo) | used | no_food | unavailable
+        photo_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photo Description
+          description: What the vision model read from the photo (and the note).
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+          description: Text typed with a photo; its amounts override photo guesses.
+        note_amounts_applied:
+          type: integer
+          title: Note Amounts Applied
+          description: How many photo portions were replaced by amounts typed in the
+            note.
+          default: 0
       type: object
       required:
       - scan_id
@@ -1547,11 +2302,6 @@ components:
           maxLength: 255
           minLength: 2
           title: Full Name
-        role:
-          type: string
-          pattern: ^(athlete|admin)$
-          title: Role
-          default: athlete
         weight_kg:
           type: number
           exclusiveMaximum: 400.0
@@ -1588,8 +2338,198 @@ components:
       - password
       - full_name
       title: RegisterRequest
+    RoutineCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 120
+          minLength: 2
+          title: Name
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Notes
+        exercises:
+          items:
+            $ref: '#/components/schemas/RoutineExerciseIn'
+          type: array
+          maxItems: 30
+          minItems: 1
+          title: Exercises
+      type: object
+      required:
+      - name
+      - exercises
+      title: RoutineCreate
+      example:
+        exercises:
+        - exercise_id: 1
+          target_reps: 8
+          target_sets: 4
+          target_weight_kg: 60
+        - exercise_id: 7
+          rest_sec: 90
+          target_reps: 10
+          target_sets: 3
+        name: Push Day
+        notes: Chest, shoulders, triceps
+    RoutineExerciseIn:
+      properties:
+        exercise_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Id
+        target_sets:
+          type: integer
+          maximum: 20.0
+          minimum: 1.0
+          title: Target Sets
+          default: 3
+        target_reps:
+          type: integer
+          maximum: 100.0
+          minimum: 1.0
+          title: Target Reps
+          default: 10
+        target_weight_kg:
+          type: number
+          maximum: 1000.0
+          minimum: 0.0
+          title: Target Weight Kg
+          default: 0.0
+        rest_sec:
+          type: integer
+          maximum: 900.0
+          minimum: 0.0
+          title: Rest Sec
+          default: 90
+      type: object
+      required:
+      - exercise_id
+      title: RoutineExerciseIn
+      example:
+        exercise_id: 1
+        rest_sec: 120
+        target_reps: 8
+        target_sets: 3
+        target_weight_kg: 60
+    RoutineExerciseOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        position:
+          type: integer
+          title: Position
+        target_sets:
+          type: integer
+          title: Target Sets
+        target_reps:
+          type: integer
+          title: Target Reps
+        target_weight_kg:
+          type: number
+          title: Target Weight Kg
+        rest_sec:
+          type: integer
+          title: Rest Sec
+        exercise:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - exercise_id
+      - position
+      - target_sets
+      - target_reps
+      - target_weight_kg
+      - rest_sec
+      title: RoutineExerciseOut
+    RoutineResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        name:
+          type: string
+          title: Name
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        exercises:
+          items:
+            $ref: '#/components/schemas/RoutineExerciseOut'
+          type: array
+          title: Exercises
+      type: object
+      required:
+      - id
+      - user_id
+      - name
+      - created_at
+      - updated_at
+      title: RoutineResponse
+    RoutineUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 120
+            minLength: 2
+          - type: 'null'
+          title: Name
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Notes
+        exercises:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/RoutineExerciseIn'
+            type: array
+            maxItems: 30
+            minItems: 1
+          - type: 'null'
+          title: Exercises
+      type: object
+      title: RoutineUpdate
+      description: Full or partial update. When `exercises` is given it replaces the
+        whole list.
     RunActivityCreate:
       properties:
+        sport_type:
+          type: string
+          pattern: ^(run|walk|ride|hike)$
+          title: Sport Type
+          default: run
+        title:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Title
         surface_type:
           type: string
           pattern: ^(road|trail)$
@@ -1645,6 +2585,15 @@ components:
         user_id:
           type: integer
           title: User Id
+        sport_type:
+          type: string
+          title: Sport Type
+          default: run
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
         surface_type:
           type: string
           title: Surface Type
@@ -1686,6 +2635,12 @@ components:
       title: RunActivityResponse
     RunActivityUpdate:
       properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Title
         surface_type:
           anyOf:
           - type: string
@@ -1726,6 +2681,44 @@ components:
           title: Is Public
       type: object
       title: RunActivityUpdate
+    ScannedMealItem:
+      properties:
+        query_text:
+          type: string
+          title: Query Text
+          description: The part of the meal description this item came from.
+        matched_food:
+          anyOf:
+          - $ref: '#/components/schemas/FoodItemSummary'
+          - type: 'null'
+          description: Best matching food, or null when nothing credible was found.
+        grams:
+          type: number
+          title: Grams
+          description: Estimated portion in grams (0 when unmatched).
+        macros:
+          $ref: '#/components/schemas/PredictedMacros'
+        match_score:
+          type: number
+          title: Match Score
+          description: Hybrid lexical + embedding score, 0-1.
+        confidence:
+          type: string
+          title: Confidence
+          description: high | low | none
+        alternatives:
+          items:
+            $ref: '#/components/schemas/FoodItemSummary'
+          type: array
+          title: Alternatives
+      type: object
+      required:
+      - query_text
+      - grams
+      - macros
+      - match_score
+      - confidence
+      title: ScannedMealItem
     TokenResponse:
       properties:
         access_token:

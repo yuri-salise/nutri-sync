@@ -35,13 +35,26 @@ async def scan_meal_nutrition(
     db: AsyncSession = Depends(get_db),
 ):
     user_id = int(token_payload.sub)
-    query_input = payload.query_input.strip()
+    note = payload.query_input.strip()
+    has_note = len(note) >= 2
+    query_input = note
+    photo_status = None  # None: no photo | "used" | "no_food" | "unavailable"
+    photo_description = None
+
+    # Photo + text: the vision model reads the photo with the text as the user's own
+    # account (the text wins); typed amounts are then enforced in execute_rag_scan.
+    # If the photo can't be used, a typed meal is still analyzed instead of failing.
     if payload.image_base64:
         try:
-            query_input = await describe_meal_photo(payload.image_base64, hint=query_input)
+            photo_description = await describe_meal_photo(payload.image_base64, hint=note) or None
+            photo_status = "used" if photo_description else "no_food"
         except VisionUnavailable as exc:
-            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
-        if not query_input:
+            if not has_note:
+                raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+            photo_status = "unavailable"
+        if photo_description:
+            query_input = photo_description
+        elif not has_note:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_CONTENT,
                 "We couldn't spot any food in that photo. Try another photo or type your meal.",
@@ -52,8 +65,10 @@ async def scan_meal_nutrition(
         db=db,
         user_id=user_id,
         query_input=query_input[:1000],
-        image_base64=payload.image_base64,
+        note=note[:1000] if photo_description and has_note else None,
     )
+    result["photo_status"] = photo_status
+    result["photo_description"] = photo_description
 
     response.headers["Location"] = (
         f"{settings.API_V1_PREFIX}/rag-nutrition-scans/{result['scan_id']}"

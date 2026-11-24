@@ -27,8 +27,16 @@ class VisionUnavailable(Exception):
     """No vision provider is configured, or every configured one failed."""
 
 
+NOTE_RULES = (
+    "\nThe user also typed a note about this meal. The note is the user's own account and "
+    "wins over what you see: use the note's names and amounts for the foods it mentions; "
+    "include foods the note mentions even if they are not in the photo; leave out foods "
+    "the note says were not eaten. Note: "
+)
+
+
 def _hinted_prompt(hint: str) -> str:
-    return PROMPT + (f"\nThe user adds this note about the meal: {hint}" if hint else "")
+    return PROMPT + (NOTE_RULES + hint if hint else "")
 
 
 async def _gemini(client: httpx.AsyncClient, image_b64: str, hint: str) -> str:
@@ -105,7 +113,8 @@ async def describe_meal_photo(image_b64: str, hint: str = "") -> str:
     if not providers:
         raise VisionUnavailable("Photo analysis is not configured on this server.")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    # 20 s per provider keeps the worst case (both tried) under the proxy's patience.
+    async with httpx.AsyncClient(timeout=20.0) as client:
         for name, call in providers:
             try:
                 return items_to_description(await call(client, image_b64, hint))

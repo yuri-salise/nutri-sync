@@ -1,0 +1,18 @@
+flowchart LR
+    user["Browser (phone or desktop)"]
+    funnel["Tailscale Funnel<br/>public HTTPS"]
+    subgraph host["Server: Docker Compose project 'finalproject'"]
+        proxy["proxy: Caddy 2<br/>:8080 -> :80"]
+        web["web: Nginx<br/>React SPA (static)"]
+        api["api: FastAPI + Uvicorn<br/>REST /api/v1, /api/docs, /api/health"]
+        db[("db: PostgreSQL 17 + pgvector<br/>volume db-data")]
+    end
+    user -->|HTTPS| funnel --> proxy
+    proxy -->|"/ (everything else)"| web
+    proxy -->|"/api/*"| api
+    api -->|"SQLAlchemy async (asyncpg)"| db
+    subgraph ci["GitHub Actions"]
+        pr["Pull request / push:<br/>lint + tests + build"]
+        deploy["Push to main:<br/>self-hosted runner deploys"]
+    end
+    deploy -.->|"docker compose up -d --build<br/>alembic upgrade head<br/>health check = commit ID"| host

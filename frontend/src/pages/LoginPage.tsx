@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
         {/* Login Form Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-card border border-line shadow-2xl space-y-5">
           {error && (
-            <div className="p-3.5 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
+            <div role="alert" className="p-3.5 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -121,11 +121,13 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted">Email Address</label>
+              <label htmlFor="login-email" className="text-xs font-semibold text-muted">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted" />
                 <input
+                  id="login-email"
                   type="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -136,11 +138,13 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted">Password</label>
+              <label htmlFor="login-password" className="text-xs font-semibold text-muted">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted" />
                 <input
+                  id="login-password"
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
