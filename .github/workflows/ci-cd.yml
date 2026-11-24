@@ -49,7 +49,6 @@ jobs:
       - name: Run Backend API Tests with Coverage
         working-directory: ./backend
         env:
-          APP_ENV: testing
           DATABASE_URL: postgresql+asyncpg://nutrisync_user:nutrisync_test_password@localhost:5432/nutrisync_test_db
           DATABASE_URL_SYNC: postgresql://nutrisync_user:nutrisync_test_password@localhost:5432/nutrisync_test_db
           SECRET_KEY: test_secret_key_minimum_32_characters_for_ci_build
@@ -108,7 +107,6 @@ jobs:
             echo "SECRET_KEY=$(openssl rand -hex 32)"
             echo "DB_PASSWORD=$(openssl rand -hex 16)"
             echo "PUBLIC_APP_URL=http://localhost:8080"
-            echo "APP_ENV=production"
           } > .env
 
       - name: Start the stack with Docker Compose

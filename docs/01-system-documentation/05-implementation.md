@@ -4,7 +4,7 @@
 
 | Layer | Choice | Why |
 | :--- | :--- | :--- |
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS 3, React Router 6, Leaflet (maps), Framer Motion, lucide-react | Single-page app with fast builds; Leaflet and OpenStreetMap give free maps for GPS tracking. |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS 3, React Router 6, Leaflet (maps), lucide-react, Plus Jakarta Sans (self-hosted) | Single-page app with fast builds; Leaflet and OpenStreetMap give free maps for GPS tracking. |
 | Backend | Python 3.10, FastAPI, Pydantic v2, Uvicorn | Typed request and response models, automatic OpenAPI at `/api/docs`, async I/O. |
 | Data access | SQLAlchemy 2 (async) with asyncpg; Alembic migrations | Parameterized queries by default; schema is versioned in the repository. |
 | Database | PostgreSQL 17 with the pgvector image | Relational integrity; the vector column stores one embedding per food. SQLite is used only for tests and quick local runs. |

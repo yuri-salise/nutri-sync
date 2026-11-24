@@ -5,8 +5,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str = "NutriSync-RAG"
-    APP_ENV: str = "development"
-    APP_DEBUG: bool = True
     APP_VERSION: str = os.getenv("APP_VERSION", "v1.0.0-dev")
     API_V1_PREFIX: str = "/api/v1"
 
@@ -18,11 +16,6 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Database
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_USER: str = "nutrisync_user"
-    DB_PASSWORD: str = ""
-    DB_NAME: str = "nutrisync_db"
     DATABASE_URL: str
     DATABASE_URL_SYNC: str
     # Serverless hosts (Vercel) behind a transaction pooler (Supabase port 6543): no app-side
@@ -38,9 +31,6 @@ class Settings(BaseSettings):
     # AI & RAG
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
     EMBEDDING_DIMENSION: int = 384
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "qwen2.5:1.5b"
-    USE_OLLAMA_FALLBACK: bool = True
 
     # Meal photo analysis (free tiers). Empty key = that provider is skipped.
     GEMINI_API_KEY: str = ""

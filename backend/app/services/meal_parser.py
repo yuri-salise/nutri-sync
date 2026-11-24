@@ -559,12 +559,6 @@ def lexical_score(query_toks: Sequence[str], name_toks: Sequence[str]) -> float:
     return 0.75 * recall + 0.25 * precision
 
 
-def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
-    va, vb = np.asarray(a, dtype=np.float32), np.asarray(b, dtype=np.float32)
-    denom = float(np.linalg.norm(va) * np.linalg.norm(vb))
-    return float(va @ vb / denom) if denom else 0.0
-
-
 class FoodMatcher:
     """Scores meal segments against a fixed list of foods."""
 

@@ -84,12 +84,3 @@ def generate_embedding(text: str) -> List[float]:
         vec[0] = 1.0
 
     return vec.tolist()
-
-
-def cosine_similarity(v1: List[float], v2: List[float]) -> float:
-    a = np.array(v1, dtype=np.float32)
-    b = np.array(v2, dtype=np.float32)
-    denom = np.linalg.norm(a) * np.linalg.norm(b)
-    if denom == 0:
-        return 0.0
-    return float(np.dot(a, b) / denom)

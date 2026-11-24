@@ -66,8 +66,3 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   if (diff < 7 * 86400) return `${Math.round(diff / 86400)}d ago`;
   return parseApiDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
-
-export function activitySummary(sport: SportType, distanceKm: number, durationSec: number): string {
-  const info = sportInfo(sport);
-  return `${info.label} · ${formatDistance(distanceKm)} km · ${formatDuration(durationSec)}`;
-}

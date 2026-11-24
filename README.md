@@ -16,7 +16,7 @@
 [![Code Style: Ruff](https://img.shields.io/badge/Code_Style-Ruff-black?style=flat-square&logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 [![License: Pending](https://img.shields.io/badge/License-Pending-lightgrey?style=flat-square)](#-license--acknowledgments)
 
-_Live URL: added after deployment (see [CI/CD & Deployment](#-cicd--deployment))_ &nbsp;•&nbsp;
+**Live:** [nutrisync-one.vercel.app](https://nutrisync-one.vercel.app) &nbsp;•&nbsp;
 [📖 System Manual (D1)](docs/01-system-documentation/README.md) &nbsp;•&nbsp;
 [👤 User Manual (D2)](docs/02-user-manual/README.md) &nbsp;•&nbsp;
 [🔬 Research Paper (D4)](docs/04-paper/README.md)
@@ -152,11 +152,11 @@ flowchart TD
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend Client** | **React 18.3**, **TypeScript 5.6**, **Vite 5.4**, **Tailwind CSS 3.4**, **Framer Motion 11.11**, **Leaflet.js 1.9**, **Lucide React**, **Vitest** |
+| **Frontend Client** | **React 18.3**, **TypeScript 5.6**, **Vite 5.4**, **Tailwind CSS 3.4** (soft-UI design tokens), **Plus Jakarta Sans** (self-hosted), **Leaflet.js 1.9**, **Lucide React**, **Vitest** |
 | **Backend API** | **Python 3.10+**, **FastAPI 0.115**, **Pydantic v2.9**, **SQLAlchemy 2.0 (Async)**, **Alembic 1.13**, **HTTPX**, **Pytest** |
 | **Database & Vector Engine** | **PostgreSQL 17** with **pgvector** (cosine distance on 384-dim embeddings), SQLite for bare-metal dev |
 | **Retrieval / NLP** | Python word matching plus a built-in 384-dim hash embedding; `sentence-transformers/all-MiniLM-L6-v2` is optional and was measured to give no accuracy gain (see D1 chapter 6) |
-| **DevOps & Ingress** | **Docker Engine**, **Docker Compose**, **Caddy 2** (reverse proxy), **Tailscale Funnel** (public HTTPS) |
+| **DevOps & Ingress** | **Vercel** (frontend + FastAPI functions) with **Supabase** Postgres; or self-hosted with **Docker Compose**, **Caddy 2** (reverse proxy), **Tailscale Funnel** (public HTTPS) |
 | **Quality & Linting** | **Ruff**, **ESLint 9**, **pytest-cov** (60% minimum enforced in CI) |
 
 ---
@@ -181,7 +181,8 @@ nutri-sync/
 │   │   └── services/                 # RAG, embeddings, MET calculations, GPS routing
 │   ├── tests/                        # Pytest suite
 │   ├── Dockerfile                    # Backend container definition
-│   └── requirements.txt              # Python dependencies
+│   ├── requirements.txt              # Runtime Python dependencies
+│   └── requirements-dev.txt          # Plus SQLite, tests and lint (local dev, CI)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/               # UI components (rings, feed, modals, rest timer, maps)
@@ -192,7 +193,10 @@ nutri-sync/
 │   ├── Dockerfile                    # Vite build + Nginx static server
 │   └── package.json                  # Dependencies and npm scripts
 ├── deploy/
-│   └── Caddyfile                     # Reverse proxy routing & security headers
+│   ├── Caddyfile                     # Reverse proxy routing & security headers
+│   ├── backup.sh, restore.sh         # Self-hosted database backup and restore test
+│   ├── supabase/harden.sql           # Locks Supabase's Data API out of the public schema
+│   └── VERCEL_SUPABASE.md            # Vercel + Supabase setup guide
 ├── docs/                             # Academic & engineering deliverables
 │   ├── 01-system-documentation/      # D1 technical chapters (draft)
 │   ├── 02-user-manual/               # D2 draft with screenshots
@@ -201,7 +205,7 @@ nutri-sync/
 │   ├── diagrams/                     # Mermaid diagram sources
 │   └── evaluation/                   # Scanner results and weighed-meal procedure
 ├── e2e/                              # Playwright end-to-end tests
-├── deploy/                           # Caddyfile, backup.sh, restore.sh
+├── vercel.json                       # Vercel services: frontend + backend, /api routing
 ├── compose.yaml                      # Docker Compose services
 ├── .env.example                      # Environment variable template
 └── README.md
@@ -325,19 +329,18 @@ A full template is in [`.env.example`](.env.example). Main variables:
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `APP_ENV` | `development` | Runtime environment (`development`, `testing`, `production`) |
 | `SECRET_KEY` | *(Required)* | Secret key for signing HS256 JWT access and refresh tokens |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Lifespan of JWT access tokens |
 | `LOGIN_RATE_LIMIT` | `5/minute` | Login attempts allowed per email (`<count>/<second\|minute\|hour>`) |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | The only browser origin allowed by CORS (comma-separated for more than one) |
 | `PUBLIC_APP_URL` | `http://localhost:8080` | Public address users open; Docker Compose sets `FRONTEND_ORIGIN` from it |
-| `DB_HOST` | `db` (or `localhost`) | PostgreSQL server host |
-| `DB_PORT` | `5432` | PostgreSQL listening port |
-| `DB_USER` | `nutrisync_user` | Database user account |
-| `DB_PASSWORD` | *(Required)* | Database user password |
-| `DB_NAME` | `nutrisync_db` | Primary database name |
+| `DB_USER` | `nutrisync_user` | Database user (Docker Compose and the backup scripts) |
+| `DB_PASSWORD` | *(Required for Compose)* | Database password (Docker Compose and the backup scripts) |
+| `DB_NAME` | `nutrisync_db` | Database name (Docker Compose and the backup scripts) |
 | `DATABASE_URL` | `postgresql+asyncpg://...` | Asynchronous database connection string |
 | `DATABASE_URL_SYNC` | `postgresql://...` | Synchronous connection string (used by Alembic migrations) |
+| `DB_SERVERLESS` | `false` | `true` on Vercel: no app-side pool, for Supabase's transaction pooler |
+| `GEMINI_API_KEY`, `GROQ_API_KEY` | *(empty)* | Meal photo analysis; an empty key skips that provider |
 | `EMBEDDING_MODEL_NAME` | `all-MiniLM-L6-v2` | SentenceTransformers model for 384-dim vectors |
 
 ---
@@ -403,7 +406,9 @@ python -m app.scripts.evaluate_scanner --eval-set app/scripts/data/scanner_third
 
 ## 🔄 CI/CD & Deployment
 
-The GitHub Actions workflow ([`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)) runs on pull requests and pushes to `main`:
+**Production (Vercel + Supabase):** every push to `main` deploys to [nutrisync-one.vercel.app](https://nutrisync-one.vercel.app); other branches get preview deployments. Setup, migrations and secrets are in [`deploy/VERCEL_SUPABASE.md`](deploy/VERCEL_SUPABASE.md).
+
+**Self-hosted (optional):** the GitHub Actions workflow ([`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)) runs on pull requests and pushes to `main`:
 
 ```mermaid
 flowchart LR
