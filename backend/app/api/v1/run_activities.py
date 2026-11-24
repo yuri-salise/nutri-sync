@@ -1,3 +1,4 @@
+import json
 import math
 from datetime import datetime, timezone
 from typing import Optional
@@ -13,9 +14,24 @@ from app.db.session import get_db, set_rls_context
 from app.schemas.common import PaginatedResponse, PaginationMeta
 from app.schemas.run import RunActivityCreate, RunActivityResponse, RunActivityUpdate
 from app.services.activity_calories import estimate_burned_kcal
+from app.services.route import parse_route, trim_ends
 from app.services.social import delete_social_for
 
 router = APIRouter(prefix="/run-activities", tags=["Runs"])
+
+
+def _for_viewer(run: RunActivity, user_id: int, role: str) -> RunActivityResponse:
+    """Someone else's activity never shows its first and last 200 m (RA 10173),
+    the same rule as the community feed. Owners and coaches see the full route."""
+    out = RunActivityResponse.model_validate(run)
+    if run.user_id != user_id and role != "admin":
+        points = trim_ends(parse_route(run.route_geojson))
+        out.route_geojson = (
+            json.dumps({"type": "LineString", "coordinates": [[lng, lat] for lat, lng in points]})
+            if points
+            else None
+        )
+    return out
 
 
 @router.get(
@@ -59,7 +75,8 @@ async def list_run_activities(
     total_pages = math.ceil(total / limit) if total > 0 else 1
 
     return PaginatedResponse(
-        data=runs, meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages)
+        data=[_for_viewer(r, user_id, token_payload.role) for r in runs],
+        meta=PaginationMeta(page=page, limit=limit, total=total, total_pages=total_pages),
     )
 
 
@@ -120,8 +137,11 @@ async def get_run_activity(
     token_payload: TokenPayload = Depends(require_roles(["athlete", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = int(token_payload.sub)
     run = await db.get(RunActivity, id)
-    if not run:
+    # Someone else's private activity answers 404, so its existence is not revealed.
+    visible = run and (run.user_id == user_id or run.is_public or token_payload.role == "admin")
+    if not visible:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -132,7 +152,7 @@ async def get_run_activity(
                 }
             },
         )
-    return run
+    return _for_viewer(run, user_id, token_payload.role)
 
 
 @router.patch("/{id}", response_model=RunActivityResponse, summary="Update run activity")

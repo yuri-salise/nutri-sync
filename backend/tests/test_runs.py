@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from httpx import AsyncClient
 
@@ -34,3 +36,34 @@ async def test_run_activities_flow(client: AsyncClient, seed_test_users, athlete
     # 4. Delete run
     del_resp = await client.delete(f"/api/v1/run-activities/{run_id}", headers=headers)
     assert del_resp.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_other_users_runs_are_private_and_trimmed(client: AsyncClient, seed_test_users, athlete_token):
+    from app.core.security import create_access_token
+
+    owner = {"Authorization": f"Bearer {athlete_token}"}
+    stranger = {"Authorization": f"Bearer {create_access_token(subject=99, role='athlete')}"}
+    # ~1 km due north, one point every ~111 m.
+    coords = [[121.0, 14.500 + i * 0.001] for i in range(10)]
+    route = '{"type":"LineString","coordinates":' + str(coords) + "}"
+    base = {"surface_type": "road", "distance_km": 1.0, "duration_sec": 600, "route_geojson": route}
+
+    private = (await client.post("/api/v1/run-activities", json={**base, "is_public": False}, headers=owner)).json()
+    public = (await client.post("/api/v1/run-activities", json={**base, "is_public": True}, headers=owner)).json()
+
+    # Someone else's private activity is not revealed.
+    assert (await client.get(f"/api/v1/run-activities/{private['id']}", headers=stranger)).status_code == 404
+
+    # Someone else's public activity loses its first and last 200 m.
+    seen = (await client.get(f"/api/v1/run-activities/{public['id']}", headers=stranger)).json()
+    seen_coords = json.loads(seen["route_geojson"])["coordinates"]
+    assert coords[0] not in seen_coords and coords[-1] not in seen_coords
+    assert 0 < len(seen_coords) < len(coords)
+
+    listed = (await client.get("/api/v1/run-activities?only_mine=false", headers=stranger)).json()["data"]
+    assert all(coords[0] not in json.loads(r["route_geojson"])["coordinates"] for r in listed)
+
+    # The owner still sees the whole route.
+    mine = (await client.get(f"/api/v1/run-activities/{public['id']}", headers=owner)).json()
+    assert json.loads(mine["route_geojson"])["coordinates"] == coords

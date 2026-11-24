@@ -143,11 +143,11 @@ describe('Community floating button', () => {
 });
 
 
-describe('coach approval wording', () => {
-  it('says "A coach approved" for one and counts from two', async () => {
+describe('coach kudos wording', () => {
+  it('says "Kudos from a coach" for one and counts from two', async () => {
     const { coachApprovalText } = await import('../components/feed/CoachBadge');
     expect(coachApprovalText(0)).toBeNull();
-    expect(coachApprovalText(1)).toBe('A coach approved');
-    expect(coachApprovalText(2)).toBe('2 coaches approved');
+    expect(coachApprovalText(1)).toBe('Kudos from a coach');
+    expect(coachApprovalText(2)).toBe('Kudos from 2 coaches');
   });
 });

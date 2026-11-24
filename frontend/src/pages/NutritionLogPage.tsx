@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { NutritionLog } from '../types';
+import { parseApiDate } from '../utils/activity';
 import { useDialogs } from '../components/common/DialogProvider';
 import {
   UtensilsCrossed,
@@ -87,10 +88,13 @@ export const NutritionLogPage: React.FC = () => {
     }
   };
 
-  const totalCalories = logs.reduce((sum, l) => sum + l.total_kcal, 0);
-  const totalProtein = logs.reduce((sum, l) => sum + l.protein_g, 0);
-  const totalCarbs = logs.reduce((sum, l) => sum + l.carbs_g, 0);
-  const totalFat = logs.reduce((sum, l) => sum + l.fat_g, 0);
+  // The totals are for today only; the list below also shows earlier days.
+  const today = new Date().toDateString();
+  const todays = logs.filter((l) => parseApiDate(l.logged_at).toDateString() === today);
+  const totalCalories = todays.reduce((sum, l) => sum + l.total_kcal, 0);
+  const totalProtein = todays.reduce((sum, l) => sum + l.protein_g, 0);
+  const totalCarbs = todays.reduce((sum, l) => sum + l.carbs_g, 0);
+  const totalFat = todays.reduce((sum, l) => sum + l.fat_g, 0);
 
   return (
     <div className="space-y-6">
@@ -102,7 +106,7 @@ export const NutritionLogPage: React.FC = () => {
             <span>Daily Food Log</span>
           </h1>
           <p className="text-sm text-muted">
-            Track your daily meals, calories, and macros with verified nutrition data.
+            Your meals, with calories and macros from DOST-FNRI and USDA food data.
           </p>
         </div>
 
@@ -118,7 +122,7 @@ export const NutritionLogPage: React.FC = () => {
       {/* Aggregate Order-Book Tickers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
-          <span className="text-[10px] tabular-nums text-muted uppercase">Total Calories</span>
+          <span className="text-[10px] tabular-nums text-muted uppercase">Today's calories</span>
           <p className="text-2xl font-black tabular-nums text-accent mt-1">
             {Math.round(totalCalories).toLocaleString()}
             <span className="text-xs text-muted ml-1">kcal</span>
@@ -126,7 +130,7 @@ export const NutritionLogPage: React.FC = () => {
         </div>
 
         <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
-          <span className="text-[10px] tabular-nums text-muted uppercase">Protein</span>
+          <span className="text-[10px] tabular-nums text-muted uppercase">Today's protein</span>
           <p className="text-2xl font-black tabular-nums text-info mt-1">
             {totalProtein.toFixed(1)}
             <span className="text-xs text-muted ml-1">g</span>
@@ -134,7 +138,7 @@ export const NutritionLogPage: React.FC = () => {
         </div>
 
         <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
-          <span className="text-[10px] tabular-nums text-muted uppercase">Carbohydrates</span>
+          <span className="text-[10px] tabular-nums text-muted uppercase">Today's carbs</span>
           <p className="text-2xl font-black tabular-nums text-ink mt-1">
             {totalCarbs.toFixed(1)}
             <span className="text-xs text-muted ml-1">g</span>
@@ -142,7 +146,7 @@ export const NutritionLogPage: React.FC = () => {
         </div>
 
         <div className="p-4 rounded-2xl bg-card border border-line shadow-neu">
-          <span className="text-[10px] tabular-nums text-muted uppercase">Fat</span>
+          <span className="text-[10px] tabular-nums text-muted uppercase">Today's fat</span>
           <p className="text-2xl font-black tabular-nums text-warning mt-1">
             {totalFat.toFixed(1)}
             <span className="text-xs text-muted ml-1">g</span>
@@ -163,7 +167,7 @@ export const NutritionLogPage: React.FC = () => {
           </div>
         ) : logs.length === 0 ? (
           <div className="p-12 text-center rounded-3xl bg-card border border-line text-xs text-muted">
-            No meals logged today yet. Use "Scan Meal with AI" or "Manual Entry" above to add your food.
+            No meals logged yet. Use the Smart Meal Scanner or "Manual Entry" to add one.
           </div>
         ) : (
           logs.map((log) => (
@@ -176,7 +180,7 @@ export const NutritionLogPage: React.FC = () => {
                   <span className="text-sm font-bold text-ink">{log.meal_name}</span>
                   {log.rag_scan_id && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] tabular-nums font-bold bg-accent/15 text-accent border border-accent/30">
-                      AI VERIFIED
+                      SCANNED
                     </span>
                   )}
                 </div>
@@ -218,7 +222,7 @@ export const NutritionLogPage: React.FC = () => {
 
       {/* Manual Entry Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
             <div
               className="animate-rise w-full max-w-md p-6 rounded-3xl bg-card border border-line shadow-2xl space-y-4"
             >

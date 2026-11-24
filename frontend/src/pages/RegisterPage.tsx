@@ -11,7 +11,6 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'athlete' | 'admin'>('athlete');
   const [weightKg, setWeightKg] = useState('72.0');
   const [baseKcal, setBaseKcal] = useState('2200');
   const [proteinG, setProteinG] = useState('150');
@@ -49,7 +48,6 @@ export const RegisterPage: React.FC = () => {
         email,
         password,
         full_name: fullName,
-        role,
         weight_kg: weight,
         base_kcal_goal: parseFloat(baseKcal) || 2200,
         protein_goal_g: parseFloat(proteinG) || 150,
@@ -82,7 +80,7 @@ export const RegisterPage: React.FC = () => {
             Create Your Account
           </h1>
           <p className="text-xs text-muted">
-            Set up your fitness goals and daily nutrition targets
+            Set up your profile, body weight and daily calorie goal
           </p>
         </div>
 
@@ -154,7 +152,7 @@ export const RegisterPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div className="space-y-1.5">
               <label htmlFor="reg-weight" className="text-xs font-semibold text-muted flex items-center gap-1">
                 <Scale className="h-3.5 w-3.5 text-accent" /> Weight (kg)
@@ -181,18 +179,6 @@ export const RegisterPage: React.FC = () => {
                 className="w-full bg-well border border-line focus:border-accent rounded-2xl px-3 py-2 text-xs text-ink tabular-nums focus:outline-none"
               />
             </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="reg-role" className="text-xs font-semibold text-muted">Account Role</label>
-              <select id="reg-role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                className="w-full bg-well border border-line rounded-2xl px-3 py-2 text-xs text-ink focus:outline-none"
-              >
-                <option value="athlete">Athlete</option>
-                <option value="admin">Coach / Admin</option>
-              </select>
-            </div>
           </div>
 
           <div className="pt-2">
@@ -209,7 +195,7 @@ export const RegisterPage: React.FC = () => {
           <div className="text-center text-xs text-muted pt-2">
             Already registered?{' '}
             <Link to="/login" className="text-accent font-semibold hover:underline">
-              Sign in to terminal
+              Sign in
             </Link>
           </div>
         </form>

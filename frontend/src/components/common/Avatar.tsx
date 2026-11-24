@@ -1,6 +1,6 @@
 import React from 'react';
 
-const COLORS = ['#1D4ED8', '#0369A1', '#92400E', '#6D28D9', '#047857', '#B93A0B'];
+const COLORS = ['#2F74E8', '#0891B2', '#C2700C', '#7C5CE0', '#059669', '#E0561E'];
 
 const initials = (name: string) =>
   name
@@ -16,7 +16,7 @@ export const Avatar: React.FC<{ name: string; id: number; size?: number }> = ({ 
   return (
     <div
       aria-hidden="true"
-      className="rounded-full flex items-center justify-center font-bold text-on-accent shrink-0 select-none"
+      className="rounded-full flex items-center justify-center font-bold text-white shrink-0 select-none"
       style={{ width: size, height: size, backgroundColor: color, fontSize: size * 0.38 }}
     >
       {initials(name)}
